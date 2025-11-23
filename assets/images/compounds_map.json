@@ -1,0 +1,317 @@
+{
+  "total": 38,
+  "config": {
+    "show_all_carbons": true,
+    "show_all_hydrogens": true,
+    "use_element_colors": true,
+    "transparent_background": false,
+    "image_size": "400x300",
+    "bond_line_width": 2.0
+  },
+  "compounds": [
+    {
+      "filename": "01_alkane_methane.svg",
+      "zh_name": "甲烷",
+      "en_name": "methane",
+      "category": "01_alkane",
+      "cat_zh": "烷烴",
+      "smiles": "C"
+    },
+    {
+      "filename": "01_alkane_ethane.svg",
+      "zh_name": "乙烷",
+      "en_name": "ethane",
+      "category": "01_alkane",
+      "cat_zh": "烷烴",
+      "smiles": "CC"
+    },
+    {
+      "filename": "01_alkane_propane.svg",
+      "zh_name": "丙烷",
+      "en_name": "propane",
+      "category": "01_alkane",
+      "cat_zh": "烷烴",
+      "smiles": "CCC"
+    },
+    {
+      "filename": "02_alkene_ethene.svg",
+      "zh_name": "乙烯",
+      "en_name": "ethene",
+      "category": "02_alkene",
+      "cat_zh": "烯烴",
+      "smiles": "C=C"
+    },
+    {
+      "filename": "02_alkene_propene.svg",
+      "zh_name": "丙烯",
+      "en_name": "propene",
+      "category": "02_alkene",
+      "cat_zh": "烯烴",
+      "smiles": "C=CC"
+    },
+    {
+      "filename": "02_alkene_1-butene.svg",
+      "zh_name": "1-丁烯",
+      "en_name": "1-butene",
+      "category": "02_alkene",
+      "cat_zh": "烯烴",
+      "smiles": "C=CCC"
+    },
+    {
+      "filename": "03_alkyne_ethyne.svg",
+      "zh_name": "乙炔",
+      "en_name": "ethyne",
+      "category": "03_alkyne",
+      "cat_zh": "炔烴",
+      "smiles": "C#C"
+    },
+    {
+      "filename": "03_alkyne_propyne.svg",
+      "zh_name": "丙炔",
+      "en_name": "propyne",
+      "category": "03_alkyne",
+      "cat_zh": "炔烴",
+      "smiles": "C#CC"
+    },
+    {
+      "filename": "04_alcohol_methanol.svg",
+      "zh_name": "甲醇",
+      "en_name": "methanol",
+      "category": "04_alcohol",
+      "cat_zh": "醇",
+      "smiles": "CO"
+    },
+    {
+      "filename": "04_alcohol_ethanol.svg",
+      "zh_name": "乙醇",
+      "en_name": "ethanol",
+      "category": "04_alcohol",
+      "cat_zh": "醇",
+      "smiles": "CCO"
+    },
+    {
+      "filename": "04_alcohol_propanol.svg",
+      "zh_name": "丙醇",
+      "en_name": "propanol",
+      "category": "04_alcohol",
+      "cat_zh": "醇",
+      "smiles": "CCCO"
+    },
+    {
+      "filename": "05_aldehyde_formaldehyde.svg",
+      "zh_name": "甲醛",
+      "en_name": "formaldehyde",
+      "category": "05_aldehyde",
+      "cat_zh": "醛",
+      "smiles": "C=O"
+    },
+    {
+      "filename": "05_aldehyde_acetaldehyde.svg",
+      "zh_name": "乙醛",
+      "en_name": "acetaldehyde",
+      "category": "05_aldehyde",
+      "cat_zh": "醛",
+      "smiles": "CC=O"
+    },
+    {
+      "filename": "05_aldehyde_propanal.svg",
+      "zh_name": "丙醛",
+      "en_name": "propanal",
+      "category": "05_aldehyde",
+      "cat_zh": "醛",
+      "smiles": "CCC=O"
+    },
+    {
+      "filename": "06_ketone_acetone.svg",
+      "zh_name": "丙酮",
+      "en_name": "acetone",
+      "category": "06_ketone",
+      "cat_zh": "酮",
+      "smiles": "CC(C)=O"
+    },
+    {
+      "filename": "06_ketone_butanone.svg",
+      "zh_name": "丁酮",
+      "en_name": "butanone",
+      "category": "06_ketone",
+      "cat_zh": "酮",
+      "smiles": "CCC(C)=O"
+    },
+    {
+      "filename": "07_carboxylic_formic_acid.svg",
+      "zh_name": "甲酸",
+      "en_name": "formic_acid",
+      "category": "07_carboxylic",
+      "cat_zh": "羧酸",
+      "smiles": "C(=O)O"
+    },
+    {
+      "filename": "07_carboxylic_acetic_acid.svg",
+      "zh_name": "乙酸",
+      "en_name": "acetic_acid",
+      "category": "07_carboxylic",
+      "cat_zh": "羧酸",
+      "smiles": "CC(=O)O"
+    },
+    {
+      "filename": "07_carboxylic_propionic_acid.svg",
+      "zh_name": "丙酸",
+      "en_name": "propionic_acid",
+      "category": "07_carboxylic",
+      "cat_zh": "羧酸",
+      "smiles": "CCC(=O)O"
+    },
+    {
+      "filename": "08_ester_methyl_formate.svg",
+      "zh_name": "甲酸甲酯",
+      "en_name": "methyl_formate",
+      "category": "08_ester",
+      "cat_zh": "酯",
+      "smiles": "COC=O"
+    },
+    {
+      "filename": "08_ester_ethyl_acetate.svg",
+      "zh_name": "乙酸乙酯",
+      "en_name": "ethyl_acetate",
+      "category": "08_ester",
+      "cat_zh": "酯",
+      "smiles": "CCOC(C)=O"
+    },
+    {
+      "filename": "08_ester_methyl_acetate.svg",
+      "zh_name": "乙酸甲酯",
+      "en_name": "methyl_acetate",
+      "category": "08_ester",
+      "cat_zh": "酯",
+      "smiles": "COC(C)=O"
+    },
+    {
+      "filename": "09_ether_dimethyl_ether.svg",
+      "zh_name": "二甲醚",
+      "en_name": "dimethyl_ether",
+      "category": "09_ether",
+      "cat_zh": "醚",
+      "smiles": "COC"
+    },
+    {
+      "filename": "09_ether_diethyl_ether.svg",
+      "zh_name": "二乙醚",
+      "en_name": "diethyl_ether",
+      "category": "09_ether",
+      "cat_zh": "醚",
+      "smiles": "CCOCC"
+    },
+    {
+      "filename": "10_amine_methylamine.svg",
+      "zh_name": "甲胺",
+      "en_name": "methylamine",
+      "category": "10_amine",
+      "cat_zh": "胺",
+      "smiles": "CN"
+    },
+    {
+      "filename": "10_amine_ethylamine.svg",
+      "zh_name": "乙胺",
+      "en_name": "ethylamine",
+      "category": "10_amine",
+      "cat_zh": "胺",
+      "smiles": "CCN"
+    },
+    {
+      "filename": "10_amine_dimethylamine.svg",
+      "zh_name": "二甲胺",
+      "en_name": "dimethylamine",
+      "category": "10_amine",
+      "cat_zh": "胺",
+      "smiles": "CNC"
+    },
+    {
+      "filename": "11_aromatic_benzene.svg",
+      "zh_name": "苯",
+      "en_name": "benzene",
+      "category": "11_aromatic",
+      "cat_zh": "芳香烴",
+      "smiles": "c1ccccc1"
+    },
+    {
+      "filename": "11_aromatic_toluene.svg",
+      "zh_name": "甲苯",
+      "en_name": "toluene",
+      "category": "11_aromatic",
+      "cat_zh": "芳香烴",
+      "smiles": "Cc1ccccc1"
+    },
+    {
+      "filename": "11_aromatic_styrene.svg",
+      "zh_name": "苯乙烯",
+      "en_name": "styrene",
+      "category": "11_aromatic",
+      "cat_zh": "芳香烴",
+      "smiles": "C=Cc1ccccc1"
+    },
+    {
+      "filename": "12_halide_chloromethane.svg",
+      "zh_name": "氯甲烷",
+      "en_name": "chloromethane",
+      "category": "12_halide",
+      "cat_zh": "鹵化物",
+      "smiles": "CCl"
+    },
+    {
+      "filename": "12_halide_bromoethane.svg",
+      "zh_name": "溴乙烷",
+      "en_name": "bromoethane",
+      "category": "12_halide",
+      "cat_zh": "鹵化物",
+      "smiles": "CCBr"
+    },
+    {
+      "filename": "12_halide_chlorobenzene.svg",
+      "zh_name": "氯苯",
+      "en_name": "chlorobenzene",
+      "category": "12_halide",
+      "cat_zh": "鹵化物",
+      "smiles": "Clc1ccccc1"
+    },
+    {
+      "filename": "13_confused_phenol.svg",
+      "zh_name": "苯酚",
+      "en_name": "phenol",
+      "category": "13_confused",
+      "cat_zh": "易混淆",
+      "smiles": "Oc1ccccc1"
+    },
+    {
+      "filename": "13_confused_benzyl_alcohol.svg",
+      "zh_name": "苯甲醇",
+      "en_name": "benzyl_alcohol",
+      "category": "13_confused",
+      "cat_zh": "易混淆",
+      "smiles": "OCc1ccccc1"
+    },
+    {
+      "filename": "13_confused_benzaldehyde.svg",
+      "zh_name": "苯甲醛",
+      "en_name": "benzaldehyde",
+      "category": "13_confused",
+      "cat_zh": "易混淆",
+      "smiles": "O=Cc1ccccc1"
+    },
+    {
+      "filename": "13_confused_benzoic_acid.svg",
+      "zh_name": "苯甲酸",
+      "en_name": "benzoic_acid",
+      "category": "13_confused",
+      "cat_zh": "易混淆",
+      "smiles": "O=C(O)c1ccccc1"
+    },
+    {
+      "filename": "13_confused_aniline.svg",
+      "zh_name": "苯胺",
+      "en_name": "aniline",
+      "category": "13_confused",
+      "cat_zh": "易混淆",
+      "smiles": "Nc1ccccc1"
+    }
+  ]
+}
