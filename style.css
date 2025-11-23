@@ -1,0 +1,672 @@
+/* --- 有機分類帽 (Organic Sorting Hat) - Harry Potter Theme --- */
+
+:root {
+    /* 哈利波特主題色票 */
+    --hp-bg-dark: #1a1a1d;         /* 深色背景 */
+    --hp-bg-darker: #0f0f12;       /* 更深的背景 */
+    --hp-parchment: #f0e6d2;       /* 羊皮紙米色 (用於文字和圖片背景) */
+    --hp-parchment-dark: #cbbfa0;  /* 深羊皮紙色 */
+    
+    --hp-gold: #d4af37;            /* 魔法金黃色 (邊框、發光) */
+    --hp-gold-glow: rgba(212, 175, 55, 0.6);
+
+    --hp-red-dark: #7f0909;        /* 葛來分多深紅 (P1, 錯誤) */
+    --hp-red-bright: #c0392b;
+    --hp-green-dark: #0f4d0f;      /* 史萊哲林深綠 (P2, 正確, HP條) */
+    --hp-green-bright: #27ae60;
+
+    --hp-wood-dark: #3b2e2a;       /* 深色木紋 (按鈕背景) */
+    --hp-wood-light: #5c4a42;
+
+    --font-serif: "Georgia", "Times New Roman", serif; /* 古老襯線體 */
+
+    /* 遊戲參數 */
+    --hp-height: 24px; 
+}
+
+/* 全域設定 */
+* {
+    box-sizing: border-box;
+    /* 禁止選取文字，避免遊戲中誤觸 */
+    user-select: none; 
+    -webkit-user-select: none;
+    touch-action: manipulation; /* 優化觸控 */
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    /* 深色魔法背景，帶有微妙的徑向漸層 */
+    background: radial-gradient(circle at center, var(--hp-bg-dark), var(--hp-bg-darker));
+    font-family: var(--font-serif);
+    color: var(--hp-parchment);
+    overflow: hidden; /* 防止捲動 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 隱藏元素 */
+.hidden { display: none !important; }
+
+/* 預載入容器 */
+#preload-container {
+    position: absolute;
+    width: 0; height: 0;
+    overflow: hidden;
+    z-index: -1;
+}
+
+/* 通用按鈕樣式 (魔法石/木塊風格) */
+.btn {
+    font-family: var(--font-serif);
+    border: 2px solid var(--hp-wood-light);
+    background: linear-gradient(to bottom, var(--hp-wood-dark), #2a221f);
+    color: var(--hp-parchment);
+    padding: 12px 24px;
+    margin: 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 6px rgba(0,0,0,0.4);
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 按鈕 hover 發光效果 */
+.btn:hover, .btn:active {
+    background: linear-gradient(to bottom, var(--hp-wood-light), var(--hp-wood-dark));
+    border-color: var(--hp-gold);
+    color: var(--hp-gold);
+    box-shadow: 0 0 15px var(--hp-gold-glow), inset 0 1px 0 rgba(255,255,255,0.2);
+    transform: translateY(-1px);
+}
+
+/* 魔法文字效果 (標題用) */
+.magical-text {
+    color: var(--hp-gold);
+    text-shadow: 0 0 10px var(--hp-gold-glow), 2px 2px 4px rgba(0,0,0,0.8);
+    letter-spacing: 1px;
+}
+
+/* 魔法邊框 */
+.magic-border {
+    border: 3px solid var(--hp-wood-dark);
+    border-image: linear-gradient(to right, var(--hp-gold), var(--hp-wood-light), var(--hp-gold)) 1;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+/* 羊皮紙背景 (用於圖片和彈窗) */
+.parchment-bg {
+    background-color: var(--hp-parchment);
+    background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" result="noise"/><feDiffuseLighting in="noise" lighting-color="%23f0e6d2" surfaceScale="2"><feDistantLight azimuth="45" elevation="60"/></feDiffuseLighting></filter><rect width="100%" height="100%" filter="url(%23noise)"/></svg>'); /* 簡易的雜點紋理 */
+    color: #333; /* 在羊皮紙上的文字要深色 */
+    border-radius: 4px;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+}
+
+/* ====================
+   主選單 (Main Menu)
+   ==================== */
+#menu-container {
+    text-align: center;
+    padding: 30px;
+    background: rgba(20, 20, 25, 0.9); /* 半透明深色背景 */
+    border-radius: 15px;
+    border: 4px solid var(--hp-wood-dark);
+    box-shadow: 0 0 30px rgba(0,0,0,0.7), inset 0 0 20px rgba(0,0,0,0.5);
+    max-width: 90%;
+    max-height: 95vh;
+    overflow-y: auto; /* 如果手機螢幕太矮可以捲動 */
+}
+
+.game-title {
+    font-size: 3rem;
+    margin-bottom: 5px;
+}
+.game-subtitle {
+    font-size: 1.5rem;
+    color: var(--hp-parchment-dark);
+    margin-bottom: 30px;
+    font-style: italic;
+}
+
+.menu-group {
+    margin-bottom: 25px;
+    border-top: 2px solid var(--hp-wood-dark);
+    padding-top: 15px;
+}
+
+.menu-heading {
+    color: var(--hp-gold);
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    text-shadow: 1px 1px 2px black;
+}
+
+.menu-btn {
+    display: block;
+    width: 100%;
+    max-width: 300px;
+    margin: 10px auto;
+    font-size: 1.2rem;
+    padding: 15px;
+}
+
+/* 特殊按鈕樣式 */
+.boss-btn {
+    background: linear-gradient(to bottom, var(--hp-red-dark), #4a0505);
+    border-color: var(--hp-red-bright);
+}
+.boss-btn:hover {
+    box-shadow: 0 0 15px var(--hp-red-bright);
+    color: #ffadad;
+}
+
+.genius-btn {
+    background: linear-gradient(to right, #2c3e50, #4ca1af);
+    border-color: #80dfff;
+}
+
+.duel-btn {
+    background: linear-gradient(to right, var(--hp-red-dark), var(--hp-wood-dark), var(--hp-green-dark));
+    border-color: var(--hp-gold);
+}
+
+/* ====================
+   遊戲主介面 (Game Container)
+   ==================== */
+#game-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--hp-bg-darker);
+}
+
+/* 頂部資訊列 */
+#info-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: rgba(0,0,0,0.6);
+    border-bottom: 3px solid var(--hp-wood-dark);
+    font-size: 1.1rem;
+}
+.icon-btn {
+    padding: 8px 15px;
+    font-size: 1rem;
+}
+.title-stat {
+    color: var(--hp-gold);
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+/* 核心遊戲區域 (包含玩家區和題目區) */
+#game-area {
+    flex: 1; /* 佔滿剩餘空間 */
+    display: flex;
+    position: relative;
+    overflow: hidden;
+    /* 預設為直向排列 (單人模式) */
+    flex-direction: column; 
+}
+
+/* 玩家區域基礎樣式 */
+.player-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    position: relative;
+    border: 2px solid rgba(0,0,0,0.3);
+}
+
+/* P1 主題色 (葛來分多紅) */
+.p1-theme {
+    background: linear-gradient(to bottom right, rgba(60, 10, 10, 0.8), rgba(30, 5, 5, 0.9));
+    border-color: var(--hp-red-dark);
+}
+/* P2 主題色 (史萊哲林綠) */
+.p2-theme {
+    background: linear-gradient(to bottom left, rgba(10, 40, 10, 0.8), rgba(5, 20, 5, 0.9));
+    border-color: var(--hp-green-dark);
+}
+
+/* 玩家頭部 (HP 和 分數) */
+.player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+/* HP條 (反應產率) */
+.hp-bar-container {
+    width: 60%;
+    height: var(--hp-height);
+    background: #333;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+}
+.hp-bar {
+    height: 100%;
+    background: linear-gradient(to right, var(--hp-green-bright), var(--hp-green-dark));
+    transition: width 0.3s ease-out;
+    box-shadow: 0 0 10px var(--hp-green-bright);
+}
+/* P1 的 HP 條用紅色系 (如果需要區分) - 這裡暫時都用綠色表示健康 */
+/* .p1-theme .hp-bar { background: linear-gradient(to right, var(--hp-red-bright), var(--hp-red-dark)); } */
+
+.hp-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.8rem;
+    color: var(--hp-parchment);
+    text-shadow: 1px 1px 2px black;
+    font-weight: bold;
+}
+
+.score-box {
+    font-size: 1.3rem;
+    font-weight: bold;
+}
+
+/* 題目容器 (Question Container) */
+.question-container {
+    flex: 2; /* 題目區佔較大比例 */
+    margin: 5px 0;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 3px double var(--hp-wood-dark);
+    /* 羊皮紙背景已在 .parchment-bg定義 */
+}
+
+.question-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 圖片樣式調整 */
+.question-content img, 
+.question-content svg {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    /* 重要：因為背景是亮的羊皮紙，有機分子(黑線)不需要濾鏡，反而要加強對比 */
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); 
+}
+
+/* 如果題目是純文字 */
+.question-content span.q-text {
+    font-size: 2rem;
+    color: #2c3e50; /* 深色墨水色 */
+    font-weight: bold;
+    text-align: center;
+    font-family: var(--font-serif);
+}
+
+/* 選項按鈕區 */
+.options-container {
+    flex: 2;
+    display: grid;
+    gap: 8px;
+    padding: 5px;
+}
+.single-col {
+    grid-template-columns: 1fr; /* 單人模式預設單欄 */
+}
+.opt-btn {
+    font-size: 1.3rem;
+    padding: 12px;
+    height: 100%;
+    white-space: normal; /* 允許文字換行 */
+    line-height: 1.2;
+}
+
+/* 選項按鈕特殊樣式 (魔法符石) */
+.magic-stone-btn {
+    background: linear-gradient(to bottom, #4a423f, #2f2724);
+    border: 2px solid #6e5d55;
+    color: var(--hp-parchment);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 3px 5px rgba(0,0,0,0.5);
+}
+.magic-stone-btn:hover {
+    background: linear-gradient(to bottom, #5c524f, #3a312e);
+    border-color: var(--hp-gold);
+    color: var(--hp-gold);
+    box-shadow: 0 0 10px var(--hp-gold-glow);
+}
+
+/* 答對/答錯效果 */
+.opt-btn.correct {
+    background: linear-gradient(to bottom, var(--hp-green-bright), var(--hp-green-dark)) !important;
+    border-color: #aaffaa !important;
+    box-shadow: 0 0 20px var(--hp-green-bright) !important;
+    color: white !important;
+}
+.opt-btn.wrong {
+    background: linear-gradient(to bottom, var(--hp-red-bright), var(--hp-red-dark)) !important;
+    border-color: #ffaaaa !important;
+    box-shadow: 0 0 20px var(--hp-red-bright) !important;
+    color: white !important;
+}
+
+/* 狀態疊加層 (警告/Combo) */
+.status-overlay {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 10;
+    pointer-events: none;
+    width: 100%;
+}
+
+.warn-text {
+    font-size: 3rem;
+    color: var(--hp-red-bright);
+    font-weight: bold;
+    text-shadow: 2px 2px 4px black, 0 0 20px var(--hp-red-dark);
+    animation: pulseWarning 0.8s infinite alternate;
+    font-family: var(--font-serif);
+}
+@keyframes pulseWarning {
+    from { transform: scale(1); opacity: 0.8; }
+    to { transform: scale(1.2); opacity: 1; }
+}
+
+.combo-text {
+    font-size: 2rem;
+    color: var(--hp-gold);
+    font-weight: bold;
+    text-shadow: 2px 2px 4px black, 0 0 15px var(--hp-gold-glow);
+    margin-top: 10px;
+    animation: floatUp 1s ease-out forwards;
+    font-family: var(--font-serif);
+}
+@keyframes floatUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 底部計時條 */
+.bottom-bar {
+    height: 16px;
+    background: #222;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+}
+#time-bar {
+    height: 100%;
+    background: linear-gradient(to right, #3498db, #2980b9); /* 藍色系 */
+    width: 100%;
+    transition: width 1s linear;
+    box-shadow: 0 0 10px #3498db;
+}
+.time-running-out {
+    background: linear-gradient(to right, var(--hp-red-bright), var(--hp-red-dark)) !important;
+    box-shadow: 0 0 15px var(--hp-red-bright) !important;
+}
+
+
+/* ====================
+   ⚔️ 對戰模式特別樣式 (關鍵修改) ⚔️
+   ==================== */
+/* 當 body 有 duel-mode class 時應用 */
+body.duel-mode #game-area {
+    flex-direction: row; /* 改為橫向排列 */
+}
+
+body.duel-mode #info-bar {
+    display: none; /* 對戰模式隱藏頂部資訊列以節省空間 */
+}
+
+/* 玩家區域在對戰模式下的調整 */
+body.duel-mode .player-area {
+    flex: 2; /* 左右玩家佔據較多空間 */
+    border-bottom: none;
+    border-right: 3px solid var(--hp-wood-dark); /* 中間分隔線 */
+    padding: 5px; /* 減少內距 */
+}
+body.duel-mode #p2-area {
+    border-right: none; /* 最右邊不需要線 */
+    border-left: 3px solid var(--hp-wood-dark);
+}
+
+/* 對戰模式的選項按鈕佈局 */
+body.duel-mode .options-container {
+    grid-template-columns: 1fr 1fr; /* 改為 2x2 網格 */
+    grid-template-rows: 1fr 1fr;
+    gap: 5px;
+    flex: 3; /* 按鈕區佔更大比例 */
+}
+body.duel-mode .opt-btn {
+    font-size: 1.5rem; /* 按鈕文字加大 */
+    padding: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* **新增** 中間共用題目區樣式 */
+#shared-question-area {
+    flex: 3; /* 中間區域佔比最大 */
+    margin: 10px;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 4px double var(--hp-gold); /* 金色雙邊框突出顯示 */
+    box-shadow: 0 0 25px rgba(0,0,0,0.7);
+    z-index: 5; /* 確保在最上層 */
+}
+/* 確保共用區的圖片最大化 */
+#shared-question-area .question-content img,
+#shared-question-area .question-content svg {
+    max-height: 95%;
+    max-width: 95%;
+}
+/* 共用區文字大小 */
+#shared-question-area .q-text {
+    font-size: 2.5rem;
+}
+
+/* 對戰模式下的 Header 調整 */
+body.duel-mode .player-header {
+    flex-direction: column; /* 直向排列 HP 和分數 */
+    align-items: stretch;
+    margin-bottom: 5px;
+}
+body.duel-mode .hp-bar-container {
+    width: 100%;
+    height: 20px;
+    margin-bottom: 5px;
+}
+body.duel-mode .score-box {
+    text-align: center;
+    font-size: 1.5rem;
+}
+
+/* 對戰模式的警告文字調整 */
+body.duel-mode .warn-text {
+    font-size: 2.5rem; /* 稍微縮小一點以免擋住太多 */
+}
+
+
+/* ====================
+   彈窗 (Modal) - 結算與參考圖
+   ==================== */
+.modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: var(--hp-bg-dark);
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    border: 4px solid var(--hp-wood-dark);
+    box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,0,0,0.5);
+    max-width: 90%;
+    color: var(--hp-parchment);
+    position: relative;
+}
+
+/* 魔法卷軸風格彈窗背景 */
+.magic-scroll {
+    background-color: var(--hp-parchment);
+    background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" result="noise"/><feDiffuseLighting in="noise" lighting-color="%23f0e6d2" surfaceScale="2"><feDistantLight azimuth="45" elevation="60"/></feDiffuseLighting></filter><rect width="100%" height="100%" filter="url(%23noise)"/></svg>');
+    color: #333; /* 卷軸上的文字要深色 */
+    border: 5px solid #5c4a42;
+    border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath fill='%23d4af37' d='M0 0h20v20H0z'/%3E%3Cpath fill='%233b2e2a' d='M2 2h16v16H2z'/%3E%3C/svg%3E") 5 stretch;
+}
+.magic-scroll .magical-text {
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5); /* 淺色背景上的標題陰影 */
+    color: #7f0909; /* 深紅色標題 */
+}
+
+
+#result-title {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+.result-detail {
+    font-size: 1.3rem;
+    margin: 15px 0;
+    font-weight: bold;
+}
+
+/* 參考圖彈窗特別設定 */
+.ref-content {
+    width: 95%;
+    height: 90%;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+#ref-img-container {
+    flex: 1;
+    background: rgba(255,255,255,0.5); /* 半透明白色疊加，讓圖更清楚 */
+    border-radius: 8px;
+    border: 2px dashed #888;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+}
+.close-btn {
+    position: absolute;
+    top: 10px; right: 15px;
+    font-size: 2.5rem;
+    cursor: pointer;
+    color: var(--hp-red-dark);
+}
+.close-btn:hover { color: var(--hp-red-bright); }
+
+/* RWD 針對小螢幕的調整 */
+@media (max-height: 600px) and (orientation: landscape) {
+    /* 針對很扁的手機橫向模式 */
+    body.duel-mode .hp-bar-container { height: 12px; }
+    body.duel-mode .score-box { font-size: 1.2rem; }
+    body.duel-mode .opt-btn { font-size: 1.2rem; padding: 2px; }
+    #shared-question-area .q-text { font-size: 1.8rem; }
+}
+
+@media (max-width: 400px) {
+    /* 針對超窄手機直向 */
+    .game-title { font-size: 2.2rem; }
+    .menu-btn { font-size: 1rem; padding: 10px; }
+    .hp-bar-container { height: 18px; }
+    .opt-btn { font-size: 1.1rem; }
+}
+
+/* --- 修正與新增樣式 (請加在 style.css 最後面) --- */
+
+/* 1. 錯誤選項樣式修正：移除紅色背景，改為文字變紅 + 震動 */
+.opt-btn.wrong {
+    background: #333 !important; /* 保持深色背景，不變紅 */
+    color: var(--hp-red-bright) !important; /* 文字變紅 */
+    border-color: var(--hp-red-bright) !important;
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+/* 2. 冷卻鎖定狀態 */
+.locked-area {
+    opacity: 0.5;
+    pointer-events: none; /* 禁止點擊 */
+    filter: grayscale(0.8);
+}
+
+/* 3. Combo 攻擊投射物 (射向對方) */
+.combo-projectile {
+    position: absolute;
+    top: 50%; /* 從畫面中間高度發射 */
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--hp-gold);
+    text-shadow: 0 0 10px var(--hp-gold-glow), 2px 2px 0 #000;
+    pointer-events: none;
+    z-index: 999;
+    white-space: nowrap;
+    font-family: var(--font-serif);
+}
+
+/* P1 的攻擊 (從左飛向右) */
+.p1-atk {
+    left: 25%; /* 起點 */
+    animation: shootRight 0.8s ease-in forwards;
+    color: #ffaaaa; /* 帶一點紅色光澤 */
+}
+
+/* P2 的攻擊 (從右飛向左) */
+.p2-atk {
+    right: 25%; /* 起點 */
+    animation: shootLeft 0.8s ease-in forwards;
+    color: #aaffaa; /* 帶一點綠色光澤 */
+}
+
+@keyframes shootRight {
+    0% { transform: translateY(0) scale(0.5); opacity: 0; left: 20%; }
+    20% { opacity: 1; transform: translateY(-20px) scale(1.2); } /* 蓄力 */
+    100% { transform: translateY(0) scale(1); opacity: 0; left: 80%; } /* 擊中右邊 */
+}
+
+@keyframes shootLeft {
+    0% { transform: translateY(0) scale(0.5); opacity: 0; right: 20%; }
+    20% { opacity: 1; transform: translateY(-20px) scale(1.2); } /* 蓄力 */
+    100% { transform: translateY(0) scale(1); opacity: 0; right: 80%; } /* 擊中左邊 */
+}

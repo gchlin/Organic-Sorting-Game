@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>有機分類帽 - 題目邏輯測試器</title>
+    <style>
+        body { font-family: "Microsoft JhengHei", sans-serif; background: #f4f4f4; padding: 20px; }
+        .control-panel {
+            background: white; padding: 20px; border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px;
+            display: flex; gap: 10px; align-items: center;
+        }
+        select, button { padding: 10px; font-size: 1rem; cursor: pointer; }
+        button { background: #3498db; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #2980b9; }
+
+        .question-card {
+            background: white; padding: 30px; border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            max-width: 600px; margin: 0 auto; text-align: center;
+        }
+        .q-img-box {
+            height: 250px; display: flex; justify-content: center; align-items: center;
+            background: #fff8e1; border: 2px dashed #ccc; margin-bottom: 20px;
+        }
+        .q-img-box img { max-height: 100%; max-width: 100%; }
+        
+        .info-text { color: #666; font-size: 0.9rem; margin-bottom: 10px; }
+        .correct-ans { color: #27ae60; font-weight: bold; font-size: 1.2rem; margin-bottom: 20px; }
+
+        .options-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        }
+        .opt-btn {
+            padding: 15px; border: 2px solid #ddd; background: #fff;
+            font-size: 1.1rem; border-radius: 5px; cursor: default;
+        }
+        .opt-btn.is-correct {
+            border-color: #27ae60; background: #eafaf1; color: #27ae60; font-weight: bold;
+        }
+        .opt-btn.is-wrong {
+            border-color: #e74c3c; color: #e74c3c;
+        }
+        .error-msg { color: red; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="control-panel">
+        <label>選擇關卡：</label>
+        <select id="level-select">
+            <option value="level1">Level 1 (碳氫)</option>
+            <option value="level2">Level 2 (醇醚)</option>
+            <option value="level3">Level 3 (醛酮)</option>
+            <option value="level4">Level 4 (酸酯)</option>
+            <option value="level5">Level 5 (雜項)</option>
+            <option value="level6">Level 6 (綜合)</option>
+            <option value="level99">Level 99 (英文挑戰)</option>
+        </select>
+        <button onclick="testGen()">隨機產生一題</button>
+    </div>
+
+    <div id="display-area" class="question-card" style="display:none;">
+        <div class="info-text">題目 ID (Key): <span id="q-key"></span></div>
+        
+        <div class="q-img-box">
+            <img id="q-img" src="" alt="Question Image">
+        </div>
+
+        <div class="correct-ans">正確答案應該是：<span id="ans-text"></span></div>
+
+        <div class="info-text">生成的 4 個選項 (綠色代表正確答案)：</div>
+        <div id="opts-container" class="options-grid"></div>
+        
+        <div id="error-log" class="error-msg"></div>
+    </div>
+
+    <script src="data.js"></script>
+
+    <script>
+        // 這是模擬 game.js 中修正後的邏輯
+        function simulatedGenerateOptions(correctKey, level) {
+            const isLevel99 = (level === 'level99');
+            
+            if (!AnswerBank[correctKey]) return [];
+
+            // 過濾邏輯
+            let pool = Object.keys(AnswerBank).filter(k => {
+                if (k === correctKey) return false;
+                
+                const item = AnswerBank[k];
+                // 判斷是否為 "cat" (英文類別)
+                const isCategoryType = (item.category === 'cat');
+
+                if (isLevel99) {
+                    return isCategoryType; // Level 99 只要英文類別
+                } else {
+                    return !isCategoryType; // 一般關卡 只要中文分子
+                }
+            });
+
+            // 隨機取 3 個誘答
+            pool.sort(() => Math.random() - 0.5);
+            const distractors = pool.slice(0, 3);
+            
+            // 混合
+            const finalKeys = [correctKey, ...distractors];
+            finalKeys.sort(() => Math.random() - 0.5);
+            
+            return finalKeys.map(k => ({
+                key: k,
+                text: AnswerBank[k].content,
+                isCorrect: (k === correctKey)
+            }));
+        }
+
+        function testGen() {
+            const level = document.getElementById('level-select').value;
+            const container = document.getElementById('display-area');
+            const errorLog = document.getElementById('error-log');
+            
+            // 檢查 data.js 是否載入
+            if (typeof QuestionSets === 'undefined' || typeof AnswerBank === 'undefined') {
+                alert("錯誤：找不到 data.js，請確認檔案位置。");
+                return;
+            }
+
+            const qList = QuestionSets[level];
+            if (!qList || qList.length === 0) {
+                alert("該關卡沒有題目資料！");
+                return;
+            }
+
+            // 隨機選題
+            const qData = qList[Math.floor(Math.random() * qList.length)];
+            
+            // 顯示基本資訊
+            container.style.display = 'block';
+            document.getElementById('q-key').textContent = qData.aKey;
+            document.getElementById('q-img').src = qData.qContent;
+            
+            // 檢查正確答案是否存在於資料庫
+            const correctItem = AnswerBank[qData.aKey];
+            if (!correctItem) {
+                document.getElementById('ans-text').textContent = "錯誤：AnswerBank 裡找不到這個 Key!";
+                errorLog.textContent = `嚴重錯誤：題目 Key [${qData.aKey}] 在 AnswerBank 中不存在。請檢查 data.js。`;
+                return;
+            } else {
+                document.getElementById('ans-text').textContent = correctItem.content;
+                errorLog.textContent = "";
+            }
+
+            // 生成選項
+            const opts = simulatedGenerateOptions(qData.aKey, level);
+            
+            // 渲染選項
+            const optsContainer = document.getElementById('opts-container');
+            optsContainer.innerHTML = '';
+            
+            opts.forEach(opt => {
+                const btn = document.createElement('div');
+                btn.className = 'opt-btn ' + (opt.isCorrect ? 'is-correct' : 'is-wrong');
+                btn.textContent = opt.text;
+                // 檢查是否出現英文 (Level 1-6 不該有英文)
+                if (level !== 'level99' && /^[A-Za-z\s]+$/.test(opt.text)) {
+                   btn.style.border = "3px solid red";
+                   btn.innerHTML += " <br>(錯誤：這是英文!)";
+                   errorLog.textContent = "偵測到異常：一般關卡出現了英文選項！請檢查 game.js 的篩選邏輯。";
+                }
+                optsContainer.appendChild(btn);
+            });
+        }
+    </script>
+</body>
+</html>

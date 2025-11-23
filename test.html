@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>有機分類帽 - 題庫檢測工具</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
+        h1 { text-align: center; }
+        .level-section { background: white; margin-bottom: 20px; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+        .card { border: 1px solid #ccc; padding: 10px; text-align: center; background: #fff; border-radius: 5px; }
+        .card img { max-width: 100%; height: 100px; object-fit: contain; background: #f9f9f9; }
+        .card .name { font-weight: bold; margin-top: 5px; color: #333; font-size: 0.9rem; }
+        .card .key { color: #888; font-size: 0.8rem; font-family: monospace; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>題庫檢測 (Test Suite)</h1>
+    <p>請檢查圖片是否顯示，以及下方的名稱是否正確。</p>
+
+    <div id="container"></div>
+
+    <script src="data.js"></script>
+    <script>
+        const container = document.getElementById('container');
+
+        if (typeof QuestionSets === 'undefined' || typeof AnswerBank === 'undefined') {
+            container.innerHTML = "<h2 class='error'>錯誤：無法讀取 data.js，請確認檔案是否存在。</h2>";
+        } else {
+            // 遍歷所有關卡
+            for (const [levelName, qList] of Object.entries(QuestionSets)) {
+                const section = document.createElement('div');
+                section.className = 'level-section';
+                section.innerHTML = `<h2>${levelName.toUpperCase()} (共 ${qList.length} 題)</h2>`;
+                
+                const grid = document.createElement('div');
+                grid.className = 'grid';
+
+                qList.forEach(q => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+
+                    // 取得正確答案文字
+                    let answerText = "Unknown Key";
+                    if (AnswerBank[q.aKey]) {
+                        answerText = AnswerBank[q.aKey].content;
+                    } else {
+                        answerText = `<span class="error">遺失 Key: ${q.aKey}</span>`;
+                    }
+
+                    card.innerHTML = `
+                        <img src="${q.qContent}" onerror="this.src=''; this.alt='圖片路徑錯誤!'; this.style.color='red';">
+                        <div class="name">${answerText}</div>
+                        <div class="key">${q.aKey}</div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                section.appendChild(grid);
+                container.appendChild(section);
+            }
+        }
+    </script>
+</body>
+</html>
