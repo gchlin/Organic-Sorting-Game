@@ -1040,10 +1040,17 @@ const Game = (function() {
             Save.markLevelClear(currentLevel);
         }
 
+        // 達門檻：先顯示結算，1.2 秒後自動切到劇情
         if (UI.btnShowStory) {
             if (hasScript && metThreshold) {
                 UI.btnShowStory.textContent = alreadyUnlocked ? '📖 重播劇情' : '✨ 解鎖劇情！';
                 UI.btnShowStory.classList.remove('hidden');
+                setTimeout(() => {
+                    UI.resultModal.classList.add('hidden');
+                    showStory(currentLevel, () => {
+                        UI.resultModal.classList.remove('hidden');
+                    });
+                }, 1200);
             } else {
                 UI.btnShowStory.classList.add('hidden');
             }
