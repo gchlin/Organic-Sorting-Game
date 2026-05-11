@@ -59,6 +59,7 @@
             
             <div id="p1-area" class="player-area p1-theme">
                 <div class="player-header">
+                    <div id="wizard-p1" class="wizard-badge">🧙 玩家一</div>
                     <div class="hp-bar-container magic-border" title="反應產率">
                         <div class="hp-bar" id="hp-p1" style="width: 100%;"></div>
                         <span class="hp-text">反應產率</span>
@@ -90,6 +91,7 @@
 
             <div id="p2-area" class="player-area p2-theme hidden">
                  <div class="player-header">
+                    <div id="wizard-p2" class="wizard-badge">🧙 玩家二</div>
                     <div class="hp-bar-container magic-border" title="反應產率">
                         <div class="hp-bar" id="hp-p2" style="width: 100%;"></div>
                         <span class="hp-text">反應產率</span>
@@ -123,6 +125,7 @@
             <h2 id="result-title" class="magical-text">實驗結束</h2>
             <p id="result-msg" class="result-detail">結果...</p>
             <div id="result-stats" class="result-detail"></div>
+            <button id="btn-show-story" class="btn magic-btn genius-btn">✨ 解鎖劇情</button>
             <button id="btn-restart" class="btn magic-btn boss-btn">再次實驗</button>
             <button id="btn-menu" class="btn magic-btn">返回大廳</button>
         </div>
@@ -138,6 +141,44 @@
         </div>
     </div>
 
+    <!-- 故事對話框 -->
+    <div id="story-modal" class="modal hidden">
+        <div class="modal-content magic-scroll story-modal-content">
+            <div id="story-speaker-row" class="story-speaker-row">
+                <span id="story-speaker-emoji" class="story-speaker-emoji">🎩</span>
+                <span id="story-speaker-name" class="story-speaker-name">分類帽</span>
+            </div>
+            <div id="story-bubble" class="story-bubble parchment-bg">
+                <p id="story-text"></p>
+            </div>
+            <div class="story-footer">
+                <div id="story-dots" class="story-dots"></div>
+                <div class="story-btn-row">
+                    <button id="btn-story-skip" class="btn magic-btn">略過全部</button>
+                    <button id="btn-story-next" class="btn magic-btn boss-btn">繼續 →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 角色選擇彈窗 -->
+    <div id="wizard-picker" class="modal hidden">
+        <div class="modal-content magic-scroll wizard-picker-content">
+            <h2 class="magical-text" id="picker-title">選擇你的魔法師</h2>
+            <p class="picker-subtitle" id="picker-subtitle">選一個身份，或輸入自訂名稱</p>
+            <div class="wizard-grid" id="wizard-grid"></div>
+            <div class="custom-name-row">
+                <input type="text" id="custom-name-input" class="magic-input" placeholder="✏️ 自訂名稱（最多 12 字）" maxlength="12" autocomplete="off">
+            </div>
+            <button id="btn-picker-confirm" class="btn magic-btn boss-btn" disabled>確認身份 ✓</button>
+            <button id="btn-picker-cancel" class="btn magic-btn">取消</button>
+        </div>
+    </div>
+
+    <div id="countdown-overlay" class="hidden">
+        <div id="countdown-number"></div>
+    </div>
+
     <audio id="bgm" loop>
         </audio>
     <audio id="se-beep" src="assets/sounds/beep.mp3" preload="auto"></audio>
@@ -149,6 +190,7 @@
 
     <script src="data(organic).js"></script>
     <script src="story(organic).js"></script>
+    <script src="save(organic).js"></script>
     <script src="game(organic).js"></script>
 </body>
 </html>

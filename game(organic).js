@@ -1,5 +1,20 @@
 // game.js - 有機分類帽 (修復音效、冷卻與Combo攻擊版)
 
+const WIZARD_PRESETS = [
+    { emoji: '🧙', name: '凱庫勒傳人',  title: '苯環發現者嫡傳弟子' },
+    { emoji: '🔬', name: '居里見習生',  title: '放射性學徒巫師' },
+    { emoji: '⚗️', name: '拉瓦節信徒',  title: '質量守恆的信仰者' },
+    { emoji: '🧪', name: '費雪酯化師',  title: '酯化反應大師' },
+    { emoji: '💜', name: '羰基魔女',    title: 'C=O 的召喚者' },
+    { emoji: '⚡', name: '鹵素獵人',    title: '追蹤 F·Cl·Br·I 者' },
+    { emoji: '🔥', name: '烯炔騎士',    title: 'π 鍵破壞者' },
+    { emoji: '🌿', name: '胺基戰士',    title: '氮原子的詩人' },
+    { emoji: '🫧', name: '醚類隱士',    title: 'C–O–C 的守護者' },
+    { emoji: '🍷', name: '乙醇愛好者',  title: '–OH 的忠實信徒' },
+    { emoji: '🍋', name: '羧酸女俠',    title: '酸性官能基代言人' },
+    { emoji: '🌸', name: '酚環衛士',    title: '苯酚直系護衛' },
+];
+
 const Game = (function() {
     // --- 變數與設定 ---
     let currentMode = "practice";
@@ -14,6 +29,12 @@ const Game = (function() {
     const players = {
         p1: { score: 0, hp: 100, combo: 0, maxHp: 100, isLocked: false },
         p2: { score: 0, hp: 100, combo: 0, maxHp: 100, isLocked: false }
+    };
+
+    // 魔法師身份（角色選擇彈窗設定）
+    const wizardPersonas = {
+        p1: { emoji: '🧙', name: '玩家一' },
+        p2: { emoji: '🧙', name: '玩家二' }
     };
 
     // 答錯冷卻的 setTimeout 控制（避免「試管破了」警告與灰色鎖定殘留到下一局）
@@ -57,7 +78,60 @@ const Game = (function() {
         KeyI: { mode: 'duel', level: 'level4' },
         KeyO: { mode: 'duel', level: 'level6' }
     };
+    const WHY_HINTS = {
+        alkane: "只有 C-C 單鍵和 C-H，沒有任何含氧 / 氮 / 鹵的官能基",
+        alkene: "含有 C=C 雙鍵",
+        alkyne: "含有 C≡C 參鍵",
+        alcohol: "-OH 接在飽和（sp3）碳上",
+        ether: "C-O-C，氧夾在兩個碳之間（沒有 OH、也沒有 C=O）",
+        aldehyde: "-CHO：羰基 C=O 在碳鏈末端，旁邊接一個 H",
+        ketone: "羰基 C=O 夾在兩個碳之間",
+        carboxylic: "-COOH：同一個碳上同時有 C=O 和 -OH",
+        ester: "-COO-：像羧酸但 -OH 被換成 -O-碳（C(=O)-O-C）",
+        amine: "含 -NH2 / -NHR / -NR2（氮接碳，沒有羰基）",
+        aromatic: "含苯環，且苯環上只接烷基 / 乙烯基等碳氫基（沒有其他官能基）",
+        halide: "含 C-X（X = F、Cl、Br、I）",
+        phenol: "-OH 直接接在苯環的碳上（若接 -CH2- 之類則算醇，不是酚）"
+    };
+    const CAT_CATEGORY_MAP = {
+        CAT_ALKANE: 'alkane',
+        CAT_ALKENE: 'alkene',
+        CAT_ALKYNE: 'alkyne',
+        CAT_ALCOHOL: 'alcohol',
+        CAT_ALDEHYDE: 'aldehyde',
+        CAT_KETONE: 'ketone',
+        CAT_CARBOXYLIC: 'carboxylic',
+        CAT_ESTER: 'ester',
+        CAT_ETHER: 'ether',
+        CAT_AMINE: 'amine',
+        CAT_AROMATIC: 'aromatic',
+        CAT_HALIDE: 'halide',
+        CAT_PHENOL: 'phenol'
+    };
+    const COACH_LINES = {
+        intro: "先看結構裡最醒目的官能基，再選分類。",
+        correct: ["答對了，這頂帽子認同你的判斷。", "很好，官能基抓得準。", "分類成功，下一個結構。"],
+        streak: "連錯幾題時，先找氧、氮、鹵素，再看有沒有 C=O 或苯環。"
+    };
     let isDuelDesktop = false;
+    let practiceWrongStreak = 0;
+    // Practice 一輪計數（用於 markLevelClear 門檻判斷：正確率 ≥ 60%）
+    let practiceRoundTotal = 0;
+    let practiceRoundCorrect = 0;
+    let practiceCoachEl = null;
+    let practiceCoachBubbleEl = null;
+    let practiceWhyEl = null;
+
+    const DUEL_WIN_TARGET = 8;
+    const DUEL_READING_MS = 1500;
+    const DUEL_LOCK_MS = 2000;
+
+    const readingTimers = { p1: null, p2: null };
+    // Per-player question state (used in duel mode)
+    const duelQ = {
+        p1: { queue: [], queueLevel: null, question: null, correctKey: '' },
+        p2: { queue: [], queueLevel: null, question: null, correctKey: '' }
+    };
 
     let currentQuestion = null;
     let correctAnswerKey = "";
@@ -77,6 +151,8 @@ const Game = (function() {
         
         qContainerP1: document.getElementById('q-container-p1'),
         qContentP1: document.getElementById('q-p1'),
+        qContainerP2: document.getElementById('q-container-p2'),
+        qContentP2: document.getElementById('q-p2'),
         qContentShared: document.getElementById('q-shared'),
 
         optsP1: document.getElementById('opts-p1'),
@@ -100,19 +176,135 @@ const Game = (function() {
         btnBack: document.getElementById('btn-back'),
         btnShowRef: document.getElementById('btn-show-ref'),
         refModal: document.getElementById('ref-modal'),
-        btnCloseRef: document.getElementById('btn-close-ref')
+        btnCloseRef: document.getElementById('btn-close-ref'),
+        storyModal: document.getElementById('story-modal'),
+        storySpeakerEmoji: document.getElementById('story-speaker-emoji'),
+        storySpeakerName: document.getElementById('story-speaker-name'),
+        storyText: document.getElementById('story-text'),
+        storyDots: document.getElementById('story-dots'),
+        storyModalContent: document.querySelector('#story-modal .modal-content'),
+        btnStoryNext: document.getElementById('btn-story-next'),
+        btnStorySkip: document.getElementById('btn-story-skip'),
+        btnShowStory: document.getElementById('btn-show-story'),
+        wizardBadgeP1: document.getElementById('wizard-p1'),
+        wizardBadgeP2: document.getElementById('wizard-p2'),
+        wizardPicker: document.getElementById('wizard-picker'),
+        pickerTitle: document.getElementById('picker-title'),
+        pickerSubtitle: document.getElementById('picker-subtitle'),
+        wizardGrid: document.getElementById('wizard-grid'),
+        customNameInput: document.getElementById('custom-name-input'),
+        btnPickerConfirm: document.getElementById('btn-picker-confirm'),
+        btnPickerCancel: document.getElementById('btn-picker-cancel')
     };
 
     // 音效 Context
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
+    // --- 角色選擇彈窗 ---
+    let _pickerPendingMode = null;
+    let _pickerPendingLevel = null;
+    let _pickerStep = null; // 'solo' | 'p1' | 'p2'
+    let _pickerSelectedIdx = -1; // index in WIZARD_PRESETS, -1 = custom
+
+    function buildWizardGrid() {
+        UI.wizardGrid.innerHTML = '';
+        WIZARD_PRESETS.forEach((w, i) => {
+            const card = document.createElement('div');
+            card.className = 'wizard-card';
+            card.dataset.idx = i;
+            card.innerHTML = `<div class="wizard-card-emoji">${w.emoji}</div>
+                              <div class="wizard-card-name">${w.name}</div>
+                              <div class="wizard-card-title">${w.title}</div>`;
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.wizard-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                _pickerSelectedIdx = i;
+                UI.customNameInput.value = '';
+                UI.btnPickerConfirm.disabled = false;
+            });
+            UI.wizardGrid.appendChild(card);
+        });
+    }
+
+    function showWizardPicker(mode, level) {
+        _pickerPendingMode = mode;
+        _pickerPendingLevel = level;
+        _pickerSelectedIdx = -1;
+
+        buildWizardGrid();
+        UI.customNameInput.value = '';
+        UI.btnPickerConfirm.disabled = true;
+
+        if (mode === 'duel') {
+            _pickerStep = 'p1';
+            UI.pickerTitle.textContent = '⚔️ 玩家一，選擇你的魔法師';
+            UI.pickerSubtitle.textContent = 'P1 · 左側 / 上側玩家';
+        } else {
+            _pickerStep = 'solo';
+            UI.pickerTitle.textContent = '選擇你的魔法師';
+            UI.pickerSubtitle.textContent = '選一個身份，或輸入自訂名稱';
+        }
+
+        UI.menu.classList.add('hidden');
+        UI.wizardPicker.classList.remove('hidden');
+        UI.customNameInput.focus();
+    }
+
+    function _applyPickerChoice(player) {
+        if (_pickerSelectedIdx >= 0) {
+            const w = WIZARD_PRESETS[_pickerSelectedIdx];
+            wizardPersonas[player] = { emoji: w.emoji, name: w.name };
+        } else {
+            const custom = UI.customNameInput.value.trim();
+            wizardPersonas[player] = { emoji: '🧙', name: custom || (player === 'p1' ? '玩家一' : '玩家二') };
+        }
+    }
+
+    function initPickerListeners() {
+        UI.customNameInput.addEventListener('input', () => {
+            const hasText = UI.customNameInput.value.trim().length > 0;
+            if (hasText) {
+                document.querySelectorAll('.wizard-card').forEach(c => c.classList.remove('selected'));
+                _pickerSelectedIdx = -1;
+            }
+            UI.btnPickerConfirm.disabled = !hasText && _pickerSelectedIdx < 0;
+        });
+
+        UI.btnPickerConfirm.addEventListener('click', () => {
+            if (_pickerStep === 'solo') {
+                _applyPickerChoice('p1');
+                wizardPersonas.p2 = { emoji: '🧙', name: '玩家二' };
+                UI.wizardPicker.classList.add('hidden');
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                startGame(_pickerPendingMode, _pickerPendingLevel);
+            } else if (_pickerStep === 'p1') {
+                _applyPickerChoice('p1');
+                _pickerStep = 'p2';
+                _pickerSelectedIdx = -1;
+                document.querySelectorAll('.wizard-card').forEach(c => c.classList.remove('selected'));
+                UI.customNameInput.value = '';
+                UI.btnPickerConfirm.disabled = true;
+                UI.pickerTitle.textContent = '⚔️ 玩家二，選擇你的魔法師';
+                UI.pickerSubtitle.textContent = `P2 · 右側 / 下側玩家　（P1 已選：${wizardPersonas.p1.emoji} ${wizardPersonas.p1.name}）`;
+            } else if (_pickerStep === 'p2') {
+                _applyPickerChoice('p2');
+                UI.wizardPicker.classList.add('hidden');
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                startGame(_pickerPendingMode, _pickerPendingLevel);
+            }
+        });
+
+        UI.btnPickerCancel.addEventListener('click', () => {
+            UI.wizardPicker.classList.add('hidden');
+            UI.menu.classList.remove('hidden');
+        });
+    }
+
     // --- 初始化 ---
     function init() {
         document.querySelectorAll('.menu-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                // 強制喚醒音效引擎 (解決瀏覽器阻擋問題)
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                startGame(btn.dataset.mode, btn.dataset.level);
+                showWizardPicker(btn.dataset.mode, btn.dataset.level);
             });
         });
 
@@ -140,6 +332,18 @@ const Game = (function() {
             });
         }
 
+        initPickerListeners();
+        initStoryListeners();
+
+        if (UI.btnShowStory) {
+            UI.btnShowStory.addEventListener('click', () => {
+                UI.resultModal.classList.add('hidden');
+                showStory(currentLevel, () => {
+                    UI.resultModal.classList.remove('hidden');
+                });
+            });
+        }
+
         preloadImages();
         applyKeyboardHints();
         focusFirstAvailableControl(UI.menu);
@@ -163,23 +367,37 @@ const Game = (function() {
 
         // 重置玩家數據與殘留 UI 狀態
         ['p1', 'p2'].forEach(p => {
-            players[p] = { score: 0, hp: 100, combo: 0, maxHp: 100, isLocked: false };
+            players[p] = { score: 0, hp: 100, combo: 0, maxHp: 100, isLocked: false, correctCount: 0, totalAsked: 0 };
             updateStats(p);
-            // 清除之前的 Combo 動畫
             document.querySelectorAll(`.combo-projectile.${p}-atk`).forEach(el => el.remove());
-            // 清掉上一局可能殘留的「試管破了」警告與冷卻鎖定（修復警告卡住、選項變灰無法點的 bug）
             if (lockTimers[p]) { clearTimeout(lockTimers[p]); lockTimers[p] = null; }
+            if (readingTimers[p]) { clearTimeout(readingTimers[p]); readingTimers[p] = null; }
+            duelQ[p] = { queue: [], queueLevel: null, question: null, correctKey: '' };
             const warnEl = (p === 'p1') ? UI.warnP1 : UI.warnP2;
             warnEl.classList.add('hidden');
             warnEl.textContent = '快炸了!';
             const optsEl = (p === 'p1') ? UI.optsP1 : UI.optsP2;
             optsEl.classList.remove('locked-area');
         });
+        // 更新玩家名稱標籤
+        if (UI.wizardBadgeP1) UI.wizardBadgeP1.textContent = `${wizardPersonas.p1.emoji} ${wizardPersonas.p1.name}`;
+        if (UI.wizardBadgeP2) UI.wizardBadgeP2.textContent = `${wizardPersonas.p2.emoji} ${wizardPersonas.p2.name}`;
+
+        // Reset HP text label based on mode
+        if (mode === 'duel') {
+            document.querySelectorAll('.hp-text').forEach(el => el.textContent = `進度 0/${DUEL_WIN_TARGET}`);
+        } else {
+            document.querySelectorAll('.hp-text').forEach(el => el.textContent = '反應產率');
+        }
         UI.timeBar.classList.remove('time-running-out');
         // 強制重洗題目佇列
         questionQueue = [];
         questionQueueLevel = null;
         currentQuestion = null;
+        practiceWrongStreak = 0;
+        practiceRoundTotal = 0;
+        practiceRoundCorrect = 0;
+        clearPracticeFeedback();
 
         UI.menu.classList.add('hidden');
         UI.resultModal.classList.add('hidden');
@@ -188,16 +406,40 @@ const Game = (function() {
         UI.levelTitle.textContent = level.toUpperCase();
 
         setupLayout(mode);
+        setupPracticeFeedback(mode);
 
+        gameActive = false;
         if (timerInterval) clearInterval(timerInterval);
-        if (mode !== 'practice') {
-            UI.timeBar.style.width = '100%';
-            timerInterval = setInterval(gameLoop, 100);
-        } else {
-            UI.timeBar.style.width = '100%';
-        }
+        UI.timeBar.style.width = '100%';
 
-        nextQuestion();
+        runCountdown(['3', '2', '1', '開始!'], () => {
+            gameActive = true;
+            if (mode !== 'practice') {
+                timerInterval = setInterval(gameLoop, 100);
+            }
+            nextQuestion();
+        });
+    }
+
+    function runCountdown(steps, onDone) {
+        const overlay = document.getElementById('countdown-overlay');
+        const numEl   = document.getElementById('countdown-number');
+        if (!overlay || !numEl) { onDone(); return; }
+
+        let i = 0;
+        function tick() {
+            if (i >= steps.length) { overlay.classList.add('hidden'); onDone(); return; }
+            numEl.textContent = steps[i];
+            // 重觸發動畫
+            numEl.style.animation = 'none';
+            void numEl.offsetWidth;
+            numEl.style.animation = '';
+            overlay.classList.remove('hidden');
+            playSound(i < steps.length - 1 ? 'countdown' : 'start');
+            i++;
+            setTimeout(tick, 850);
+        }
+        tick();
     }
 
     function setupLayout(mode) {
@@ -215,17 +457,68 @@ const Game = (function() {
             document.body.classList.add(isDuelDesktop ? 'duel-desktop' : 'duel-mobile');
             UI.infoBar.style.display = 'none';
             UI.p2Area.classList.remove('hidden');
-            UI.qContainerP1.classList.add('hidden');
-            UI.sharedArea.classList.remove('hidden');
-            if (isDuelDesktop) UI.optsP2.classList.add('hidden');
+            // Each player gets their own question stream — no shared area
+            UI.qContainerP1.classList.remove('hidden');
+            UI.qContainerP2.classList.remove('hidden');
+            UI.optsP2.classList.remove('hidden');
+        }
+    }
+
+    function setupPracticeFeedback(mode) {
+        ensurePracticeFeedbackUI();
+        if (mode === 'practice') {
+            practiceCoachEl.classList.remove('hidden');
+            setPracticeCoachText(COACH_LINES.intro);
+        } else {
+            practiceCoachEl.classList.add('hidden');
+            practiceWhyEl.classList.add('hidden');
+        }
+    }
+
+    function ensurePracticeFeedbackUI() {
+        if (!practiceCoachEl) {
+            practiceCoachEl = document.createElement('div');
+            practiceCoachEl.id = 'practice-coach';
+            practiceCoachEl.className = 'practice-coach hidden';
+            practiceCoachEl.innerHTML = `
+                <div class="coach-emoji" aria-hidden="true">🎩</div>
+                <div class="coach-bubble" role="status" aria-live="polite"></div>
+            `;
+            practiceCoachBubbleEl = practiceCoachEl.querySelector('.coach-bubble');
+            UI.game.appendChild(practiceCoachEl);
+        }
+
+        if (!practiceWhyEl) {
+            practiceWhyEl = document.createElement('div');
+            practiceWhyEl.id = 'practice-why-hint';
+            practiceWhyEl.className = 'practice-why-hint hidden';
+            UI.qContainerP1.insertAdjacentElement('afterend', practiceWhyEl);
+        }
+    }
+
+    function setPracticeCoachText(text) {
+        ensurePracticeFeedbackUI();
+        practiceCoachBubbleEl.textContent = text;
+    }
+
+    function clearPracticeFeedback() {
+        if (practiceWhyEl) {
+            practiceWhyEl.textContent = '';
+            practiceWhyEl.classList.add('hidden');
         }
     }
 
     function showMenu() {
         gameActive = false;
         clearInterval(timerInterval);
+        ['p1', 'p2'].forEach(p => {
+            if (readingTimers[p]) { clearTimeout(readingTimers[p]); readingTimers[p] = null; }
+        });
+        clearPracticeFeedback();
+        if (practiceCoachEl) practiceCoachEl.classList.add('hidden');
         UI.game.classList.add('hidden');
         UI.resultModal.classList.add('hidden');
+        if (UI.storyModal) UI.storyModal.classList.add('hidden');
         UI.menu.classList.remove('hidden');
         document.body.classList.remove('duel-mode', 'duel-desktop', 'duel-mobile');
         focusFirstAvailableControl(UI.menu);
@@ -320,9 +613,105 @@ const Game = (function() {
         if (timeLeft <= 0) endGame(currentMode === 'duel' ? 'draw' : 'lose');
     }
 
+    // --- 故事播放系統 ---
+    const STORY_THRESHOLD = 0.6;  // 答對率 ≥ 60%，且至少答 4 題
+    const STORY_MIN_ASKED = 4;
+
+    let _storyLines = [];
+    let _storyIdx = 0;
+    let _storyOnDone = null;
+
+    const SPEAKER_INFO = {
+        hat: { emoji: '🎩', name: '分類帽', cls: 'speaker-hat' },
+        wiz: { emoji: '🧙', name: null, cls: 'speaker-wiz' }  // name 由 wizardPersonas 動態填
+    };
+
+    function _storyReplaceName(text) {
+        return text.replace(/\{name\}/g, wizardPersonas.p1.name || '你');
+    }
+
+    function _storyRenderLine(idx) {
+        const line = _storyLines[idx];
+        const info = SPEAKER_INFO[line.who];
+        const name = line.who === 'wiz'
+            ? `${wizardPersonas.p1.emoji} ${wizardPersonas.p1.name}`
+            : `${info.emoji} 分類帽`;
+
+        UI.storySpeakerEmoji.textContent = line.who === 'wiz' ? wizardPersonas.p1.emoji : info.emoji;
+        UI.storySpeakerName.textContent   = line.who === 'wiz' ? wizardPersonas.p1.name : '分類帽';
+        UI.storyText.textContent          = _storyReplaceName(line.text);
+
+        UI.storyModalContent.classList.toggle('speaker-wiz', line.who === 'wiz');
+
+        // 更新進度點
+        UI.storyDots.querySelectorAll('.story-dot').forEach((dot, i) => {
+            dot.classList.toggle('done', i < idx);
+            dot.classList.toggle('current', i === idx);
+        });
+
+        // 最後一句改按鈕文字
+        UI.btnStoryNext.textContent = (idx === _storyLines.length - 1) ? '完成 ✓' : '繼續 →';
+    }
+
+    function _buildDots() {
+        UI.storyDots.innerHTML = '';
+        _storyLines.forEach((_, i) => {
+            const dot = document.createElement('span');
+            dot.className = 'story-dot';
+            UI.storyDots.appendChild(dot);
+        });
+    }
+
+    function showStory(levelKey, onDone) {
+        const script = (typeof StoryScripts !== 'undefined') ? StoryScripts[levelKey] : null;
+        if (!script || script.length === 0) { if (onDone) onDone(); return; }
+
+        _storyLines = script;
+        _storyIdx = 0;
+        _storyOnDone = onDone || null;
+
+        _buildDots();
+        _storyRenderLine(0);
+
+        UI.storyModal.classList.remove('hidden');
+    }
+
+    function _storyAdvance() {
+        _storyIdx++;
+        if (_storyIdx >= _storyLines.length) {
+            _storyClose(true);
+        } else {
+            _storyRenderLine(_storyIdx);
+        }
+    }
+
+    function _storyClose(finished) {
+        UI.storyModal.classList.add('hidden');
+        if (_storyOnDone) { const cb = _storyOnDone; _storyOnDone = null; cb(finished); }
+    }
+
+    function initStoryListeners() {
+        UI.btnStoryNext.addEventListener('click', _storyAdvance);
+        UI.btnStorySkip.addEventListener('click', () => _storyClose(false));
+    }
+
+    function _checkStoryThreshold() {
+        // 回傳是否本次達門檻
+        if (currentMode === 'duel') {
+            // 任一玩家贏（correctCount >= DUEL_WIN_TARGET）就算
+            return players.p1.correctCount >= DUEL_WIN_TARGET || players.p2.correctCount >= DUEL_WIN_TARGET;
+        }
+        const p = players.p1;
+        if (p.totalAsked < STORY_MIN_ASKED) return false;
+        return (p.correctCount / p.totalAsked) >= STORY_THRESHOLD;
+    }
+
     function endGame(resultType, winner) {
         gameActive = false;
         clearInterval(timerInterval);
+        ['p1', 'p2'].forEach(p => {
+            if (readingTimers[p]) { clearTimeout(readingTimers[p]); readingTimers[p] = null; }
+        });
         UI.resultModal.classList.remove('hidden');
         
         let title = "", msg = "";
@@ -336,7 +725,7 @@ const Game = (function() {
                 msg = "實驗室維持了完美的平衡...";
                 playSound('lose');
             }
-            UI.resultStats.innerHTML = `P1: ${players.p1.score} 分 <br> P2: ${players.p2.score} 分`;
+            UI.resultStats.innerHTML = `P1: ${players.p1.correctCount}/${DUEL_WIN_TARGET} 題 <br> P2: ${players.p2.correctCount}/${DUEL_WIN_TARGET} 題`;
         } else {
             if (players.p1.hp <= 0) {
                 title = "實驗失敗 (爆炸)";
@@ -351,6 +740,24 @@ const Game = (function() {
         }
         UI.resultTitle.textContent = title;
         UI.resultMsg.textContent = msg;
+
+        // 故事解鎖判斷
+        const alreadyUnlocked = (typeof Save !== 'undefined') && Save.isStoryUnlocked(currentLevel);
+        const hasScript = (typeof StoryScripts !== 'undefined') && !!StoryScripts[currentLevel];
+        const metThreshold = _checkStoryThreshold();
+
+        if (hasScript && metThreshold && typeof Save !== 'undefined') {
+            Save.markLevelClear(currentLevel);
+        }
+
+        if (UI.btnShowStory) {
+            if (hasScript && metThreshold) {
+                UI.btnShowStory.textContent = alreadyUnlocked ? '📖 重播劇情' : '✨ 解鎖劇情！';
+                UI.btnShowStory.classList.add('visible');
+            } else {
+                UI.btnShowStory.classList.remove('visible');
+            }
+        }
     }
 
     function getRandomMsg(type) {
@@ -370,13 +777,24 @@ const Game = (function() {
 
     function nextQuestion() {
         if (!gameActive) return;
+        if (currentMode === 'duel') {
+            nextDuelQuestion('p1');
+            nextDuelQuestion('p2');
+            return;
+        }
         const list = QuestionSets[currentLevel];
         if (!list || list.length === 0) return;
 
-        // 洗牌佇列：發完一輪才重洗，保證一輪內不重複；換關卡時重建
         if (questionQueueLevel !== currentLevel || questionQueue.length === 0) {
+            // 一輪結束：判斷 Practice 通關門檻（正確率 ≥ 60%）
+            if (currentMode === 'practice' && practiceRoundTotal > 0) {
+                if (practiceRoundCorrect / practiceRoundTotal >= 0.6) {
+                    Save.markLevelClear(currentLevel);
+                }
+            }
+            practiceRoundTotal = list.length;
+            practiceRoundCorrect = 0;
             questionQueue = shuffleArray([...list]);
-            // 避免新一輪第一題剛好等於剛出過的那題（連續重複觀感差）
             if (currentQuestion && questionQueue.length > 1 &&
                 questionQueue[questionQueue.length - 1] === currentQuestion) {
                 [questionQueue[0], questionQueue[questionQueue.length - 1]] =
@@ -391,6 +809,85 @@ const Game = (function() {
 
         const options = generateOptions(correctAnswerKey, currentLevel);
         renderQuestion(qData, options);
+    }
+
+    function nextDuelQuestion(player) {
+        if (!gameActive) return;
+        const list = QuestionSets[currentLevel];
+        if (!list || list.length === 0) return;
+        const pq = duelQ[player];
+
+        if (pq.queueLevel !== currentLevel || pq.queue.length === 0) {
+            pq.queue = shuffleArray([...list]);
+            if (pq.question && pq.queue.length > 1 &&
+                pq.queue[pq.queue.length - 1] === pq.question) {
+                [pq.queue[0], pq.queue[pq.queue.length - 1]] =
+                    [pq.queue[pq.queue.length - 1], pq.queue[0]];
+            }
+            pq.queueLevel = currentLevel;
+        }
+
+        const qData = pq.queue.pop();
+        pq.question = qData;
+        pq.correctKey = qData.aKey;
+
+        const options = generateOptions(pq.correctKey, currentLevel);
+        renderDuelQuestion(player, qData, options);
+        startReadingPeriod(player);
+    }
+
+    function renderDuelQuestion(player, qData, options) {
+        const qContentEl = (player === 'p1') ? UI.qContentP1 : UI.qContentP2;
+        const optsEl = (player === 'p1') ? UI.optsP1 : UI.optsP2;
+
+        const imgTag = `<img src="${qData.qContent}" alt="Structure" draggable="false">`;
+        qContentEl.innerHTML = imgTag;
+        qContentEl.querySelector('img').onerror = () => { qContentEl.innerHTML = "<span class='q-text'>圖片遺失</span>"; };
+
+        optsEl.innerHTML = '';
+        optsEl.classList.remove('locked-area');
+        if (lockTimers[player]) { clearTimeout(lockTimers[player]); lockTimers[player] = null; }
+        players[player].isLocked = false;
+
+        options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'btn opt-btn magic-stone-btn';
+            btn.dataset.idx = idx;
+            btn.dataset.key = opt.key;
+            // Key hint: P1 uses A/F/Z/C, P2 uses 4/6/1/3
+            const keyCodes = (player === 'p1')
+                ? ANSWER_KEY_BINDINGS.duelDesktop.p1[idx]
+                : ANSWER_KEY_BINDINGS.duelDesktop.p2[idx];
+            const keyLabel = isDuelDesktop ? formatKeyHint(keyCodes) : '';
+            btn.innerHTML = keyLabel
+                ? `<span class="key-hint key-hint-left">[${keyLabel}]</span><span class="option-text">${opt.text}</span>`
+                : `<span class="option-text">${opt.text}</span>`;
+            optsEl.appendChild(btn);
+        });
+    }
+
+    function startReadingPeriod(player) {
+        const optsEl = (player === 'p1') ? UI.optsP1 : UI.optsP2;
+        optsEl.classList.add('locked-area');
+        players[player].isLocked = true;
+        if (readingTimers[player]) clearTimeout(readingTimers[player]);
+        readingTimers[player] = setTimeout(() => {
+            if (!gameActive) return;
+            optsEl.classList.remove('locked-area');
+            players[player].isLocked = false;
+            readingTimers[player] = null;
+        }, DUEL_READING_MS);
+    }
+
+    function updateDuelProgress(player) {
+        const hpEl = (player === 'p1') ? UI.hpP1 : UI.hpP2;
+        const areaEl = (player === 'p1') ? UI.p1Area : UI.p2Area;
+        const count = players[player].correctCount;
+        const pct = Math.min((count / DUEL_WIN_TARGET) * 100, 100);
+        hpEl.style.width = `${pct}%`;
+        hpEl.style.background = '';
+        const hpTextEl = areaEl.querySelector('.hp-text');
+        if (hpTextEl) hpTextEl.textContent = `進度 ${count}/${DUEL_WIN_TARGET}`;
     }
 
     function generateOptions(correctKey, level) {
@@ -428,6 +925,7 @@ const Game = (function() {
     }
 
     function renderQuestion(qData, options) {
+        clearPracticeFeedback();
         let targets = (currentMode === 'duel') ? [UI.qContentShared] : [UI.qContentP1];
         const imgTag = `<img src="${qData.qContent}" alt="Structure" draggable="false">`;
         
@@ -457,7 +955,7 @@ const Game = (function() {
 
         renderBtns(UI.optsP1, 'p1');
         if (currentMode === 'duel') renderBtns(UI.optsP2, 'p2');
-        focusFirstAvailableControl(UI.game);
+        blurActiveControl();
     }
 
     function getKeyHint(index, playerPrefix) {
@@ -487,7 +985,8 @@ const Game = (function() {
         if (!btn) return;
 
         const selectedKey = btn.dataset.key;
-        const isCorrect = (selectedKey === correctAnswerKey);
+        const activeCorrectKey = (currentMode === 'duel') ? duelQ[player].correctKey : correctAnswerKey;
+        const isCorrect = (selectedKey === activeCorrectKey);
 
         if (isCorrect) {
             handleCorrect(player, btn);
@@ -499,6 +998,12 @@ const Game = (function() {
     function handleKeyboardInput(e) {
         if (e.repeat) return;
         if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+
+        if (gameActive && isVisible(UI.game) && isGameControlSuppressedKey(e.code)) {
+            e.preventDefault();
+            blurActiveControl();
+            return;
+        }
 
         if (handleArrowNavigation(e)) return;
         if (handleGlobalShortcut(e)) return;
@@ -523,7 +1028,7 @@ const Game = (function() {
             optionIndex = SOLO_KEYS[e.code];
         }
 
-        const container = (currentMode === 'duel' && isDuelDesktop) ? UI.optsP1 : (player === 'p1' ? UI.optsP1 : UI.optsP2);
+        const container = player === 'p1' ? UI.optsP1 : UI.optsP2;
         const btn = container.querySelector(`.opt-btn[data-idx="${optionIndex}"]`);
         if (!btn) return;
         e.preventDefault();
@@ -591,6 +1096,21 @@ const Game = (function() {
         if (isVisible(UI.menu)) return UI.menu;
         if (isVisible(UI.game)) return UI.game;
         return document.body;
+    }
+
+    function isGameControlSuppressedKey(code) {
+        return code === 'Enter' ||
+            code === 'Space' ||
+            code === 'ArrowUp' ||
+            code === 'ArrowDown' ||
+            code === 'ArrowLeft' ||
+            code === 'ArrowRight';
+    }
+
+    function blurActiveControl() {
+        if (document.activeElement && document.activeElement !== document.body) {
+            document.activeElement.blur();
+        }
     }
 
     function getFocusableControls(root) {
@@ -677,58 +1197,132 @@ const Game = (function() {
     function handleCorrect(player, btn) {
         playSound('correct');
         btn.classList.add('correct');
-        
-        // 計算分數與 Combo
+        players[player].totalAsked++;
+
+        if (currentMode === 'duel') {
+            players[player].correctCount++;
+            Save.addCorrect(1);
+            Save.seeMolecule(duelQ[player].correctKey);
+            updateDuelProgress(player);
+            if (players[player].correctCount >= DUEL_WIN_TARGET) {
+                endGame('win', player);
+                return;
+            }
+            setTimeout(() => nextDuelQuestion(player), 700);
+            return;
+        }
+
+        // practice / speed mode
+        practiceWrongStreak = 0;
+        Save.addCorrect(1);
+        Save.seeMolecule(correctAnswerKey);
+        if (currentMode === 'practice') {
+            practiceRoundCorrect++;
+            const lines = COACH_LINES.correct;
+            setPracticeCoachText(lines[Math.floor(Math.random() * lines.length)]);
+        }
+        if (currentMode === 'speed') {
+            const bonus = players[player].combo >= 2 ? (players[player].combo >= 3 ? 4 : 3) : 2;
+            timeLeft = Math.min(timeLeft + bonus, MAX_TIME);
+        }
+
         players[player].score += (10 + players[player].combo * 2);
         players[player].combo++;
         players[player].hp = Math.min(players[player].hp + 5, players[player].maxHp);
-
-        // 觸發 Combo 攻擊動畫
         triggerComboAttack(player);
         updateStats(player);
 
-        // 對戰模式有人答對就換題；單人模式延遲換題
-        setTimeout(() => {
-            nextQuestion();
-        }, 400);
+        setTimeout(() => { nextQuestion(); }, 700);
     }
 
     function handleWrong(player, btn) {
         playSound('wrong');
-        btn.classList.add('wrong'); // 這裡 CSS 會處理「無紅色背景」
-        
+        btn.classList.add('wrong');
+        players[player].totalAsked++;
+        revealCorrectAnswer(player);
+        showPracticeWrongHint();
+
         players[player].combo = 0;
-        players[player].hp -= 20;
-        
-        // 2. 觸發冷卻 (鎖定該玩家按鈕)
+        if (currentMode !== 'duel') {
+            players[player].hp -= 20;
+        }
+
         players[player].isLocked = true;
         const container = (player === 'p1') ? UI.optsP1 : UI.optsP2;
-        const shouldLockContainer = !(currentMode === 'duel' && isDuelDesktop);
-        if (shouldLockContainer) container.classList.add('locked-area'); // CSS 控制變灰
+        container.classList.add('locked-area');
 
-        // 警告文字
+        if (currentMode !== 'duel') {
+            Save.recordWrong(correctAnswerKey);
+        }
+
         const warnEl = (player === 'p1') ? UI.warnP1 : UI.warnP2;
         warnEl.textContent = "試管破了!";
         warnEl.classList.remove('hidden');
 
-        // 1秒後解除鎖定（不再用 gameActive 當守衛——即使這次答錯導致遊戲結束，UI 也要清乾淨）
+        const lockDuration = (currentMode === 'duel') ? DUEL_LOCK_MS : 1600;
         if (lockTimers[player]) clearTimeout(lockTimers[player]);
         lockTimers[player] = setTimeout(() => {
             players[player].isLocked = false;
-            if (shouldLockContainer) container.classList.remove('locked-area');
+            container.classList.remove('locked-area');
             warnEl.classList.add('hidden');
             warnEl.textContent = '快炸了!';
-            // 移除按鈕錯誤樣式，讓玩家可以重選
             btn.classList.remove('wrong');
+            clearCorrectReveal(player);
             lockTimers[player] = null;
-        }, 1000); // 1秒冷卻
+        }, lockDuration);
 
-        updateStats(player);
-
-        if (players[player].hp <= 0) {
-            if (currentMode === 'duel') endGame('win', (player === 'p1' ? 'p2' : 'p1'));
-            else endGame('lose');
+        if (currentMode !== 'duel') {
+            updateStats(player);
+            if (players[player].hp <= 0) endGame('lose');
         }
+    }
+
+    function getOptionContainerForPlayer(player) {
+        return player === 'p1' ? UI.optsP1 : UI.optsP2;
+    }
+
+    function revealCorrectAnswer(player) {
+        const correctKey = (currentMode === 'duel') ? duelQ[player].correctKey : correctAnswerKey;
+        const container = getOptionContainerForPlayer(player);
+        const correctBtn = container.querySelector(`.opt-btn[data-key="${correctKey}"]`);
+        if (correctBtn) correctBtn.classList.add('reveal-correct');
+    }
+
+    function clearCorrectReveal(player) {
+        const container = player === 'p1' ? UI.optsP1 : UI.optsP2;
+        container.querySelectorAll('.reveal-correct').forEach(el => el.classList.remove('reveal-correct'));
+    }
+
+    function showPracticeWrongHint() {
+        if (currentMode !== 'practice') return;
+
+        practiceWrongStreak++;
+        const hint = getWhyHintForAnswer(correctAnswerKey);
+        if (!hint) return;
+
+        ensurePracticeFeedbackUI();
+        practiceWhyEl.textContent = `為什麼：${hint}`;
+        practiceWhyEl.classList.remove('hidden');
+
+        const coachText = practiceWrongStreak >= 3
+            ? `${hint} ${COACH_LINES.streak}`
+            : hint;
+        setPracticeCoachText(coachText);
+    }
+
+    function getWhyHintForAnswer(answerKey) {
+        const category = getAnswerCategory(answerKey);
+        return category ? WHY_HINTS[category] : '';
+    }
+
+    function getAnswerCategory(answerKey) {
+        if (Object.prototype.hasOwnProperty.call(CAT_CATEGORY_MAP, answerKey)) {
+            return CAT_CATEGORY_MAP[answerKey];
+        }
+
+        const answer = AnswerBank[answerKey];
+        if (!answer || answer.category === 'cat') return '';
+        return answer.category;
     }
 
     // --- Combo 攻擊動畫 (對戰時射向對方) ---
@@ -744,10 +1338,11 @@ const Game = (function() {
         // 放入遊戲區域
         UI.game.appendChild(projectile);
 
-        // 動畫結束後移除 DOM
+        // 動畫結束後移除 DOM；備用 timeout 處理 prefers-reduced-motion 導致 animationend 不觸發的情況
         projectile.addEventListener('animationend', () => {
             projectile.remove();
         });
+        setTimeout(() => projectile.remove(), 1200);
     }
 
     function updateStats(p) {
@@ -787,27 +1382,42 @@ const Game = (function() {
     function fallbackSound(type) {
         if (!audioCtx) return;
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
         const now = audioCtx.currentTime;
 
+        function tone(freq, type_, dur, vol, freqEnd) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = type_; osc.frequency.setValueAtTime(freq, now);
+            if (freqEnd) osc.frequency.exponentialRampToValueAtTime(freqEnd, now + dur);
+            gain.gain.setValueAtTime(vol, now);
+            gain.gain.linearRampToValueAtTime(0, now + dur);
+            osc.start(now); osc.stop(now + dur);
+        }
+
         if (type === 'correct') {
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(600, now);
-            osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
-            gain.gain.setValueAtTime(0.1, now);
-            gain.gain.linearRampToValueAtTime(0, now + 0.3);
-            osc.start(now); osc.stop(now + 0.3);
+            tone(500, 'sine', 0.08, 0.12, 900);
+            setTimeout(() => { const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.type='sine'; o.frequency.value=1100; g.gain.setValueAtTime(0.10,audioCtx.currentTime); g.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.18); o.start(); o.stop(audioCtx.currentTime+0.18); }, 90);
         } else if (type === 'wrong') {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(150, now);
-            osc.frequency.linearRampToValueAtTime(100, now + 0.2);
-            gain.gain.setValueAtTime(0.2, now);
-            gain.gain.linearRampToValueAtTime(0, now + 0.2);
-            osc.start(now); osc.stop(now + 0.2);
+            tone(220, 'sawtooth', 0.15, 0.18, 130);
+            setTimeout(() => tone(130, 'sawtooth', 0.15, 0.12, 90), 140);
+        } else if (type === 'countdown') {
+            tone(880, 'sine', 0.12, 0.10);
+        } else if (type === 'start') {
+            // 上升三連音：do mi sol
+            [523, 659, 784].forEach((f, i) => {
+                setTimeout(() => tone(f, 'sine', 0.18, 0.13), i * 120);
+            });
+        } else if (type === 'win') {
+            [523, 659, 784, 1047].forEach((f, i) => {
+                setTimeout(() => tone(f, 'sine', 0.22, 0.13), i * 130);
+            });
+        } else if (type === 'lose') {
+            [400, 330, 262].forEach((f, i) => {
+                setTimeout(() => tone(f, 'sawtooth', 0.22, 0.12), i * 140);
+            });
+        } else if (type === 'beep') {
+            tone(660, 'sine', 0.08, 0.08);
         }
     }
 
