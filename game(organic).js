@@ -1295,6 +1295,18 @@ const Game = (function() {
     function handleKeyboardInput(e) {
         if (e.repeat) return;
 
+        // 劇情對話框鍵盤
+        if (isVisible(UI.storyModal)) {
+            if (e.code === 'Enter' || e.code === 'Space' || e.code === 'ArrowRight') {
+                e.preventDefault();
+                UI.btnStoryNext.click();
+            } else if (e.code === 'Escape' || e.code === 'ArrowLeft') {
+                e.preventDefault();
+                UI.btnStorySkip.click();
+            }
+            return;
+        }
+
         // 魔法師選擇框優先接管鍵盤
         if (isVisible(UI.wizardPicker)) {
             const inInput = e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
