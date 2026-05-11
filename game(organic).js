@@ -604,11 +604,11 @@ const Game = (function() {
             gameActive = true;
             nextQuestion();
         } else {
-            nextQuestion(); // 先渲染題目（被黑幕蓋住）
             runCountdown(['3', '2', '1', '開始!'], () => {
                 document.body.classList.remove('countdown-active');
                 gameActive = true;
                 timerInterval = setInterval(gameLoop, 100);
+                nextQuestion();
             });
         }
     }
