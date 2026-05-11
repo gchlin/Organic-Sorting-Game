@@ -323,18 +323,15 @@ body.duel-desktop .hat-display {
     height: clamp(36px, 4vw, 52px);
 }
 
-/* magichat.webp sprite sheet（4 frames 橫排） */
+/* magichat.webp sprite sheet（4 frames 橫排）
+   background-size / keyframe 由 JS initHatSprites() 動態注入像素值，
+   這裡只設定底色與共用屬性。 */
 .hat-sprite {
     background-image: url('assets/images/character/magichat.webp');
-    background-size: 400% auto;
     background-repeat: no-repeat;
     background-position: 0 0;
     animation: hatSpritePlay 0.6s steps(4) infinite, hatFloat 3s ease-in-out infinite;
     image-rendering: pixelated;
-}
-@keyframes hatSpritePlay {
-    from { background-position: 0 0; }
-    to   { background-position: -400% 0; }
 }
 @keyframes hatFloat {
     0%,100% { transform: translateY(0); }

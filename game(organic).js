@@ -412,7 +412,41 @@ const Game = (function() {
     }
 
     // --- 初始化 ---
+    function initHatSprites() {
+        const HAT_FRAMES = 4;
+        const img = new Image();
+        img.onload = () => {
+            const ratio = img.naturalWidth / img.naturalHeight; // total strip width / height
+            // Give each element its own background-size matching its rendered height,
+            // then inject per-element inline animation using CSS custom properties isn't
+            // needed — instead we set background-size individually so the @keyframes
+            // percentage offsets we skip; we use a CSS variable trick:
+            // Each element gets style="background-size:Wpx Hpx; --hat-w:Wpx"
+            // and the keyframes use translateX (no) — simplest: give each element
+            // a unique animation name via inline <style> per element is too heavy.
+            //
+            // Simplest correct approach: all hats share the same @keyframes pixel offset,
+            // so we make all hats the same background-size (strip at 72px height),
+            // and let CSS object-fit / element size control the visual box.
+            const refH = 72;
+            const totalW = Math.round(ratio * refH);
+            const style = document.createElement('style');
+            style.id = 'hat-sprite-keyframes';
+            style.textContent = `
+                @keyframes hatSpritePlay {
+                    from { background-position: 0 0; }
+                    to   { background-position: -${totalW}px 0; }
+                }
+                .hat-sprite {
+                    background-size: ${totalW}px ${refH}px;
+                }`;
+            document.head.appendChild(style);
+        };
+        img.src = 'assets/images/character/magichat.webp';
+    }
+
     function init() {
+        initHatSprites();
         document.querySelectorAll('.menu-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 showWizardPicker(btn.dataset.mode, btn.dataset.level);
