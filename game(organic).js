@@ -600,16 +600,19 @@ const Game = (function() {
         if (timerInterval) clearInterval(timerInterval);
         UI.timeBar.style.width = '100%';
 
-        if (mode === 'practice') {
+        if (mode === 'practice' || mode === 'speed') {
             gameActive = true;
+            if (mode === 'speed') timerInterval = setInterval(gameLoop, 100);
             nextQuestion();
         } else {
-            runCountdown(['3', '2', '1', '開始!'], () => {
+            // duel：黑幕短暫遮住，同時揭開題目，無倒數數字
+            document.body.classList.add('countdown-active');
+            setTimeout(() => {
                 document.body.classList.remove('countdown-active');
                 gameActive = true;
                 timerInterval = setInterval(gameLoop, 100);
                 nextQuestion();
-            });
+            }, 800);
         }
     }
 
