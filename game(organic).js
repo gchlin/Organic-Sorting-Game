@@ -115,6 +115,7 @@ const Game = (function() {
     };
     let isDuelDesktop = false;
     let _devQuickWin = false; // ← 改成 true 開啟測試模式（答對1題即結算）；` 鍵也可即時切換
+    let _muted = false;
     let practiceWrongStreak = 0;
     // Practice 一輪計數（用於 markLevelClear 門檻判斷：正確率 ≥ 60%）
     let practiceRoundTotal = 0;
@@ -459,8 +460,65 @@ const Game = (function() {
             });
         }
 
+        // 靜音按鈕（首頁 + 遊戲中）
+        const btnMute = document.getElementById('btn-mute');
+        const btnMuteGame = document.getElementById('btn-mute-game');
+        [btnMute, btnMuteGame].forEach(btn => {
+            if (btn) btn.addEventListener('click', toggleMute);
+        });
+
+        // 匯出存檔
+        const btnExport = document.getElementById('btn-export');
+        if (btnExport) btnExport.addEventListener('click', () => {
+            const text = Save.exportText();
+            navigator.clipboard.writeText(text).then(() => {
+                btnExport.textContent = '✅ 已複製';
+                setTimeout(() => { btnExport.textContent = '📤 匯出'; }, 2000);
+            }).catch(() => {
+                // 降級：顯示 prompt
+                window.prompt('複製以下存檔：', text);
+            });
+        });
+
+        // 匯入存檔
+        const btnImportOpen = document.getElementById('btn-import-open');
+        const importModal = document.getElementById('import-modal');
+        const btnImportConfirm = document.getElementById('btn-import-confirm');
+        const btnImportCancel = document.getElementById('btn-import-cancel');
+        const importTextarea = document.getElementById('import-textarea');
+        if (btnImportOpen && importModal) {
+            btnImportOpen.addEventListener('click', () => {
+                if (importTextarea) importTextarea.value = '';
+                importModal.classList.remove('hidden');
+                if (importTextarea) importTextarea.focus();
+            });
+            btnImportCancel.addEventListener('click', () => importModal.classList.add('hidden'));
+            btnImportConfirm.addEventListener('click', () => {
+                const ok = Save.importText(importTextarea.value.trim());
+                if (ok) {
+                    importModal.classList.add('hidden');
+                    updateMenuProgress();
+                    showBadgeToast(null, '✅ 存檔匯入成功！');
+                } else {
+                    importTextarea.style.borderColor = '#e74c3c';
+                    setTimeout(() => { importTextarea.style.borderColor = ''; }, 1500);
+                }
+            });
+        }
+
+        // 重置進度
+        const btnReset = document.getElementById('btn-reset-save');
+        if (btnReset) btnReset.addEventListener('click', () => {
+            if (confirm('確定要重置所有進度嗎？（此操作無法復原）')) {
+                Save.reset();
+                updateMenuProgress();
+                showBadgeToast(null, '🗑️ 進度已重置');
+            }
+        });
+
         preloadImages();
         applyKeyboardHints();
+        updateMenuProgress();
         focusFirstAvailableControl(UI.menu);
     }
 
@@ -627,6 +685,96 @@ const Game = (function() {
         }
     }
 
+    // --- 靜音 ---
+    function toggleMute() {
+        _muted = !_muted;
+        document.body.classList.toggle('muted', _muted);
+        const icon = _muted ? '🔇' : '🔊';
+        const label = _muted ? '🔇 靜音' : '🔊 音效';
+        const btnMute = document.getElementById('btn-mute');
+        const btnMuteGame = document.getElementById('btn-mute-game');
+        if (btnMute) btnMute.textContent = label;
+        if (btnMuteGame) btnMuteGame.textContent = icon;
+    }
+
+    // --- 進度面板 ---
+    function _totalMoleculeCount() {
+        if (typeof QuestionSets === 'undefined') return 0;
+        const keys = new Set();
+        Object.values(QuestionSets).forEach(list => list.forEach(q => keys.add(q.aKey)));
+        return keys.size;
+    }
+
+    function updateMenuProgress() {
+        if (typeof Save === 'undefined') return;
+        const d = Save.get();
+        const totalMol = _totalMoleculeCount();
+        const seenMol  = d.seenMolecules.length;
+
+        const elMol  = document.getElementById('prog-molecules');
+        const elCorr = document.getElementById('prog-correct');
+        const elBadges = document.getElementById('prog-badges');
+        const elLevels = document.getElementById('prog-levels');
+
+        if (elMol)  elMol.textContent  = `${seenMol} / ${totalMol}`;
+        if (elCorr) elCorr.textContent = d.totalCorrect;
+
+        // 關卡通過指示
+        if (elLevels) {
+            const LEVELS = ['level1','level2','level3','level4','level5','level6'];
+            elLevels.innerHTML = LEVELS.map(lv => {
+                const cleared = Save.isLevelCleared(lv);
+                return `<span class="prog-level-chip${cleared ? ' cleared' : ''}">${lv.replace('level','Lv.')}</span>`;
+            }).join('');
+        }
+
+        // 勳章列表
+        if (elBadges) {
+            elBadges.innerHTML = Save.allBadgeDefs().map(b => {
+                const unlocked = d.badges.includes(b.id);
+                return `<span class="prog-badge${unlocked ? ' unlocked' : ''}" title="${b.label}（${b.needCorrect}題）">${b.emoji}</span>`;
+            }).join('');
+        }
+    }
+
+    // --- 勳章 Toast ---
+    let _badgeToastTimer = null;
+    function showBadgeToast(badgeId, customMsg) {
+        const el = document.getElementById('badge-toast');
+        if (!el) return;
+        let msg = customMsg;
+        if (!msg && badgeId && typeof Save !== 'undefined') {
+            const badge = Save.allBadgeDefs().find(b => b.id === badgeId);
+            if (badge) msg = `🎉 勳章解鎖！${badge.emoji} ${badge.label}`;
+        }
+        if (!msg) return;
+        el.textContent = msg;
+        el.classList.remove('hidden');
+        void el.offsetWidth;
+        el.classList.add('show');
+        if (_badgeToastTimer) clearTimeout(_badgeToastTimer);
+        _badgeToastTimer = setTimeout(() => {
+            el.classList.remove('show');
+            setTimeout(() => el.classList.add('hidden'), 350);
+        }, 2800);
+    }
+
+    // --- 競速 +時間浮字 ---
+    function showTimeBonus(bonus, referenceEl) {
+        const pop = document.createElement('div');
+        pop.className = 'time-bonus-pop';
+        pop.textContent = `+${bonus}s`;
+        // 定位在答題區中央上方
+        const rect = referenceEl
+            ? referenceEl.getBoundingClientRect()
+            : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0, height: 0 };
+        pop.style.left = `${rect.left + rect.width / 2}px`;
+        pop.style.top  = `${rect.top}px`;
+        pop.style.transform = 'translateX(-50%)';
+        document.body.appendChild(pop);
+        setTimeout(() => pop.remove(), 950);
+    }
+
     function showMenu() {
         gameActive = false;
         clearInterval(timerInterval);
@@ -640,6 +788,7 @@ const Game = (function() {
         if (UI.storyModal) UI.storyModal.classList.add('hidden');
         UI.menu.classList.remove('hidden');
         document.body.classList.remove('duel-mode', 'duel-desktop', 'duel-mobile');
+        updateMenuProgress();
         focusFirstAvailableControl(UI.menu);
     }
 
@@ -1355,7 +1504,8 @@ const Game = (function() {
         players[player].correctCount++;
 
         if (currentMode === 'duel') {
-            Save.addCorrect(1);
+            const duelBadges = Save.addCorrect(1);
+            if (duelBadges && duelBadges.length) showBadgeToast(duelBadges[0]);
             Save.seeMolecule(duelQ[player].correctKey);
             updateDuelProgress(player);
             duelArenaAttack(player);
@@ -1381,7 +1531,8 @@ const Game = (function() {
         }
 
         practiceWrongStreak = 0;
-        Save.addCorrect(1);
+        const newBadges = Save.addCorrect(1);
+        if (newBadges && newBadges.length) showBadgeToast(newBadges[0]);
         Save.seeMolecule(correctAnswerKey);
         if (currentMode === 'practice') {
             practiceRoundCorrect++;
@@ -1391,6 +1542,7 @@ const Game = (function() {
         if (currentMode === 'speed') {
             const bonus = players[player].combo >= 2 ? (players[player].combo >= 3 ? 4 : 3) : 2;
             timeLeft = Math.min(timeLeft + bonus, MAX_TIME);
+            showTimeBonus(bonus, UI.optsP1);
         }
 
         players[player].score += (10 + players[player].combo * 2);
@@ -1638,6 +1790,7 @@ const Game = (function() {
 
     // --- 音效系統 (增強版) ---
     function playSound(type) {
+        if (_muted) return;
         // 先嘗試抓 HTML 的 audio 標籤
         const audioId = {
             'correct': 'se-correct',

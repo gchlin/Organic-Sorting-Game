@@ -45,12 +45,32 @@
             <span id="wizard-status-label">🧙 玩家一</span>
             <button id="btn-change-wizard" class="btn magic-btn">更換魔法師</button>
         </div>
+
+        <!-- 進度面板 -->
+        <div id="progress-panel" class="progress-panel">
+            <div class="prog-row">
+                <span>📚 認識分子</span><strong id="prog-molecules">0 / 0</strong><span>種</span>
+                <span class="prog-levels" id="prog-levels"></span>
+            </div>
+            <div class="prog-row">
+                <span>✅ 累積答對</span><strong id="prog-correct">0</strong><span>題</span>
+            </div>
+            <div class="prog-badges" id="prog-badges"></div>
+        </div>
+        <div class="save-controls">
+            <button id="btn-mute" class="btn magic-btn save-ctrl-btn">🔊 音效</button>
+            <button id="btn-export" class="btn magic-btn save-ctrl-btn">📤 匯出</button>
+            <button id="btn-import-open" class="btn magic-btn save-ctrl-btn">📥 匯入</button>
+            <button id="btn-reset-save" class="btn magic-btn save-ctrl-btn reset-btn">🗑️ 重置</button>
+        </div>
+
         <button id="btn-show-ref" class="btn hidden">查看分類總表</button>
     </div>
 
     <div id="game-container" class="hidden">
         <div id="info-bar">
             <button id="btn-back" class="btn magic-btn icon-btn">↩ 撤退</button>
+            <button id="btn-mute-game" class="btn magic-btn icon-btn" title="靜音">🔊</button>
             <div class="stat-box title-stat">
                  <span id="mode-title">修煉模式</span>
             </div>
@@ -71,6 +91,8 @@
                     <span class="arena-wiz-emoji">🧙</span>
                     <span class="arena-wiz-label"></span>
                 </div>
+                <!-- 中央裁判帽 -->
+                <div class="arena-center-hat hat-sprite" aria-hidden="true"></div>
                 <div id="arena-p2" class="arena-wizard arena-wiz-p2">
                     <span class="arena-wiz-emoji">🧙</span>
                     <span class="arena-wiz-label"></span>
@@ -93,7 +115,7 @@
                 </div>
 
                 <div id="q-container-p1" class="question-container parchment-bg">
-                    <div class="hat-display" aria-hidden="true">🎩</div>
+                    <div class="hat-display hat-sprite" aria-hidden="true"></div>
                     <div id="q-p1" class="question-content"></div>
                 </div>
                 
@@ -126,7 +148,7 @@
                 </div>
 
                 <div id="q-container-p2" class="question-container parchment-bg hidden">
-                    <div class="hat-display" aria-hidden="true">🎩</div>
+                    <div class="hat-display hat-sprite" aria-hidden="true"></div>
                     <div id="q-p2" class="question-content"></div>
                 </div>
 
@@ -194,6 +216,22 @@
             </div>
             <button id="btn-picker-confirm" class="btn magic-btn boss-btn" disabled>確認身份 ✓</button>
             <button id="btn-picker-cancel" class="btn magic-btn">取消</button>
+        </div>
+    </div>
+
+    <!-- 勳章解鎖 Toast -->
+    <div id="badge-toast" class="badge-toast hidden"></div>
+
+    <!-- 匯入存檔 Modal -->
+    <div id="import-modal" class="modal hidden">
+        <div class="modal-content magic-scroll import-modal-content">
+            <h3 class="magical-text">📥 匯入存檔</h3>
+            <p class="import-hint">貼上之前用「匯出」取得的 JSON 文字：</p>
+            <textarea id="import-textarea" class="magic-input import-textarea" rows="7" placeholder='{"version":1,"totalCorrect":0,...}'></textarea>
+            <div class="import-btn-row">
+                <button id="btn-import-confirm" class="btn magic-btn boss-btn">確認匯入 ✓</button>
+                <button id="btn-import-cancel" class="btn magic-btn">取消</button>
+            </div>
         </div>
     </div>
 

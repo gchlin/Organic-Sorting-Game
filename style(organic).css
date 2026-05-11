@@ -310,17 +310,52 @@ body, html {
 }
 
 .hat-display {
-    font-size: clamp(2.8rem, 5vw, 4.5rem);
     flex-shrink: 0;
     align-self: center;
+    width:  clamp(48px, 7vw, 72px);
+    height: clamp(48px, 7vw, 72px);
     filter: drop-shadow(0 0 8px rgba(212,175,55,0.55));
     user-select: none;
     pointer-events: none;
 }
-
-/* 對戰桌面模式帽子縮小 */
 body.duel-desktop .hat-display {
-    font-size: clamp(2rem, 3vw, 2.8rem);
+    width:  clamp(36px, 4vw, 52px);
+    height: clamp(36px, 4vw, 52px);
+}
+
+/* magichat.webp sprite sheet（4 frames 橫排） */
+.hat-sprite {
+    background-image: url('assets/images/character/magichat.webp');
+    background-size: 400% auto;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    animation: hatSpritePlay 0.6s steps(4) infinite, hatFloat 3s ease-in-out infinite;
+    image-rendering: pixelated;
+}
+@keyframes hatSpritePlay {
+    from { background-position: 0 0; }
+    to   { background-position: -400% 0; }
+}
+@keyframes hatFloat {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-5px); }
+}
+
+/* 競技場中央裁判帽 */
+.arena-center-hat {
+    position: absolute;
+    left: 50%;
+    bottom: 14px;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 60px;
+    filter: drop-shadow(0 0 10px rgba(212,175,55,0.8));
+    animation: hatSpritePlay 0.6s steps(4) infinite, arenaHatGlow 2s ease-in-out infinite !important;
+    pointer-events: none;
+}
+@keyframes arenaHatGlow {
+    0%,100% { filter: drop-shadow(0 0 8px rgba(212,175,55,0.5)); }
+    50%     { filter: drop-shadow(0 0 20px rgba(212,175,55,1.0)); }
 }
 
 .question-content {
@@ -1387,3 +1422,136 @@ body.duel-mobile  #duel-arena { display: none; }
     text-overflow: ellipsis;
     max-width: 100%;
 }
+
+/* ==============================
+   進度面板 (Progress Panel)
+   ============================== */
+.progress-panel {
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(212,175,55,0.3);
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin: 8px auto;
+    max-width: 480px;
+    font-size: 0.9rem;
+    color: var(--hp-parchment);
+}
+.prog-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 3px 0;
+}
+.prog-row strong { color: var(--hp-gold); font-size: 1.05rem; }
+.prog-levels { display: flex; gap: 4px; flex-wrap: wrap; margin-left: 4px; }
+.prog-level-chip {
+    font-size: 0.75rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(212,175,55,0.25);
+}
+.prog-level-chip.cleared { background: rgba(88,214,141,0.2); border-color: #58d68d; color: #58d68d; }
+.prog-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+}
+.prog-badge {
+    font-size: 1.4rem;
+    opacity: 0.25;
+    filter: grayscale(1);
+    transition: all 0.3s;
+    cursor: default;
+    position: relative;
+}
+.prog-badge.unlocked {
+    opacity: 1;
+    filter: none;
+    filter: drop-shadow(0 0 6px rgba(212,175,55,0.7));
+}
+.prog-badge[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.85);
+    color: var(--hp-parchment);
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* 存檔控制列 */
+.save-controls {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 6px auto 4px;
+    max-width: 480px;
+}
+.save-ctrl-btn { font-size: 0.85rem; padding: 5px 12px; }
+.reset-btn { color: #e74c3c !important; border-color: rgba(231,76,60,0.5) !important; }
+
+/* 匯入 Modal */
+.import-modal-content { max-width: 480px; text-align: left; }
+.import-hint { font-size: .88rem; margin: 8px 0 6px; color: #555; }
+.import-textarea { width: 100%; box-sizing: border-box; resize: vertical; font-family: monospace; font-size: .8rem; }
+.import-btn-row { display: flex; gap: 8px; margin-top: 10px; }
+.import-btn-row .btn { flex: 1; }
+
+/* ==============================
+   勳章解鎖 Toast
+   ============================== */
+.badge-toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: linear-gradient(135deg, #3b2e2a, #5c4a42);
+    border: 2px solid var(--hp-gold);
+    border-radius: 12px;
+    padding: 10px 20px;
+    color: var(--hp-parchment);
+    font-size: 1rem;
+    font-weight: bold;
+    text-align: center;
+    z-index: 5000;
+    box-shadow: 0 0 20px rgba(212,175,55,0.5);
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+}
+.badge-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ==============================
+   競速 +時間 浮字
+   ============================== */
+.time-bonus-pop {
+    position: fixed;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #2ecc71;
+    text-shadow: 0 0 10px #27ae60;
+    pointer-events: none;
+    z-index: 4000;
+    animation: timeBonusFly 0.9s ease-out forwards;
+}
+@keyframes timeBonusFly {
+    0%   { transform: translateY(0) scale(1);   opacity: 1; }
+    100% { transform: translateY(-60px) scale(0.7); opacity: 0; }
+}
+
+/* ==============================
+   靜音狀態
+   ============================== */
+body.muted #btn-mute::after,
+body.muted #btn-mute-game::after { content: ' (靜音)'; font-size: 0.7em; opacity: 0.7; }
