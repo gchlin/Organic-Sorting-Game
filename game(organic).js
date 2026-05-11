@@ -669,26 +669,19 @@ const Game = (function() {
     function setupPracticeFeedback(mode) {
         ensurePracticeFeedbackUI();
         if (mode === 'practice') {
-            practiceCoachEl.classList.remove('hidden');
             setPracticeCoachText(COACH_LINES.intro);
+        } else if (mode === 'speed') {
+            setPracticeCoachText('⚡ 加油！');
         } else {
-            practiceCoachEl.classList.add('hidden');
-            practiceWhyEl.classList.add('hidden');
+            if (practiceCoachBubbleEl) practiceCoachBubbleEl.classList.add('hidden');
+            if (practiceWhyEl) practiceWhyEl.classList.add('hidden');
         }
     }
 
     function ensurePracticeFeedbackUI() {
-        if (!practiceCoachEl) {
-            practiceCoachEl = document.createElement('div');
-            practiceCoachEl.id = 'practice-coach';
-            practiceCoachEl.className = 'practice-coach hidden';
-            practiceCoachEl.innerHTML = `
-                <div class="coach-bubble" role="status" aria-live="polite"></div>
-            `;
-            practiceCoachBubbleEl = practiceCoachEl.querySelector('.coach-bubble');
-            UI.game.appendChild(practiceCoachEl);
+        if (!practiceCoachBubbleEl) {
+            practiceCoachBubbleEl = document.getElementById('practice-coach-bubble');
         }
-
         if (!practiceWhyEl) {
             practiceWhyEl = document.createElement('div');
             practiceWhyEl.id = 'practice-why-hint';
@@ -699,7 +692,9 @@ const Game = (function() {
 
     function setPracticeCoachText(text) {
         ensurePracticeFeedbackUI();
+        if (!practiceCoachBubbleEl) return;
         practiceCoachBubbleEl.textContent = text;
+        practiceCoachBubbleEl.classList.toggle('hidden', !text);
     }
 
     function clearPracticeFeedback() {
@@ -806,7 +801,7 @@ const Game = (function() {
             if (readingTimers[p]) { clearTimeout(readingTimers[p]); readingTimers[p] = null; }
         });
         clearPracticeFeedback();
-        if (practiceCoachEl) practiceCoachEl.classList.add('hidden');
+        if (practiceCoachBubbleEl) practiceCoachBubbleEl.classList.add('hidden');
         UI.game.classList.add('hidden');
         UI.resultModal.classList.add('hidden');
         if (UI.storyModal) UI.storyModal.classList.add('hidden');
@@ -1576,6 +1571,8 @@ const Game = (function() {
             const bonus = players[player].combo >= 2 ? (players[player].combo >= 3 ? 4 : 3) : 2;
             timeLeft = Math.min(timeLeft + bonus, MAX_TIME);
             showTimeBonus(bonus, UI.optsP1);
+            const speedLines = ['⚡ 繼續！', '🔥 燃燒！', '💥 完美！', '✨ 加速！', '🚀 快！'];
+            setPracticeCoachText(speedLines[Math.floor(Math.random() * speedLines.length)]);
         }
 
         players[player].score += (10 + players[player].combo * 2);

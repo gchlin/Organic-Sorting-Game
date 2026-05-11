@@ -319,6 +319,15 @@ body, html {
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
 }
 
+/* 帽子 + 說話泡泡的包裝 */
+.hat-coach-wrap {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
 .hat-display {
     flex-shrink: 0;
     align-self: center;
@@ -887,28 +896,29 @@ body.countdown-active .hat-display {
     box-shadow: 0 0 12px rgba(0,0,0,0.35);
 }
 
-.practice-coach {
-    position: absolute;
-    right: 18px;
-    top: 72px;
-    z-index: 35;
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    max-width: min(360px, 42vw);
-    pointer-events: none;
-}
-
-
 .coach-bubble {
-    padding: 10px 12px;
+    padding: 8px 10px;
     border-radius: 8px;
     border: 2px solid rgba(212, 175, 55, 0.75);
     background: rgba(31, 24, 20, 0.94);
     color: var(--hp-parchment);
-    font-size: 0.98rem;
+    font-size: 0.82rem;
     line-height: 1.35;
-    box-shadow: 0 0 16px rgba(0,0,0,0.52), 0 0 10px rgba(212, 175, 55, 0.25);
+    text-align: center;
+    box-shadow: 0 0 12px rgba(0,0,0,0.5), 0 0 8px rgba(212, 175, 55, 0.2);
+    max-width: clamp(80px, 12vw, 140px);
+    position: relative;
+}
+/* 泡泡下方箭頭指向帽子 */
+.coach-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -9px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: rgba(212, 175, 55, 0.75);
+    border-bottom: none;
 }
 
 @keyframes coachFloat {
@@ -971,15 +981,9 @@ body.countdown-active .hat-display {
 }
 
 @media (max-width: 760px) {
-    .practice-coach {
-        top: auto;
-        right: 10px;
-        bottom: 22px;
-        max-width: min(92vw, 360px);
-    }
-
     .coach-bubble {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
+        max-width: clamp(60px, 18vw, 100px);
     }
 
     .practice-why-hint {
