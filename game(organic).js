@@ -114,7 +114,7 @@ const Game = (function() {
         streak: "連錯幾題時，先找氧、氮、鹵素，再看有沒有 C=O 或苯環。"
     };
     let isDuelDesktop = false;
-    let _devQuickWin = false; // ← 改成 true 開啟測試模式（答對1題即結算）；` 鍵也可即時切換
+    let _devQuickWin = true; // ← 改成 true 開啟測試模式（答對1題即結算）；` 鍵也可即時切換
     let _muted = false;
     let practiceWrongStreak = 0;
     // Practice 一輪計數（用於 markLevelClear 門檻判斷：正確率 ≥ 60%）
@@ -395,17 +395,25 @@ const Game = (function() {
                 }
                 break;
             case 'ArrowRight':
+            case 'ArrowLeft':
+            case 'ArrowUp':
             case 'ArrowDown': {
                 e.preventDefault();
-                const next = (_pickerKeyFocusIdx < 0) ? 0 : (_pickerKeyFocusIdx + 1) % total;
-                _pickerSetKeyFocus(next);
-                break;
-            }
-            case 'ArrowLeft':
-            case 'ArrowUp': {
-                e.preventDefault();
-                const prev = (_pickerKeyFocusIdx <= 0) ? total - 1 : _pickerKeyFocusIdx - 1;
-                _pickerSetKeyFocus(prev);
+                if (total === 0) break;
+                if (_pickerKeyFocusIdx < 0) { _pickerSetKeyFocus(0); break; }
+                // 計算每列格數（從第一排有幾個同 offsetTop）
+                const firstTop = cards[0].offsetTop;
+                let cols = 0;
+                for (let c = 0; c < total; c++) {
+                    if (cards[c].offsetTop === firstTop) cols++; else break;
+                }
+                if (cols < 1) cols = 1;
+                let idx = _pickerKeyFocusIdx;
+                if (e.code === 'ArrowRight') idx = (idx + 1) % total;
+                else if (e.code === 'ArrowLeft') idx = (idx - 1 + total) % total;
+                else if (e.code === 'ArrowDown') idx = Math.min(idx + cols, total - 1);
+                else if (e.code === 'ArrowUp') idx = Math.max(idx - cols, 0);
+                _pickerSetKeyFocus(idx);
                 break;
             }
         }
@@ -555,6 +563,8 @@ const Game = (function() {
         // 更新玩家名稱標籤
         if (UI.wizardBadgeP1) UI.wizardBadgeP1.textContent = `${wizardPersonas.p1.emoji} ${wizardPersonas.p1.name}`;
         if (UI.wizardBadgeP2) UI.wizardBadgeP2.textContent = `${wizardPersonas.p2.emoji} ${wizardPersonas.p2.name}`;
+        const avatarP1 = document.getElementById('wizard-avatar-p1');
+        if (avatarP1) avatarP1.textContent = wizardPersonas.p1.emoji;
 
         // Reset HP text label based on mode
         if (mode === 'duel') {
@@ -1029,9 +1039,9 @@ const Game = (function() {
         if (UI.btnShowStory) {
             if (hasScript && metThreshold) {
                 UI.btnShowStory.textContent = alreadyUnlocked ? '📖 重播劇情' : '✨ 解鎖劇情！';
-                UI.btnShowStory.classList.add('visible');
+                UI.btnShowStory.classList.remove('hidden');
             } else {
-                UI.btnShowStory.classList.remove('visible');
+                UI.btnShowStory.classList.add('hidden');
             }
         }
     }
@@ -1276,8 +1286,15 @@ const Game = (function() {
 
         // 魔法師選擇框優先接管鍵盤
         if (isVisible(UI.wizardPicker)) {
-            if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
-                if (e.code === 'Escape') { e.preventDefault(); UI.btnPickerCancel.click(); }
+            const inInput = e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
+            if (inInput) {
+                if (e.code === 'Escape') { e.preventDefault(); UI.btnPickerCancel.click(); return; }
+                // 方向鍵從 input 跳到格子導航
+                if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.code)) {
+                    e.preventDefault();
+                    e.target.blur();
+                    handlePickerKeydown(e);
+                }
                 return;
             }
             handlePickerKeydown(e);
@@ -1527,9 +1544,11 @@ const Game = (function() {
 
         // practice / speed mode
         if (_devQuickWin) {
-            // 測試模式：直接以通關條件結算
-            practiceRoundTotal = Math.max(practiceRoundTotal, STORY_MIN_ASKED);
-            practiceRoundCorrect = practiceRoundTotal; // 100% 正確率
+            // 測試模式：強制達門檻結算
+            practiceRoundTotal = STORY_MIN_ASKED;
+            practiceRoundCorrect = STORY_MIN_ASKED;
+            players[player].totalAsked = STORY_MIN_ASKED;
+            players[player].correctCount = STORY_MIN_ASKED;
             players[player].score += 10;
             updateStats(player);
             Save.addCorrect(1);

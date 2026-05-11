@@ -11,10 +11,14 @@
     <div id="preload-container"></div>
 
     <div id="menu-container">
+        <div id="wizard-status-bar" class="wizard-status-bar hidden">
+            <span id="wizard-status-label">🧙 玩家一</span>
+            <button id="btn-change-wizard" class="btn magic-btn">更換魔法師</button>
+        </div>
         <h1 class="game-title magical-text">有機分類帽</h1>
         <h2 class="game-subtitle">Organic Sorting Hat</h2>
         <p class="keyboard-help">方向鍵選關卡，Enter / Space 開始；也可直接按按鈕前的 [快捷鍵]。</p>
-        
+
         <div class="menu-group">
             <h3 class="menu-heading">⚗️ 自我修煉 (Practice)</h3>
             <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level1">Level 1: 碳氫骨架基礎</button>
@@ -39,11 +43,6 @@
             <button class="btn menu-btn magic-btn duel-btn" data-mode="duel" data-level="level3">對決：醛酮</button>
             <button class="btn menu-btn magic-btn duel-btn" data-mode="duel" data-level="level4">對決：酸酯</button>
             <button class="btn menu-btn magic-btn duel-btn boss-btn" data-mode="duel" data-level="level6">對決：終極分類</button>
-        </div>
-
-        <div id="wizard-status-bar" class="wizard-status-bar hidden">
-            <span id="wizard-status-label">🧙 玩家一</span>
-            <button id="btn-change-wizard" class="btn magic-btn">更換魔法師</button>
         </div>
 
         <!-- 進度面板 -->
@@ -115,8 +114,9 @@
                 </div>
 
                 <div id="q-container-p1" class="question-container parchment-bg">
-                    <div class="hat-display hat-sprite" aria-hidden="true"></div>
+                    <div id="wizard-avatar-p1" class="wizard-avatar" aria-hidden="true"></div>
                     <div id="q-p1" class="question-content"></div>
+                    <div class="hat-display hat-sprite" aria-hidden="true"></div>
                 </div>
                 
                 <div id="opts-p1" class="options-container single-col">

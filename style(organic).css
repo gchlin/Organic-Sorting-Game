@@ -309,6 +309,16 @@ body, html {
     /* 羊皮紙背景已在 .parchment-bg定義 */
 }
 
+.wizard-avatar {
+    flex-shrink: 0;
+    align-self: center;
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
+
 .hat-display {
     flex-shrink: 0;
     align-self: center;
@@ -321,6 +331,9 @@ body, html {
 body.duel-desktop .hat-display {
     width:  clamp(36px, 4vw, 52px);
     height: clamp(36px, 4vw, 52px);
+}
+body.duel-mode .wizard-avatar {
+    display: none;
 }
 
 /* 分類帽靜態圖 */
