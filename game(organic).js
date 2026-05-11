@@ -683,7 +683,6 @@ const Game = (function() {
             practiceCoachEl.id = 'practice-coach';
             practiceCoachEl.className = 'practice-coach hidden';
             practiceCoachEl.innerHTML = `
-                <div class="coach-emoji" aria-hidden="true">🎩</div>
                 <div class="coach-bubble" role="status" aria-live="polite"></div>
             `;
             practiceCoachBubbleEl = practiceCoachEl.querySelector('.coach-bubble');

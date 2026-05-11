@@ -899,11 +899,6 @@ body.countdown-active .hat-display {
     pointer-events: none;
 }
 
-.coach-emoji {
-    font-size: 2.2rem;
-    filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.55));
-    animation: coachFloat 3.2s ease-in-out infinite;
-}
 
 .coach-bubble {
     padding: 10px 12px;
@@ -996,7 +991,6 @@ body.countdown-active .hat-display {
 @media (prefers-reduced-motion: reduce) {
     .opt-btn.wrong,
     .opt-btn.reveal-correct,
-    .coach-emoji,
     .warn-text,
     .combo-text {
         animation: none !important;
