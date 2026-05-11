@@ -1064,8 +1064,8 @@ body.countdown-active .hat-display {
 }
 
 .story-modal-content.speaker-wiz .story-speaker-name {
-    color: var(--hp-parchment);
-    text-shadow: 0 0 8px rgba(240,230,210,0.4);
+    color: var(--hp-gold);
+    text-shadow: 0 0 8px rgba(212,175,55,0.5);
 }
 
 .story-footer {
