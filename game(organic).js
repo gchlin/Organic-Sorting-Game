@@ -1300,6 +1300,12 @@ const Game = (function() {
             const inInput = e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
             if (inInput) {
                 if (e.code === 'Escape') { e.preventDefault(); UI.btnPickerCancel.click(); return; }
+                // Enter 從 input 確認（若按鈕可用）
+                if (e.code === 'Enter') {
+                    e.preventDefault();
+                    if (!UI.btnPickerConfirm.disabled) UI.btnPickerConfirm.click();
+                    return;
+                }
                 // 方向鍵從 input 跳到格子導航
                 if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.code)) {
                     e.preventDefault();
