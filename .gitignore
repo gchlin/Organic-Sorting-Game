@@ -1,0 +1,10 @@
+# Claude Code 本地設定（個人 / 機器特定，不進版控）
+.claude/settings.local.json
+
+# Python 快取（assets/images/ 的產圖腳本產生）
+__pycache__/
+*.pyc
+
+# 作業系統雜物
+Thumbs.db
+.DS_Store

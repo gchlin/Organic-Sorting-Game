@@ -132,8 +132,18 @@ body, html {
 .game-subtitle {
     font-size: 1.5rem;
     color: var(--hp-parchment-dark);
-    margin-bottom: 30px;
+    margin-bottom: 12px;
     font-style: italic;
+}
+
+.keyboard-help {
+    max-width: 680px;
+    margin: 0 auto 24px;
+    color: var(--hp-parchment);
+    text-align: center;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    opacity: 0.9;
 }
 
 .menu-group {
@@ -331,7 +341,8 @@ body, html {
     padding: 5px;
 }
 .single-col {
-    grid-template-columns: 1fr; /* 單人模式預設單欄 */
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
 }
 .opt-btn {
     font-size: 1.3rem;
@@ -339,6 +350,57 @@ body, html {
     height: 100%;
     white-space: normal; /* 允許文字換行 */
     line-height: 1.2;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.opt-btn .option-text {
+    display: block;
+    text-align: center;
+    padding: 0 38px;
+    width: 100%;
+}
+
+.key-hint {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    min-width: 28px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    background: rgba(0,0,0,0.35);
+    color: var(--hp-gold);
+    font-size: 0.86rem;
+    line-height: 1;
+    font-family: "Consolas", "Courier New", monospace;
+    letter-spacing: 0;
+    text-align: center;
+    border: 1px solid rgba(212, 175, 55, 0.45);
+}
+
+.key-hint-left {
+    left: 10px;
+}
+
+.key-hint-right {
+    right: 10px;
+}
+
+.button-hotkey {
+    display: inline-block;
+    margin-right: 8px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    background: rgba(0,0,0,0.28);
+    color: var(--hp-gold);
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 0.82em;
+    line-height: 1;
+    letter-spacing: 0;
+    vertical-align: middle;
 }
 
 /* 選項按鈕特殊樣式 (魔法符石) */
@@ -353,6 +415,13 @@ body, html {
     border-color: var(--hp-gold);
     color: var(--hp-gold);
     box-shadow: 0 0 10px var(--hp-gold-glow);
+}
+
+.btn:focus-visible,
+.close-btn:focus-visible {
+    outline: 3px solid var(--hp-gold);
+    outline-offset: 3px;
+    box-shadow: 0 0 16px var(--hp-gold-glow), 0 0 0 2px rgba(0,0,0,0.55);
 }
 
 /* 答對/答錯效果 */
@@ -509,6 +578,70 @@ body.duel-mode .score-box {
 /* 對戰模式的警告文字調整 */
 body.duel-mode .warn-text {
     font-size: 2.5rem; /* 稍微縮小一點以免擋住太多 */
+}
+
+/* 桌面 Duel：兩人共用同一題與同一組 2x2 選項，左右鍵位區搶答 */
+body.duel-desktop #game-area {
+    flex-direction: row;
+    padding-bottom: 178px;
+}
+
+body.duel-desktop .player-area {
+    flex: 1;
+    max-width: 240px;
+    min-width: 180px;
+    justify-content: flex-start;
+}
+
+body.duel-desktop #p1-area {
+    border-right: 3px solid var(--hp-wood-dark);
+}
+
+body.duel-desktop #p2-area {
+    border-left: 3px solid var(--hp-wood-dark);
+}
+
+body.duel-desktop #shared-question-area {
+    flex: 2.4;
+    min-width: 360px;
+    margin: 10px 16px;
+}
+
+body.duel-desktop #opts-p1 {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    width: min(760px, 82vw);
+    height: 142px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
+    padding: 10px;
+    z-index: 30;
+    background: rgba(17, 12, 10, 0.86);
+    border: 2px solid var(--hp-gold);
+    border-radius: 8px;
+    box-shadow: 0 0 22px rgba(0,0,0,0.75), 0 0 14px var(--hp-gold-glow);
+}
+
+body.duel-desktop #opts-p2 {
+    display: none;
+}
+
+body.duel-desktop .opt-btn {
+    min-height: 0;
+    font-size: 1.25rem;
+    padding: 20px 12px 8px;
+}
+
+body.duel-desktop .key-hint {
+    font-size: 0.78rem;
+}
+
+/* 手機 Duel：維持原本雙邊觸控版面 */
+body.duel-mobile .key-hint {
+    display: none;
 }
 
 
