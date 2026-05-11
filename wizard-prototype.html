@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>巫師對決 視覺雛形 (emoji/CSS 驗證版)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+    background: radial-gradient(ellipse at center, #2a1a3e 0%, #14091f 70%, #0a0410 100%);
+    color: #e8d9b5;
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    overflow-x: hidden;
+  }
+  h1 { margin: 14px 0 4px; font-size: 1.4rem; color: #f0c674; text-shadow: 0 0 12px #b38f3e; }
+  .hint { font-size: .85rem; opacity: .7; margin-bottom: 10px; }
+
+  /* === 競技場 === */
+  #arena {
+    position: relative;
+    width: min(900px, 96vw);
+    height: 360px;
+    margin: 8px 0 18px;
+    border: 2px solid #5a4a7a;
+    border-radius: 16px;
+    background:
+      radial-gradient(circle at 50% 120%, rgba(120,80,180,.35), transparent 60%),
+      linear-gradient(180deg, rgba(40,25,60,.6), rgba(15,8,25,.9));
+    box-shadow: inset 0 0 60px rgba(0,0,0,.6), 0 0 30px rgba(90,60,140,.3);
+    overflow: hidden;
+  }
+  /* 飄浮的試管 / 場景裝飾 */
+  .floaty { position: absolute; font-size: 1.6rem; opacity: .25; animation: floaty 6s ease-in-out infinite; }
+  .floaty:nth-child(1){ left: 12%; top: 18%; animation-delay: 0s; }
+  .floaty:nth-child(2){ left: 78%; top: 14%; animation-delay: 1.4s; font-size: 1.2rem; }
+  .floaty:nth-child(3){ left: 30%; top: 70%; animation-delay: 2.8s; }
+  .floaty:nth-child(4){ left: 62%; top: 64%; animation-delay: 3.6s; font-size: 1.3rem; }
+  @keyframes floaty { 0%,100%{ transform: translateY(0) rotate(-5deg);} 50%{ transform: translateY(-14px) rotate(5deg);} }
+
+  /* === 巫師 === */
+  .wizard {
+    position: absolute; bottom: 40px;
+    font-size: 5.2rem; line-height: 1;
+    filter: drop-shadow(0 0 0 transparent);
+    transition: filter .15s;
+    user-select: none;
+  }
+  .wizard .label {
+    position: absolute; bottom: -26px; left: 50%; transform: translateX(-50%);
+    font-size: .8rem; white-space: nowrap; opacity: .8;
+  }
+  #p1 { left: 60px;  animation: idleL 3.2s ease-in-out infinite; }
+  #p2 { right: 60px; transform: scaleX(-1); animation: idleR 3.0s ease-in-out infinite; }
+  #p1 .label { transform: translateX(-50%); }
+  #p2 .label { transform: translateX(-50%) scaleX(-1); }
+  @keyframes idleL { 0%,100%{ transform: translateY(0) rotate(-2deg);} 50%{ transform: translateY(-10px) rotate(2deg);} }
+  @keyframes idleR { 0%,100%{ transform: scaleX(-1) translateY(0) rotate(-2deg);} 50%{ transform: scaleX(-1) translateY(-10px) rotate(2deg);} }
+
+  /* 蓄力（放大 + 發光） */
+  #p1.charging { animation: chargeL .28s ease-out; }
+  #p2.charging { animation: chargeR .28s ease-out; }
+  @keyframes chargeL { 0%{ transform: translateY(0) scale(1);} 60%{ transform: translateY(-6px) scale(1.22);} 100%{ transform: translateY(0) scale(1);} }
+  @keyframes chargeR { 0%{ transform: scaleX(-1) translateY(0) scale(1);} 60%{ transform: scaleX(-1) translateY(-6px) scale(1.22);} 100%{ transform: scaleX(-1) translateY(0) scale(1);} }
+  .charging { filter: drop-shadow(0 0 18px #8be9fd) drop-shadow(0 0 30px #ffd866) !important; }
+
+  /* 被擊中（後仰彈飛 + 閃白） */
+  #p1.hit { animation: hitL .55s cubic-bezier(.22,1.5,.4,1); }
+  #p2.hit { animation: hitR .55s cubic-bezier(.22,1.5,.4,1); }
+  @keyframes hitL {
+    0%{ transform: translateY(0) rotate(0);}
+    25%{ transform: translateX(-46px) translateY(-26px) rotate(-22deg);}
+    55%{ transform: translateX(-18px) translateY(0) rotate(8deg);}
+    100%{ transform: translateY(0) rotate(0);}
+  }
+  @keyframes hitR {
+    0%{ transform: scaleX(-1) translateY(0) rotate(0);}
+    25%{ transform: scaleX(-1) translateX(-46px) translateY(-26px) rotate(-22deg);}
+    55%{ transform: scaleX(-1) translateX(-18px) translateY(0) rotate(8deg);}
+    100%{ transform: scaleX(-1) translateY(0) rotate(0);}
+  }
+  /* 命中：用色彩光暈表現，不做亮度爆閃（對光敏感者友善） */
+  .hit { filter: drop-shadow(0 0 22px #ff8a8a) drop-shadow(0 0 36px #ff5555) saturate(1.4) !important; }
+
+  /* 答錯：自己施法失敗（踉蹌冒煙） */
+  #p1.fizzle { animation: fizzleL .5s ease-out; }
+  #p2.fizzle { animation: fizzleR .5s ease-out; }
+  @keyframes fizzleL { 0%,100%{ transform: translateY(0) rotate(0);} 25%{ transform: translateX(14px) rotate(10deg);} 60%{ transform: translateX(-8px) rotate(-6deg);} }
+  @keyframes fizzleR { 0%,100%{ transform: scaleX(-1) translateY(0) rotate(0);} 25%{ transform: scaleX(-1) translateX(14px) rotate(10deg);} 60%{ transform: scaleX(-1) translateX(-8px) rotate(-6deg);} }
+
+  /* === 閃電投射物 === */
+  .bolt {
+    position: absolute; bottom: 96px;
+    font-size: 2.6rem;
+    pointer-events: none;
+    filter: drop-shadow(0 0 10px #8be9fd) drop-shadow(0 0 18px #fff);
+  }
+  @keyframes flyLR { 0%{ left: 130px; opacity:0; transform: scale(.5) rotate(0);} 12%{opacity:1;} 100%{ left: calc(100% - 170px); opacity:1; transform: scale(1.1) rotate(40deg);} }
+  @keyframes flyRL { 0%{ right: 130px; opacity:0; transform: scaleX(-1) scale(.5) rotate(0);} 12%{opacity:1;} 100%{ right: calc(100% - 170px); opacity:1; transform: scaleX(-1) scale(1.1) rotate(40deg);} }
+
+  /* === 命中爆點 / 火花 === */
+  .burst { position: absolute; bottom: 96px; font-size: 3.2rem; pointer-events:none; animation: burst .5s ease-out forwards; }
+  @keyframes burst { 0%{ transform: scale(.3); opacity:1;} 100%{ transform: scale(1.8); opacity:0;} }
+  .spark { position: absolute; font-size: 1.2rem; pointer-events:none; }
+  @keyframes sparkFly { to { transform: translate(var(--dx), var(--dy)) scale(.2); opacity:0; } }
+
+  /* === HP 條 === */
+  .hpwrap { position: absolute; top: 14px; width: 200px; }
+  #hp1wrap { left: 18px; }
+  #hp2wrap { right: 18px; }
+  .hpbar-bg { height: 16px; border-radius: 8px; background: rgba(0,0,0,.5); border: 1px solid #6a5a8a; overflow: hidden; }
+  .hpbar { height: 100%; width: 100%; transition: width .35s ease; }
+  #hp1 { background: linear-gradient(90deg,#3aa0ff,#1e5fff); }
+  #hp2 { background: linear-gradient(90deg,#ff7a7a,#e02e2e); margin-left:auto; }
+  .hplabel { font-size: .75rem; opacity:.75; margin-top: 3px; }
+  #hp2wrap .hplabel { text-align: right; }
+
+  /* === Combo 文字 === */
+  .combotext {
+    position: absolute; top: 46%; left: 50%; transform: translate(-50%,-50%);
+    font-size: 2.4rem; font-weight: 900; pointer-events:none;
+    text-shadow: 0 0 16px currentColor; animation: comboPop .6s ease-out forwards;
+  }
+  @keyframes comboPop { 0%{ transform: translate(-50%,-50%) scale(.4); opacity:0;} 25%{ transform: translate(-50%,-50%) scale(1.3); opacity:1;} 100%{ transform: translate(-50%,-160%) scale(1); opacity:0;} }
+
+  /* === 螢幕震動（不做全螢幕亮暗閃光） === */
+  #arena.shake { animation: shake .32s; }
+  @keyframes shake { 0%,100%{transform:translate(0,0);} 20%{transform:translate(-5px,2px);} 40%{transform:translate(4px,-3px);} 60%{transform:translate(-3px,-2px);} 80%{transform:translate(3px,2px);} }
+
+  /* === 控制台 === */
+  #panel { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom: 30px; }
+  button {
+    font: inherit; font-size: 1rem; padding: 10px 16px; cursor: pointer;
+    border-radius: 10px; border: 1px solid #6a5a8a;
+    background: linear-gradient(180deg,#4a3a6a,#2e2244); color:#e8d9b5;
+    box-shadow: 0 2px 0 #1a1228;
+  }
+  button:hover { filter: brightness(1.15); }
+  button:active { transform: translateY(2px); box-shadow:none; }
+  .b1 { border-color:#3aa0ff; } .b2 { border-color:#ff7a7a; }
+  #notes { max-width: 760px; font-size:.85rem; line-height:1.6; opacity:.8; margin:0 16px 40px; }
+  #notes h3 { color:#f0c674; margin-bottom:6px; }
+  #notes li { margin-left: 1.2em; }
+</style>
+</head>
+<body>
+
+  <h1>⚔️ 巫師對決 — 視覺雛形（emoji / CSS 驗證版）</h1>
+  <p class="hint">用按鈕模擬「答對 = 施法電對方」「答錯 = 自己施法失敗」。確認手感後再決定要不要畫真正的立繪。</p>
+
+  <div id="arena">
+    <span class="floaty">🧪</span><span class="floaty">⚗️</span><span class="floaty">✨</span><span class="floaty">🔮</span>
+
+    <div id="hp1wrap" class="hpwrap"><div class="hpbar-bg"><div id="hp1" class="hpbar"></div></div><div class="hplabel">P1 反應產率</div></div>
+    <div id="hp2wrap" class="hpwrap"><div class="hpbar-bg"><div id="hp2" class="hpbar"></div></div><div class="hplabel">P2 反應產率</div></div>
+
+    <div id="p1" class="wizard">🧙‍♂️<span class="label">P1（藍）</span></div>
+    <div id="p2" class="wizard">🧙‍♀️<span class="label">P2（紅）</span></div>
+  </div>
+
+  <div id="panel">
+    <button class="b1" onclick="attack('p1')">🧙‍♂️ P1 答對 → 施法</button>
+    <button class="b1" onclick="fizzle('p1')">🧙‍♂️ P1 答錯 → 失敗</button>
+    <button class="b2" onclick="attack('p2')">🧙‍♀️ P2 答對 → 施法</button>
+    <button class="b2" onclick="fizzle('p2')">🧙‍♀️ P2 答錯 → 失敗</button>
+    <button onclick="reset()">↻ 重置</button>
+  </div>
+
+  <div id="notes">
+    <h3>這個雛形示範了哪些「juice」元素</h3>
+    <ul>
+      <li>巫師 idle 漂浮動畫（不動的立繪很死）</li>
+      <li>施法三段感：蓄力放大發光 → ⚡ 飛出 → 命中爆 💥 + 火花 ✨</li>
+      <li>被擊中：閃白 + 後仰彈飛 + 回彈（打擊感）</li>
+      <li>答錯 ≠ 被打，而是「自己施法失敗」踉蹌 💨（邏輯才對）</li>
+      <li>連擊放大：combo 越高字越大、特效越多（這裡用文字示意）</li>
+      <li>螢幕輕微震動（刻意不做全螢幕亮暗閃光 / 高對比爆閃 —— 對光敏感者友善）</li>
+      <li>HP 條掉血動畫</li>
+    </ul>
+    <h3>還缺什麼（要做成正式版需要的）</h3>
+    <ul>
+      <li>真正的角色立繪 / 背景場景（emoji 只是占位）</li>
+      <li>音效層：蓄力聲、電擊聲、被打悶哼、HP 警告嗶嗶</li>
+      <li>連鎖閃電的實際特效（大招）、勝利 / 落敗的收尾動畫</li>
+      <li>整合進真正的對戰流程（看結構式 → 選對 → 觸發此動畫）</li>
+    </ul>
+  </div>
+
+<script>
+  const A = document.getElementById('arena');
+  const hp = { p1: 100, p2: 100 };
+  const combo = { p1: 0, p2: 0 };
+  const colorOf = p => p === 'p1' ? '#8be9fd' : '#ff7a7a';
+
+  function setHp(p, v){ hp[p] = Math.max(0, v); document.getElementById('hp'+p[1]).style.width = hp[p] + '%'; }
+
+  function shake(){ A.classList.remove('shake'); void A.offsetWidth; A.classList.add('shake'); }
+
+  function once(el, cls, dur){ el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(()=>el.classList.remove(cls), dur); }
+
+  function spawn(el){ A.appendChild(el); }
+
+  function bolt(caster){
+    const target = caster === 'p1' ? 'p2' : 'p1';
+    const b = document.createElement('div');
+    b.className = 'bolt';
+    b.textContent = combo[caster] >= 3 ? '🌩️' : '⚡';
+    b.style.animation = (caster === 'p1' ? 'flyLR' : 'flyRL') + ' .34s linear forwards';
+    if (caster === 'p1') b.style.left = '130px'; else b.style.right = '130px';
+    spawn(b);
+    setTimeout(()=>{ b.remove(); impact(target, caster); }, 330);
+  }
+
+  function impact(target, caster){
+    // 命中爆點
+    const burst = document.createElement('div');
+    burst.className = 'burst';
+    burst.textContent = '💥';
+    if (target === 'p1') burst.style.left = '120px'; else burst.style.right = '120px';
+    spawn(burst); setTimeout(()=>burst.remove(), 500);
+
+    // 火花四射
+    const tEl = document.getElementById(target).getBoundingClientRect();
+    const aEl = A.getBoundingClientRect();
+    const cx = tEl.left - aEl.left + tEl.width/2, cy = tEl.top - aEl.top + tEl.height/2;
+    for (let i=0;i<8;i++){
+      const s = document.createElement('div');
+      s.className = 'spark'; s.textContent = ['✨','⚡','💢','🔆'][i%4];
+      s.style.left = cx+'px'; s.style.top = cy+'px';
+      const ang = Math.random()*Math.PI*2, dist = 40+Math.random()*60;
+      s.style.setProperty('--dx', Math.cos(ang)*dist+'px');
+      s.style.setProperty('--dy', Math.sin(ang)*dist+'px');
+      s.style.animation = 'sparkFly .5s ease-out forwards';
+      spawn(s); setTimeout(()=>s.remove(), 520);
+    }
+
+    // 被擊中反應
+    once(document.getElementById(target), 'hit', 560);
+    shake();
+
+    // 扣血（連擊加成）
+    const dmg = 16 + combo[caster]*4;
+    setHp(target, hp[target] - dmg);
+
+    // combo 文字
+    if (combo[caster] >= 2){
+      const ct = document.createElement('div');
+      ct.className = 'combotext'; ct.style.color = colorOf(caster);
+      ct.textContent = 'COMBO x' + combo[caster] + (combo[caster]>=4 ? ' 🔥' : '!');
+      ct.style.fontSize = (2.0 + Math.min(combo[caster],6)*0.35) + 'rem';
+      spawn(ct); setTimeout(()=>ct.remove(), 650);
+    }
+
+    if (hp[target] <= 0){
+      setTimeout(()=>{ document.getElementById(target).textContent = '💀'; }, 560);
+    }
+  }
+
+  function attack(caster){
+    if (hp[caster] <= 0 || hp[caster==='p1'?'p2':'p1'] <= 0) return;
+    combo[caster]++; combo[caster==='p1'?'p2':'p1'] = 0;
+    once(document.getElementById(caster), 'charging', 280);
+    setTimeout(()=>bolt(caster), 200);
+  }
+
+  function fizzle(p){
+    combo[p] = 0;
+    once(document.getElementById(p), 'fizzle', 500);
+    // 冒煙
+    const smoke = document.createElement('div');
+    smoke.className = 'burst'; smoke.textContent = '💨';
+    if (p === 'p1') smoke.style.left = '70px'; else smoke.style.right = '70px';
+    smoke.style.bottom = '110px';
+    spawn(smoke); setTimeout(()=>smoke.remove(), 500);
+    setHp(p, hp[p] - 12);
+    if (hp[p] <= 0) setTimeout(()=>{ document.getElementById(p).textContent = '💀'; }, 400);
+  }
+
+  function reset(){
+    hp.p1 = hp.p2 = 100; combo.p1 = combo.p2 = 0;
+    setHp('p1',100); setHp('p2',100);
+    document.getElementById('p1').textContent = '🧙‍♂️';
+    document.getElementById('p2').textContent = '🧙‍♀️';
+    // 補回 label（textContent 清掉了 span）
+    document.getElementById('p1').insertAdjacentHTML('beforeend','<span class="label">P1（藍）</span>');
+    document.getElementById('p2').insertAdjacentHTML('beforeend','<span class="label">P2（紅）</span>');
+  }
+
+  reset();
+  // 鍵盤：左 = P1 答對 / Z = P1 答錯；右 = P2 答對 / M = P2 答錯
+  addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft') attack('p1');
+    else if (e.key === 'z' || e.key === 'Z') fizzle('p1');
+    else if (e.key === 'ArrowRight') attack('p2');
+    else if (e.key === 'm' || e.key === 'M') fizzle('p2');
+    else if (e.key === 'r' || e.key === 'R') reset();
+  });
+</script>
+</body>
+</html>
