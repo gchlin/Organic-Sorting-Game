@@ -1188,6 +1188,192 @@ body.duel-mobile .key-hint {
     padding: 4px 12px;
 }
 
+/* ===================================================
+   對決競技場 (Duel Arena) — 桌面 Duel 專用 juice 層
+   =================================================== */
+
+#duel-arena {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 155px;
+    z-index: 15;
+    pointer-events: none;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 50% 130%, rgba(120,80,180,.3), transparent 60%),
+        linear-gradient(180deg, rgba(40,25,60,.55), rgba(15,8,25,.85));
+    border-bottom: 2px solid rgba(90,60,140,.45);
+}
+
+/* 桌面 Duel 顯示競技場，玩家區域下移 */
+body.duel-desktop #duel-arena { display: block; }
+body.duel-desktop #game-area  { padding-top: 155px; }
+/* 手機 Duel：隱藏競技場（空間不足） */
+body.duel-mobile  #duel-arena { display: none; }
+
+/* 飄浮裝飾 */
+.arena-floaty {
+    position: absolute;
+    font-size: 1.5rem;
+    opacity: .22;
+    pointer-events: none;
+    animation: arenaFloat 6s ease-in-out infinite;
+}
+.arena-floaty:nth-child(1){ left: 14%; top: 18%; animation-delay: 0s; }
+.arena-floaty:nth-child(2){ left: 76%; top: 14%; animation-delay: 1.4s; font-size: 1.1rem; }
+.arena-floaty:nth-child(3){ left: 33%; top: 66%; animation-delay: 2.8s; }
+.arena-floaty:nth-child(4){ left: 62%; top: 60%; animation-delay: 3.6s; font-size: 1.2rem; }
+@keyframes arenaFloat {
+    0%,100%{ transform: translateY(0) rotate(-5deg); }
+    50%{ transform: translateY(-13px) rotate(5deg); }
+}
+
+/* 巫師立像 */
+.arena-wizard {
+    position: absolute;
+    bottom: 8px;
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+}
+.arena-wiz-emoji { font-size: 4rem; display: block; }
+.arena-wiz-label {
+    display: block;
+    font-size: .68rem;
+    color: var(--hp-gold);
+    opacity: .85;
+    text-align: center;
+    white-space: nowrap;
+    margin-top: 2px;
+}
+
+#arena-p1 { left: 6%; animation: arenaIdleL 3.2s ease-in-out infinite; }
+#arena-p2 { right: 6%; animation: arenaIdleR 3s ease-in-out infinite; }
+#arena-p2 .arena-wiz-emoji { transform: scaleX(-1); display: inline-block; }
+
+@keyframes arenaIdleL {
+    0%,100%{ transform: translateY(0) rotate(-2deg); }
+    50%{ transform: translateY(-8px) rotate(2deg); }
+}
+@keyframes arenaIdleR {
+    0%,100%{ transform: translateY(0) rotate(2deg); }
+    50%{ transform: translateY(-8px) rotate(-2deg); }
+}
+
+/* 蓄力 */
+#arena-p1.arena-charging { animation: arenaChargeL .28s ease-out forwards; filter: drop-shadow(0 0 14px #8be9fd) drop-shadow(0 0 22px #ffd866); }
+#arena-p2.arena-charging { animation: arenaChargeR .28s ease-out forwards; filter: drop-shadow(0 0 14px #8be9fd) drop-shadow(0 0 22px #ffd866); }
+@keyframes arenaChargeL {
+    0%{ transform: translateY(0) scale(1); }
+    60%{ transform: translateY(-5px) scale(1.22); }
+    100%{ transform: translateY(0) scale(1); }
+}
+@keyframes arenaChargeR {
+    0%{ transform: translateY(0) scale(1); }
+    60%{ transform: translateY(-5px) scale(1.22); }
+    100%{ transform: translateY(0) scale(1); }
+}
+
+/* 被擊中 */
+#arena-p1.arena-hit { animation: arenaHitL .55s cubic-bezier(.22,1.5,.4,1); filter: drop-shadow(0 0 18px #ff8a8a) drop-shadow(0 0 28px #ff5555) saturate(1.4); }
+#arena-p2.arena-hit { animation: arenaHitR .55s cubic-bezier(.22,1.5,.4,1); filter: drop-shadow(0 0 18px #ff8a8a) drop-shadow(0 0 28px #ff5555) saturate(1.4); }
+@keyframes arenaHitL {
+    0%{ transform: translateY(0) rotate(0); }
+    25%{ transform: translateX(-38px) translateY(-18px) rotate(-22deg); }
+    55%{ transform: translateX(-12px) translateY(0) rotate(8deg); }
+    100%{ transform: translateY(0) rotate(0); }
+}
+@keyframes arenaHitR {
+    0%{ transform: translateY(0) rotate(0); }
+    25%{ transform: translateX(38px) translateY(-18px) rotate(22deg); }
+    55%{ transform: translateX(12px) translateY(0) rotate(-8deg); }
+    100%{ transform: translateY(0) rotate(0); }
+}
+
+/* 施法失敗 */
+#arena-p1.arena-fizzle { animation: arenaFizzleL .5s ease-out; filter: drop-shadow(0 0 10px #aaa) saturate(0.5); }
+#arena-p2.arena-fizzle { animation: arenaFizzleR .5s ease-out; filter: drop-shadow(0 0 10px #aaa) saturate(0.5); }
+@keyframes arenaFizzleL {
+    0%,100%{ transform: translateY(0) rotate(0); }
+    25%{ transform: translateX(12px) rotate(10deg); }
+    60%{ transform: translateX(-6px) rotate(-6deg); }
+}
+@keyframes arenaFizzleR {
+    0%,100%{ transform: translateY(0) rotate(0); }
+    25%{ transform: translateX(-12px) rotate(-10deg); }
+    60%{ transform: translateX(6px) rotate(6deg); }
+}
+
+/* 競技場震動 */
+#duel-arena.arena-shake { animation: arenaShakeKf .3s; }
+@keyframes arenaShakeKf {
+    0%,100%{ transform: translate(0,0); }
+    20%{ transform: translate(-4px,2px); }
+    40%{ transform: translate(3px,-2px); }
+    60%{ transform: translate(-2px,-2px); }
+    80%{ transform: translate(2px,2px); }
+}
+
+/* 魔法投射物 */
+.arena-bolt {
+    position: absolute;
+    bottom: 50px;
+    font-size: 2.2rem;
+    pointer-events: none;
+    filter: drop-shadow(0 0 8px #8be9fd) drop-shadow(0 0 14px #fff);
+}
+@keyframes arenaBoltLR {
+    0%  { left: 15%; opacity: 0; transform: scale(.5); }
+    12% { opacity: 1; }
+    100%{ left: 80%; opacity: 1; transform: scale(1.1) rotate(35deg); }
+}
+@keyframes arenaBoltRL {
+    0%  { right: 15%; opacity: 0; transform: scale(.5); }
+    12% { opacity: 1; }
+    100%{ right: 80%; opacity: 1; transform: scale(1.1) rotate(-35deg); }
+}
+
+/* 爆炸點 */
+.arena-burst {
+    position: absolute;
+    bottom: 46px;
+    font-size: 2.8rem;
+    pointer-events: none;
+    animation: arenaBurstKf .52s ease-out forwards;
+}
+@keyframes arenaBurstKf {
+    0%{ transform: scale(.3); opacity: 1; }
+    100%{ transform: scale(1.9); opacity: 0; }
+}
+
+/* 火花 */
+.arena-spark {
+    position: absolute;
+    font-size: .95rem;
+    pointer-events: none;
+    animation: arenaSparkFly .52s ease-out forwards;
+}
+@keyframes arenaSparkFly {
+    to { transform: translate(var(--dx), var(--dy)) scale(.15); opacity: 0; }
+}
+
+/* Combo 文字（競技場） */
+.arena-combo {
+    position: absolute;
+    left: 50%;
+    top: 38%;
+    transform: translate(-50%,-50%);
+    font-weight: 900;
+    pointer-events: none;
+    text-shadow: 0 0 14px currentColor;
+    animation: arenaComboKf .68s ease-out forwards;
+}
+@keyframes arenaComboKf {
+    0%  { transform: translate(-50%,-50%) scale(.4); opacity: 0; }
+    25% { transform: translate(-50%,-50%) scale(1.3); opacity: 1; }
+    100%{ transform: translate(-50%,-150%) scale(1); opacity: 0; }
+}
+
 /* 遊戲中玩家名稱標籤 */
 .wizard-badge {
     font-size: 0.85rem;

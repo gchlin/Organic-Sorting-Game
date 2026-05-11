@@ -565,6 +565,7 @@ const Game = (function() {
         UI.optsP2.classList.remove('hidden');
         UI.qContainerP1.classList.remove('hidden');
         UI.infoBar.style.display = 'flex';
+        if (arenaEl) arenaEl.classList.add('hidden');
 
         if (mode === 'duel') {
             document.body.classList.add('duel-mode');
@@ -572,10 +573,13 @@ const Game = (function() {
             document.body.classList.add(isDuelDesktop ? 'duel-desktop' : 'duel-mobile');
             UI.infoBar.style.display = 'none';
             UI.p2Area.classList.remove('hidden');
-            // Each player gets their own question stream — no shared area
             UI.qContainerP1.classList.remove('hidden');
             UI.qContainerP2.classList.remove('hidden');
             UI.optsP2.classList.remove('hidden');
+            if (arenaEl && isDuelDesktop) {
+                arenaEl.classList.remove('hidden');
+                _arenaUpdateWizards();
+            }
         }
     }
 
@@ -1354,6 +1358,7 @@ const Game = (function() {
             Save.addCorrect(1);
             Save.seeMolecule(duelQ[player].correctKey);
             updateDuelProgress(player);
+            duelArenaAttack(player);
             if (_devQuickWin || players[player].correctCount >= DUEL_WIN_TARGET) {
                 endGame('win', player);
                 return;
@@ -1407,6 +1412,8 @@ const Game = (function() {
         players[player].combo = 0;
         if (currentMode !== 'duel') {
             players[player].hp -= 20;
+        } else {
+            duelArenaFizzle(player);
         }
 
         players[player].isLocked = true;
@@ -1485,6 +1492,117 @@ const Game = (function() {
         const answer = AnswerBank[answerKey];
         if (!answer || answer.category === 'cat') return '';
         return answer.category;
+    }
+
+    // --- 對決競技場動畫 ---
+    const arenaEl   = document.getElementById('duel-arena');
+    const arenaP1El = document.getElementById('arena-p1');
+    const arenaP2El = document.getElementById('arena-p2');
+
+    function _arenaOnce(el, cls, dur) {
+        el.classList.remove(cls);
+        void el.offsetWidth;
+        el.classList.add(cls);
+        setTimeout(() => el.classList.remove(cls), dur);
+    }
+
+    function _arenaShake() {
+        if (!arenaEl) return;
+        _arenaOnce(arenaEl, 'arena-shake', 320);
+    }
+
+    function _arenaSpawnBolt(caster, comboCount) {
+        if (!arenaEl) return;
+        const b = document.createElement('div');
+        b.className = 'arena-bolt';
+        b.textContent = comboCount >= 3 ? '🌩️' : '⚡';
+        const toP2 = (caster === 'p1');
+        b.style.animation = (toP2 ? 'arenaBoltLR' : 'arenaBoltRL') + ' .32s linear forwards';
+        if (toP2) b.style.left = '15%'; else b.style.right = '15%';
+        arenaEl.appendChild(b);
+        setTimeout(() => {
+            b.remove();
+            _arenaImpact(toP2 ? 'p2' : 'p1', caster, comboCount);
+        }, 310);
+    }
+
+    function _arenaImpact(target, caster, comboCount) {
+        if (!arenaEl) return;
+        const targetEl = target === 'p1' ? arenaP1El : arenaP2El;
+
+        // 爆炸點
+        const burst = document.createElement('div');
+        burst.className = 'arena-burst';
+        burst.textContent = '💥';
+        burst.style[target === 'p1' ? 'left' : 'right'] = '14%';
+        arenaEl.appendChild(burst);
+        setTimeout(() => burst.remove(), 540);
+
+        // 火花
+        const tRect = targetEl.getBoundingClientRect();
+        const aRect = arenaEl.getBoundingClientRect();
+        const cx = tRect.left - aRect.left + tRect.width / 2;
+        const cy = tRect.top  - aRect.top  + tRect.height / 2;
+        const SPARKS = ['✨','⚡','💢','🔆'];
+        for (let i = 0; i < 8; i++) {
+            const s = document.createElement('div');
+            s.className = 'arena-spark';
+            s.textContent = SPARKS[i % 4];
+            s.style.left = `${cx}px`;
+            s.style.top  = `${cy}px`;
+            const ang  = Math.random() * Math.PI * 2;
+            const dist = 36 + Math.random() * 52;
+            s.style.setProperty('--dx', `${Math.cos(ang) * dist}px`);
+            s.style.setProperty('--dy', `${Math.sin(ang) * dist}px`);
+            arenaEl.appendChild(s);
+            setTimeout(() => s.remove(), 540);
+        }
+
+        // 被擊中
+        _arenaOnce(targetEl, 'arena-hit', 580);
+        _arenaShake();
+
+        // Combo 文字（combo ≥ 2）
+        if (comboCount >= 2) {
+            const ct = document.createElement('div');
+            ct.className = 'arena-combo';
+            ct.style.color = caster === 'p1' ? '#8be9fd' : '#ff8a8a';
+            ct.style.fontSize = `${1.8 + Math.min(comboCount, 6) * 0.3}rem`;
+            ct.textContent = `COMBO ×${comboCount}${comboCount >= 4 ? ' 🔥' : '!'}`;
+            arenaEl.appendChild(ct);
+            setTimeout(() => ct.remove(), 700);
+        }
+    }
+
+    function duelArenaAttack(player) {
+        if (!arenaEl || arenaEl.classList.contains('hidden') || !isDuelDesktop) return;
+        const casterEl = player === 'p1' ? arenaP1El : arenaP2El;
+        const comboCount = players[player].combo; // already incremented by this point
+        _arenaOnce(casterEl, 'arena-charging', 290);
+        setTimeout(() => _arenaSpawnBolt(player, comboCount), 200);
+    }
+
+    function duelArenaFizzle(player) {
+        if (!arenaEl || arenaEl.classList.contains('hidden') || !isDuelDesktop) return;
+        const casterEl = player === 'p1' ? arenaP1El : arenaP2El;
+        _arenaOnce(casterEl, 'arena-fizzle', 520);
+
+        // 冒煙
+        const smoke = document.createElement('div');
+        smoke.className = 'arena-burst';
+        smoke.textContent = '💨';
+        smoke.style[player === 'p1' ? 'left' : 'right'] = '10%';
+        smoke.style.bottom = '56px';
+        arenaEl.appendChild(smoke);
+        setTimeout(() => smoke.remove(), 540);
+    }
+
+    function _arenaUpdateWizards() {
+        if (!arenaP1El || !arenaP2El) return;
+        arenaP1El.querySelector('.arena-wiz-emoji').textContent = wizardPersonas.p1.emoji;
+        arenaP1El.querySelector('.arena-wiz-label').textContent = wizardPersonas.p1.name;
+        arenaP2El.querySelector('.arena-wiz-emoji').textContent = wizardPersonas.p2.emoji;
+        arenaP2El.querySelector('.arena-wiz-label').textContent = wizardPersonas.p2.name;
     }
 
     // --- Combo 攻擊動畫 (對戰時射向對方) ---
