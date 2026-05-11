@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>分類帽動畫 Demo</title>
+<style>
+  body {
+    background: #1a0a2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: sans-serif;
+    color: #f0e6c8;
+    gap: 40px;
+  }
+  h2 { color: #d4af37; margin-bottom: 0; }
+  .row { display: flex; gap: 60px; align-items: flex-end; flex-wrap: wrap; justify-content: center; }
+  .demo-box { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .label { font-size: 0.85rem; opacity: 0.7; }
+
+  .hat {
+    width: 80px;
+    height: 80px;
+    image-rendering: pixelated;
+    background-image: url('assets/images/character/magichat.webp');
+    /* background-size 和 animation 由 JS 動態設定 */
+  }
+
+  @keyframes hat-float {
+    0%   { transform: translateY(0);    }
+    50%  { transform: translateY(-6px); }
+    100% { transform: translateY(0);    }
+  }
+  @keyframes hat-glow-filter {
+    0%   { filter: drop-shadow(0 0 4px  rgba(212,175,55,0.4)); }
+    50%  { filter: drop-shadow(0 0 18px rgba(212,175,55,1.0)); }
+    100% { filter: drop-shadow(0 0 4px  rgba(212,175,55,0.4)); }
+  }
+
+  .bubble {
+    background: #2d1b4e;
+    border: 1px solid #d4af37;
+    border-radius: 10px;
+    padding: 10px 16px;
+    max-width: 140px;
+    text-align: center;
+    font-size: 0.8rem;
+    position: relative;
+  }
+  .bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -8px; left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: #d4af37;
+    border-bottom: none;
+  }
+</style>
+</head>
+<body>
+
+<h2>🎩 分類帽 Sprite Sheet 動畫 Demo</h2>
+<p id="info" style="opacity:0.5;font-size:0.75rem;">載入中…</p>
+<div class="row" id="row"></div>
+<p style="opacity:0.5; font-size:0.8rem;">哪個最好看就告訴我，直接套進遊戲</p>
+
+<script>
+const SRC    = 'assets/images/character/magichat.webp';
+const FRAMES = 4;
+const SIZE   = 80; // 顯示大小 px
+
+const img = new Image();
+img.onload = () => {
+  const fw = img.naturalWidth;   // 整張寬
+  const fh = img.naturalHeight;  // 整張高
+  const scaledW = (fw / fh) * SIZE; // 等比例縮放後的總寬
+  const frameW  = scaledW / FRAMES; // 一格的寬
+
+  document.getElementById('info').textContent =
+    `圖片：${fw}×${fh}px → 顯示 ${scaledW.toFixed(0)}×${SIZE}px，每格 ${frameW.toFixed(0)}px`;
+
+  // 注入 @keyframes（background-position 從 0 跑到 -總寬）
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes sprite {
+      from { background-position: 0 0; }
+      to   { background-position: -${scaledW}px 0; }
+    }
+  `;
+  document.head.appendChild(style);
+
+  const configs = [
+    { label: '① 說話（快 8fps）',  bubble: '說話動畫',    fps: 8,  float: false, glow: false },
+    { label: '② 說話（慢 4fps）',  bubble: '慢速版',      fps: 4,  float: false, glow: false },
+    { label: '③ 飄浮 + 說話',     bubble: '飄浮待機',    fps: 4,  float: true,  glow: false },
+    { label: '④ 說話 + 發光 ✨',  bubble: '說話+光效',   fps: 8,  float: false, glow: true  },
+  ];
+
+  const row = document.getElementById('row');
+  configs.forEach(cfg => {
+    const dur = (FRAMES / cfg.fps).toFixed(2) + 's';
+    const extraAnim = cfg.float
+      ? `, hat-float 2s ease-in-out infinite`
+      : cfg.glow
+      ? `, hat-glow-filter 1.5s ease-in-out infinite`
+      : '';
+
+    const box = document.createElement('div');
+    box.className = 'demo-box';
+
+    const hatDiv = document.createElement('div');
+    hatDiv.className = 'hat';
+    hatDiv.style.backgroundSize = `${scaledW}px ${SIZE}px`;
+    hatDiv.style.animation = `sprite ${dur} steps(${FRAMES}) infinite` + extraAnim;
+
+    box.innerHTML = `<div class="bubble">${cfg.bubble}</div>`;
+    box.appendChild(hatDiv);
+    box.innerHTML += `<span class="label">${cfg.label}</span>`;
+    box.insertBefore(hatDiv, box.children[1]);
+
+    row.appendChild(box);
+  });
+};
+img.src = SRC;
+</script>
+</body>
+</html>
