@@ -1045,14 +1045,16 @@ body.countdown-active .hat-display {
     padding: 16px 18px;
     margin-bottom: 16px;
     position: relative;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    background: rgba(20, 12, 35, 0.92);
+    border: 1px solid rgba(212,175,55,0.35);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
 }
 
 .story-bubble p {
     margin: 0;
     font-size: 1.05rem;
     line-height: 1.65;
-    color: #2c2416;
+    color: var(--hp-parchment);
     font-family: var(--font-serif);
 }
 
