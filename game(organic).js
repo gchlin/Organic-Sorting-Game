@@ -114,6 +114,7 @@ const Game = (function() {
         streak: "連錯幾題時，先找氧、氮、鹵素，再看有沒有 C=O 或苯環。"
     };
     let isDuelDesktop = false;
+    let _devQuickWin = false; // ← 改成 true 開啟測試模式（答對1題即結算）；` 鍵也可即時切換
     let practiceWrongStreak = 0;
     // Practice 一輪計數（用於 markLevelClear 門檻判斷：正確率 ≥ 60%）
     let practiceRoundTotal = 0;
@@ -203,11 +204,14 @@ const Game = (function() {
     // --- 角色選擇彈窗 ---
     let _pickerPendingMode = null;
     let _pickerPendingLevel = null;
-    let _pickerStep = null; // 'solo' | 'p1' | 'p2'
+    let _pickerStep = null; // 'solo' | 'p1' | 'p2' | 'change'
     let _pickerSelectedIdx = -1; // index in WIZARD_PRESETS, -1 = custom
+    let _p1WizardPersisted = false; // P1 魔法師是否已選過（跨關卡記憶）
+    let _pickerKeyFocusIdx = -1;   // 鍵盤焦點在第幾張卡片（-1 = 無）
 
     function buildWizardGrid() {
         UI.wizardGrid.innerHTML = '';
+        _pickerKeyFocusIdx = -1;
         WIZARD_PRESETS.forEach((w, i) => {
             const card = document.createElement('div');
             card.className = 'wizard-card';
@@ -216,9 +220,10 @@ const Game = (function() {
                               <div class="wizard-card-name">${w.name}</div>
                               <div class="wizard-card-title">${w.title}</div>`;
             card.addEventListener('click', () => {
-                document.querySelectorAll('.wizard-card').forEach(c => c.classList.remove('selected'));
+                document.querySelectorAll('.wizard-card').forEach(c => c.classList.remove('selected', 'keyboard-focus'));
                 card.classList.add('selected');
                 _pickerSelectedIdx = i;
+                _pickerKeyFocusIdx = i;
                 UI.customNameInput.value = '';
                 UI.btnPickerConfirm.disabled = false;
             });
@@ -226,19 +231,59 @@ const Game = (function() {
         });
     }
 
+    function _pickerSetKeyFocus(newIdx) {
+        const cards = UI.wizardGrid.querySelectorAll('.wizard-card');
+        if (_pickerKeyFocusIdx >= 0 && _pickerKeyFocusIdx < cards.length) {
+            cards[_pickerKeyFocusIdx].classList.remove('keyboard-focus');
+        }
+        _pickerKeyFocusIdx = Math.max(0, Math.min(newIdx, cards.length - 1));
+        if (_pickerKeyFocusIdx >= 0 && _pickerKeyFocusIdx < cards.length) {
+            cards[_pickerKeyFocusIdx].classList.add('keyboard-focus');
+            cards[_pickerKeyFocusIdx].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
     function showWizardPicker(mode, level) {
         _pickerPendingMode = mode;
         _pickerPendingLevel = level;
         _pickerSelectedIdx = -1;
+
+        // 更換魔法師模式（首頁按鈕）
+        if (mode === '_change') {
+            _pickerStep = 'change';
+            buildWizardGrid();
+            UI.customNameInput.value = '';
+            UI.btnPickerConfirm.disabled = true;
+            UI.pickerTitle.textContent = '更換你的魔法師';
+            UI.pickerSubtitle.textContent = `目前：${wizardPersonas.p1.emoji} ${wizardPersonas.p1.name}`;
+            UI.menu.classList.add('hidden');
+            UI.wizardPicker.classList.remove('hidden');
+            UI.customNameInput.focus();
+            return;
+        }
+
+        // 非對決模式：若已選過魔法師就直接開始
+        if (mode !== 'duel' && _p1WizardPersisted) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            startGame(mode, level);
+            return;
+        }
 
         buildWizardGrid();
         UI.customNameInput.value = '';
         UI.btnPickerConfirm.disabled = true;
 
         if (mode === 'duel') {
-            _pickerStep = 'p1';
-            UI.pickerTitle.textContent = '⚔️ 玩家一，選擇你的魔法師';
-            UI.pickerSubtitle.textContent = 'P1 · 左側 / 上側玩家';
+            if (_p1WizardPersisted) {
+                // P1 已記住，只選 P2
+                _pickerStep = 'p2';
+                UI.pickerTitle.textContent = '⚔️ 玩家二，選擇你的魔法師';
+                UI.pickerSubtitle.textContent = `P2 · 右側 / 下側玩家　（P1：${wizardPersonas.p1.emoji} ${wizardPersonas.p1.name}）`;
+            } else {
+                _pickerStep = 'p1';
+                UI.pickerTitle.textContent = '⚔️ 玩家一，選擇你的魔法師';
+                UI.pickerSubtitle.textContent = 'P1 · 左側 / 上側玩家';
+            }
         } else {
             _pickerStep = 'solo';
             UI.pickerTitle.textContent = '選擇你的魔法師';
@@ -248,6 +293,18 @@ const Game = (function() {
         UI.menu.classList.add('hidden');
         UI.wizardPicker.classList.remove('hidden');
         UI.customNameInput.focus();
+    }
+
+    function _updateWizardStatusBar() {
+        const bar = document.getElementById('wizard-status-bar');
+        const label = document.getElementById('wizard-status-label');
+        if (!bar || !label) return;
+        if (_p1WizardPersisted) {
+            label.textContent = `${wizardPersonas.p1.emoji} ${wizardPersonas.p1.name}`;
+            bar.classList.remove('hidden');
+        } else {
+            bar.classList.add('hidden');
+        }
     }
 
     function _applyPickerChoice(player) {
@@ -274,14 +331,19 @@ const Game = (function() {
             if (_pickerStep === 'solo') {
                 _applyPickerChoice('p1');
                 wizardPersonas.p2 = { emoji: '🧙', name: '玩家二' };
+                _p1WizardPersisted = true;
+                _updateWizardStatusBar();
                 UI.wizardPicker.classList.add('hidden');
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 startGame(_pickerPendingMode, _pickerPendingLevel);
             } else if (_pickerStep === 'p1') {
                 _applyPickerChoice('p1');
+                _p1WizardPersisted = true;
+                _updateWizardStatusBar();
                 _pickerStep = 'p2';
                 _pickerSelectedIdx = -1;
-                document.querySelectorAll('.wizard-card').forEach(c => c.classList.remove('selected'));
+                _pickerKeyFocusIdx = -1;
+                buildWizardGrid();
                 UI.customNameInput.value = '';
                 UI.btnPickerConfirm.disabled = true;
                 UI.pickerTitle.textContent = '⚔️ 玩家二，選擇你的魔法師';
@@ -291,13 +353,61 @@ const Game = (function() {
                 UI.wizardPicker.classList.add('hidden');
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 startGame(_pickerPendingMode, _pickerPendingLevel);
+            } else if (_pickerStep === 'change') {
+                _applyPickerChoice('p1');
+                _p1WizardPersisted = true;
+                _updateWizardStatusBar();
+                UI.wizardPicker.classList.add('hidden');
+                UI.menu.classList.remove('hidden');
+                focusFirstAvailableControl(UI.menu);
             }
         });
 
         UI.btnPickerCancel.addEventListener('click', () => {
             UI.wizardPicker.classList.add('hidden');
             UI.menu.classList.remove('hidden');
+            focusFirstAvailableControl(UI.menu);
         });
+    }
+
+    // --- 魔法師彈窗鍵盤導航 ---
+    function handlePickerKeydown(e) {
+        const cards = UI.wizardGrid.querySelectorAll('.wizard-card');
+        const total = cards.length;
+
+        switch (e.code) {
+            case 'Escape':
+                e.preventDefault();
+                UI.btnPickerCancel.click();
+                break;
+            case 'Enter':
+                e.preventDefault();
+                if (_pickerKeyFocusIdx >= 0 && _pickerKeyFocusIdx < total) {
+                    cards[_pickerKeyFocusIdx].click();
+                }
+                if (!UI.btnPickerConfirm.disabled) UI.btnPickerConfirm.click();
+                break;
+            case 'Space':
+                e.preventDefault();
+                if (_pickerKeyFocusIdx >= 0 && _pickerKeyFocusIdx < total) {
+                    cards[_pickerKeyFocusIdx].click();
+                }
+                break;
+            case 'ArrowRight':
+            case 'ArrowDown': {
+                e.preventDefault();
+                const next = (_pickerKeyFocusIdx < 0) ? 0 : (_pickerKeyFocusIdx + 1) % total;
+                _pickerSetKeyFocus(next);
+                break;
+            }
+            case 'ArrowLeft':
+            case 'ArrowUp': {
+                e.preventDefault();
+                const prev = (_pickerKeyFocusIdx <= 0) ? total - 1 : _pickerKeyFocusIdx - 1;
+                _pickerSetKeyFocus(prev);
+                break;
+            }
+        }
     }
 
     // --- 初始化 ---
@@ -307,6 +417,11 @@ const Game = (function() {
                 showWizardPicker(btn.dataset.mode, btn.dataset.level);
             });
         });
+
+        const btnChangeWizard = document.getElementById('btn-change-wizard');
+        if (btnChangeWizard) {
+            btnChangeWizard.addEventListener('click', () => showWizardPicker('_change', null));
+        }
 
         UI.optsP1.addEventListener('click', e => handleOptionClick(e, 'p1'));
         UI.optsP2.addEventListener('click', e => handleOptionClick(e, 'p2'));
@@ -997,6 +1112,17 @@ const Game = (function() {
 
     function handleKeyboardInput(e) {
         if (e.repeat) return;
+
+        // 魔法師選擇框優先接管鍵盤
+        if (isVisible(UI.wizardPicker)) {
+            if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+                if (e.code === 'Escape') { e.preventDefault(); UI.btnPickerCancel.click(); }
+                return;
+            }
+            handlePickerKeydown(e);
+            return;
+        }
+
         if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
 
         if (gameActive && isVisible(UI.game) && isGameControlSuppressedKey(e.code)) {
@@ -1035,7 +1161,31 @@ const Game = (function() {
         handleOptionClick({ target: btn }, player);
     }
 
+    function _setDevQuickWin(on) {
+        _devQuickWin = on;
+        let indicator = document.getElementById('dev-quickwin-indicator');
+        if (on) {
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'dev-quickwin-indicator';
+                indicator.textContent = '🔧 測試模式：答對1題即結算';
+                indicator.style.cssText = 'position:fixed;bottom:8px;left:50%;transform:translateX(-50%);background:#c0392b;color:#fff;padding:4px 14px;border-radius:8px;font-size:0.85rem;z-index:9999;pointer-events:none;font-family:sans-serif;';
+                document.body.appendChild(indicator);
+            }
+            indicator.style.display = 'block';
+        } else if (indicator) {
+            indicator.style.display = 'none';
+        }
+    }
+
     function handleGlobalShortcut(e) {
+        // ` 鍵切換開發者快速結算模式
+        if (e.code === 'Backquote') {
+            e.preventDefault();
+            _setDevQuickWin(!_devQuickWin);
+            return true;
+        }
+
         if (isVisible(UI.refModal)) {
             if (e.code === 'Escape' || e.code === 'KeyX') {
                 e.preventDefault();
@@ -1198,13 +1348,13 @@ const Game = (function() {
         playSound('correct');
         btn.classList.add('correct');
         players[player].totalAsked++;
+        players[player].correctCount++;
 
         if (currentMode === 'duel') {
-            players[player].correctCount++;
             Save.addCorrect(1);
             Save.seeMolecule(duelQ[player].correctKey);
             updateDuelProgress(player);
-            if (players[player].correctCount >= DUEL_WIN_TARGET) {
+            if (_devQuickWin || players[player].correctCount >= DUEL_WIN_TARGET) {
                 endGame('win', player);
                 return;
             }
@@ -1213,6 +1363,18 @@ const Game = (function() {
         }
 
         // practice / speed mode
+        if (_devQuickWin) {
+            // 測試模式：直接以通關條件結算
+            practiceRoundTotal = Math.max(practiceRoundTotal, STORY_MIN_ASKED);
+            practiceRoundCorrect = practiceRoundTotal; // 100% 正確率
+            players[player].score += 10;
+            updateStats(player);
+            Save.addCorrect(1);
+            Save.seeMolecule(correctAnswerKey);
+            setTimeout(() => endGame('win', player), 600);
+            return;
+        }
+
         practiceWrongStreak = 0;
         Save.addCorrect(1);
         Save.seeMolecule(correctAnswerKey);
@@ -1232,7 +1394,7 @@ const Game = (function() {
         triggerComboAttack(player);
         updateStats(player);
 
-        setTimeout(() => { nextQuestion(); }, 700);
+        setTimeout(() => { nextQuestion(); }, 1000);
     }
 
     function handleWrong(player, btn) {

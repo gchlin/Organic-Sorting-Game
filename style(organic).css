@@ -301,10 +301,26 @@ body, html {
     margin: 5px 0;
     padding: 10px;
     display: flex;
+    flex-direction: row;
     justify-content: center;
     align-items: center;
+    gap: 10px;
     border: 3px double var(--hp-wood-dark);
     /* 羊皮紙背景已在 .parchment-bg定義 */
+}
+
+.hat-display {
+    font-size: clamp(2.8rem, 5vw, 4.5rem);
+    flex-shrink: 0;
+    align-self: center;
+    filter: drop-shadow(0 0 8px rgba(212,175,55,0.55));
+    user-select: none;
+    pointer-events: none;
+}
+
+/* 對戰桌面模式帽子縮小 */
+body.duel-desktop .hat-display {
+    font-size: clamp(2rem, 3vw, 2.8rem);
 }
 
 .question-content {
@@ -670,7 +686,8 @@ body.duel-mobile .key-hint {
     justify-content: center;
     align-items: center;
     z-index: 200;
-    pointer-events: none;
+    pointer-events: all;
+    background: rgba(0, 0, 0, 0.88);
 }
 
 #countdown-number {
@@ -1096,6 +1113,12 @@ body.duel-mobile .key-hint {
     box-shadow: 0 0 10px rgba(120,90,40,0.35);
 }
 
+.wizard-card.keyboard-focus {
+    outline: 3px solid var(--hp-gold);
+    outline-offset: 2px;
+    box-shadow: 0 0 12px rgba(212,175,55,0.65);
+}
+
 .wizard-card-emoji {
     font-size: 1.8rem;
     line-height: 1.2;
@@ -1141,6 +1164,28 @@ body.duel-mobile .key-hint {
 
 .magic-input::placeholder {
     color: rgba(80,60,40,0.5);
+}
+
+/* 首頁已選魔法師狀態列 */
+.wizard-status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 8px auto 4px;
+    padding: 6px 16px;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 10px;
+    max-width: 400px;
+    color: var(--hp-gold);
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.wizard-status-bar .btn {
+    font-size: 0.85rem;
+    padding: 4px 12px;
 }
 
 /* 遊戲中玩家名稱標籤 */
