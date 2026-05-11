@@ -963,7 +963,7 @@ const Game = (function() {
         _buildDots();
         _storyRenderLine(0);
 
-        UI.storyModal.classList.remove('hidden');
+        if (UI.storyModal) UI.storyModal.classList.remove('hidden');
     }
 
     function _storyAdvance() {
