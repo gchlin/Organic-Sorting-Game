@@ -182,3 +182,71 @@
    - 鍵盤快捷標為已實作。
    - `setupLayout()` 依設備分支標為已實作。
    - Duel 實機測試仍留在 §14。
+
+---
+
+### 4. 答題回饋強化（設計決策清單 §4）
+
+**對應設計決策**
+- `設計決策清單.md` §0：不做全螢幕亮暗閃光 / 高對比爆閃；衝擊感用色彩光暈、位移、輕微震動。
+- `設計決策清單.md` §4：答錯高亮正確答案、練習模式顯示「為什麼」、練習模式分類帽教練、Practice vs Speed 回饋不同。
+- `化學審查清單.md` §3：13 類官能基「為什麼」草稿文案。
+
+**完成項目**
+- `game(organic).js`
+  - 新增 `WHY_HINTS`，含 13 類：`alkane`、`alkene`、`alkyne`、`alcohol`、`ether`、`aldehyde`、`ketone`、`carboxylic`、`ester`、`amine`、`aromatic`、`halide`、`phenol`。
+  - 新增 `CAT_CATEGORY_MAP`，讓 Level 99 的 `CAT_*` 答案也能對回正確官能基提示。
+  - 答錯時在 1 秒冷卻期間替正確答案按鈕加 `.reveal-correct`，冷卻結束清掉；單人、競速、Duel 桌面共用選項、Duel 手機雙選項區都走同一套邏輯。
+  - 練習模式答錯時顯示一行「為什麼」提示；競速 / 對決不顯示，避免拖慢節奏。
+  - 練習模式新增分類帽教練 UI 雛形：🎩 + 對話泡泡。開場、答對、答錯、連錯 3 次以上會更新台詞。
+- `style(organic).css`
+  - 新增 `.reveal-correct` 柔和綠色光暈 / 脈動，不使用全螢幕閃光。
+  - 新增 `.practice-why-hint`、`.practice-coach`、`.coach-bubble`、`.coach-emoji` 樣式。
+  - 補 `prefers-reduced-motion: reduce`，關閉答錯震動、正解脈動、教練浮動與 combo 動畫。
+- `設計決策清單.md`
+  - §4 對應項目標 ✅ / `[x]`。
+
+**測試結果**
+- `node --check game(organic).js` 通過。
+- `node --check data(organic).js` 通過。
+- `QuestionSets` 一致性檢查通過：
+  - missing image files: `0`
+  - missing `AnswerBank` keys: `0`
+
+**剩餘風險**
+- 尚未做瀏覽器實機 / Playwright 視覺檢查；分類帽泡泡在小螢幕上可能還需要依實際版面微調位置。
+
+---
+
+### 5. 答題畫面鍵盤焦點修正
+
+**背景**
+- 先前進入遊戲後，瀏覽器焦點可能落在「撤退 / Esc」按鈕。
+- 玩家若按 Enter，會誤觸返回大廳。
+- 設計決策：答題畫面採「game controls」，不是一般網頁 focus navigation。
+
+**完成項目**
+- `game(organic).js`
+  - `renderQuestion()` 結束時不再 `focusFirstAvailableControl(UI.game)`。
+  - 新增 `blurActiveControl()`，每次出新題後清掉目前焦點。
+  - 新增 `isGameControlSuppressedKey()`。
+  - 答題畫面中攔截並 `preventDefault()`：
+    - `ArrowUp`
+    - `ArrowDown`
+    - `ArrowLeft`
+    - `ArrowRight`
+    - `Enter`
+    - `Space`
+  - 答題鍵仍維持：
+    - 左側：`A/F/Z/C`
+    - 右側：`4/6/1/3`
+  - `Esc / M` 返回大廳、`R` 重開仍保留。
+  - 主選單 / 結算畫面 / 參考圖彈窗仍保留方向鍵、Enter、Space 的一般鍵盤導覽。
+
+**測試結果**
+- `node --check game(organic).js` 通過。
+- `git diff --check` 無錯誤，只有 Windows CRLF 提示。
+
+**交接給 Claude 的注意事項**
+- 若之後調整鍵盤 UX，請保留「答題畫面不預設 focus、不用方向鍵 / Enter / Space 答題」這個決策，除非另開可及性設定。
+- §13 可及性後續要補策略：目前答題畫面偏遊戲控制，非一般表單導覽；滑鼠 / 觸控與明確快捷鍵提示仍可用。
