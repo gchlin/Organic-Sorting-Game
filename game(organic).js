@@ -604,28 +604,35 @@ const Game = (function() {
             gameActive = true;
             nextQuestion();
         } else {
+            nextQuestion(); // 先渲染題目（被黑幕蓋住）
             runCountdown(['3', '2', '1', '開始!'], () => {
+                document.body.classList.remove('countdown-active');
                 gameActive = true;
                 timerInterval = setInterval(gameLoop, 100);
-                nextQuestion();
             });
         }
     }
 
     function runCountdown(steps, onDone) {
+        const numEl = document.getElementById('countdown-number');
         const overlay = document.getElementById('countdown-overlay');
-        const numEl   = document.getElementById('countdown-number');
-        if (!overlay || !numEl) { onDone(); return; }
+        // 用 body class 黑幕蓋住題目內容，overlay 只顯示數字
+        document.body.classList.add('countdown-active');
+        if (overlay) overlay.classList.remove('hidden');
 
         let i = 0;
         function tick() {
-            if (i >= steps.length) { overlay.classList.add('hidden'); onDone(); return; }
-            numEl.textContent = steps[i];
-            // 重觸發動畫
-            numEl.style.animation = 'none';
-            void numEl.offsetWidth;
-            numEl.style.animation = '';
-            overlay.classList.remove('hidden');
+            if (i >= steps.length) {
+                if (overlay) overlay.classList.add('hidden');
+                onDone();
+                return;
+            }
+            if (numEl) {
+                numEl.textContent = steps[i];
+                numEl.style.animation = 'none';
+                void numEl.offsetWidth;
+                numEl.style.animation = '';
+            }
             playSound(i < steps.length - 1 ? 'countdown' : 'start');
             i++;
             setTimeout(tick, 850);

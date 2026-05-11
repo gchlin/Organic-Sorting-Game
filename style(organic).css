@@ -711,7 +711,7 @@ body.duel-mobile .key-hint {
 }
 
 
-/* 倒數開始 overlay */
+/* 倒數開始 overlay — 只顯示數字，背景透明（題目由 body.countdown-active 黑幕處理） */
 #countdown-overlay {
     position: fixed;
     inset: 0;
@@ -719,8 +719,25 @@ body.duel-mobile .key-hint {
     justify-content: center;
     align-items: center;
     z-index: 200;
-    pointer-events: all;
-    background: rgba(0, 0, 0, 0.88);
+    pointer-events: none;
+    background: transparent;
+}
+
+/* 倒數期間：題目區、選項文字全部黑色蓋住 */
+body.countdown-active .question-content,
+body.countdown-active .question-content * {
+    color: transparent !important;
+    background-color: transparent !important;
+}
+body.countdown-active .opt-btn {
+    color: transparent !important;
+    background: #1a1a2e !important;
+    border-color: #333 !important;
+    pointer-events: none;
+}
+body.countdown-active .wizard-avatar,
+body.countdown-active .hat-display {
+    opacity: 0;
 }
 
 #countdown-number {
