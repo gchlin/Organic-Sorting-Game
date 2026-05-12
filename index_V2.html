@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>有機分類帽 - Organic Sorting Hat</title>
+
+    <!-- ✅ v2 新增：載入 Cinzel 標題字體 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap">
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- ✅ v2 新增：永遠在 style.css 之後 -->
+    <link rel="stylesheet" href="style-visual-v2.css">
+</head>
+<body>
+
+    <div id="preload-container"></div>
+
+    <div id="menu-container">
+        <div class="title-row">
+            <div id="title-hat" class="title-hat hat-char neutral" aria-hidden="true"></div>
+            <div class="title-text-wrap">
+                <h1 class="game-title magical-text">有機分類帽</h1>
+                <h2 class="game-subtitle">Organic Sorting Hat</h2>
+            </div>
+        </div>
+        <p class="keyboard-help">方向鍵選關卡，Enter / Space 開始；也可直接按按鈕前的 [快捷鍵]。</p>
+        <button id="btn-tutorial" class="btn magic-btn tutorial-btn">新手導覽 — 怎麼玩、怎麼按</button>
+
+        <!-- 進度面板（認識分子、累積答對、勳章） -->
+        <div id="progress-panel" class="progress-panel">
+            <div class="prog-row">
+                <!-- ✅ v2:emoji→icon -->
+                <span data-icon="books">認識分子</span><strong id="prog-molecules">0 / 0</strong><span>種</span>
+                <span class="prog-levels" id="prog-levels"></span>
+            </div>
+            <div class="prog-row">
+                <!-- ✅ v2:emoji→icon -->
+                <span data-icon="check">累積答對</span><strong id="prog-correct">0</strong><span>題</span>
+            </div>
+            <div class="prog-badges" id="prog-badges"></div>
+        </div>
+
+        <div class="menu-group">
+            <!-- ✅ v2:emoji→icon -->
+            <h3 class="menu-heading" data-icon="flask">自我修煉 (Practice)</h3>
+            <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level1">Level 1: 碳氫骨架基礎</button>
+            <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level2">Level 2: 單鍵氧家族 (醇醚)</button>
+            <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level3">Level 3: 雙鍵氧家族 (醛酮)</button>
+            <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level4">Level 4: 雙氧複合 (酸酯)</button>
+            <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level5">Level 5: 雜原子與鹵素</button>
+            <button class="btn menu-btn magic-btn boss-btn" data-mode="practice" data-level="level6">Level 6: 終極分類帽 (綜合題)</button>
+            <button class="btn menu-btn magic-btn genius-btn" data-mode="practice" data-level="level99">Level 99: 資優全英挑戰</button>
+        </div>
+
+        <div class="menu-group">
+            <!-- ✅ v2:emoji→icon -->
+            <h3 class="menu-heading" data-icon="hourglass">競速挑戰 (Time Attack)</h3>
+            <button class="btn menu-btn magic-btn" data-mode="speed" data-level="level3">挑戰：醛酮分辨</button>
+            <button class="btn menu-btn magic-btn" data-mode="speed" data-level="level4">挑戰：酸酯分辨</button>
+            <button class="btn menu-btn magic-btn boss-btn" data-mode="speed" data-level="level6">挑戰：終極大亂鬥</button>
+        </div>
+
+        <div class="menu-group">
+            <!-- ✅ v2:emoji→icon -->
+            <h3 class="menu-heading" data-icon="swords">巫師對決 (Duel Mode)</h3>
+            <p style="color:var(--hp-parchment); font-size: 0.9rem;">(桌面鍵盤搶答；手機橫放觸控)</p>
+            <button class="btn menu-btn magic-btn duel-btn" data-mode="duel" data-level="level3">對決：醛酮</button>
+            <button class="btn menu-btn magic-btn duel-btn" data-mode="duel" data-level="level4">對決：酸酯</button>
+            <button class="btn menu-btn magic-btn duel-btn boss-btn" data-mode="duel" data-level="level6">對決：終極分類</button>
+        </div>
+
+        <div class="save-controls">
+            <!-- ✅ v2:全部 emoji→icon -->
+            <button id="btn-open-codex" class="btn magic-btn save-ctrl-btn" data-icon="codex">圖鑑</button>
+            <button id="btn-mute" class="btn magic-btn save-ctrl-btn" data-icon="sound-on">音效</button>
+            <button id="btn-export" class="btn magic-btn save-ctrl-btn" data-icon="export">匯出存檔</button>
+            <button id="btn-import-open" class="btn magic-btn save-ctrl-btn" data-icon="import">匯入存檔</button>
+            <button id="btn-reset-save" class="btn magic-btn save-ctrl-btn reset-btn" data-icon="reset">重置</button>
+        </div>
+
+        <div id="wizard-status-bar" class="wizard-status-bar hidden">
+            <!-- ✅ v2:emoji→icon -->
+            <span id="wizard-status-label" data-icon="wizard">玩家一</span>
+            <button id="btn-change-wizard" class="btn magic-btn">更換魔法師</button>
+        </div>
+
+        <button id="btn-show-ref" class="btn hidden">查看分類總表</button>
+    </div>
+
+    <div id="game-container" class="hidden">
+        <div id="info-bar">
+            <!-- ✅ v2:icon 取代 ↩ 字符 -->
+            <button id="btn-back" class="btn magic-btn icon-btn" data-icon="back">撤退</button>
+            <!-- ✅ v2:icon-only 按鈕；JS 切換 data-icon 來改 sound-on/sound-off -->
+            <button id="btn-mute-game" class="btn magic-btn icon-btn icon-only" data-icon="sound-on" title="靜音"></button>
+            <div class="stat-box title-stat">
+                 <span id="mode-title">修煉模式</span>
+            </div>
+            <div class="stat-box title-stat">
+                <span id="level-title">Level 1</span>
+            </div>
+        </div>
+
+        <div id="game-area">
+
+            <!-- 對決競技場（桌面 Duel 專用，答對施法/答錯失敗動畫） -->
+            <div id="duel-arena" class="hidden">
+                <span class="arena-floaty">🧪</span>
+                <span class="arena-floaty">⚗️</span>
+                <span class="arena-floaty">✨</span>
+                <span class="arena-floaty">🔮</span>
+                <div id="arena-p1" class="arena-wizard">
+                    <span class="arena-wiz-emoji">🧙</span>
+                    <span class="arena-wiz-label"></span>
+                </div>
+                <!-- 中央裁判帽 -->
+                <div class="arena-center-hat hat-char neutral" aria-hidden="true"></div>
+                <div id="arena-p2" class="arena-wizard arena-wiz-p2">
+                    <span class="arena-wiz-emoji">🧙</span>
+                    <span class="arena-wiz-label"></span>
+                </div>
+            </div>
+
+            <div id="p1-area" class="player-area p1-theme">
+                <div class="player-header">
+                    <!-- ✅ v2:emoji→icon（保留 wizard-badge class） -->
+                    <div id="wizard-p1" class="wizard-badge" data-icon="wizard">玩家一</div>
+                    <div class="hp-bar-container magic-border" title="魔法成功率">
+                        <div class="hp-bar" id="hp-p1" style="width: 100%;"></div>
+                        <span class="hp-text">魔法成功率</span>
+                    </div>
+                    <div class="score-box magic-text">魔力: <span id="score-p1">0</span></div>
+                </div>
+                
+                <div class="status-overlay">
+                    <div id="warn-p1" class="warn-text hidden">魔力告急!</div>
+                    <div id="combo-p1" class="combo-text hidden">魔力 COMBO x2!</div>
+                </div>
+
+                <div id="q-container-p1" class="question-container parchment-bg">
+                    <div id="wizard-avatar-p1" class="wizard-avatar" aria-hidden="true"></div>
+                    <div id="q-p1" class="question-content"></div>
+                    <div class="hat-coach-wrap">
+                        <div id="practice-coach-bubble" class="coach-bubble hidden" role="status" aria-live="polite"></div>
+                        <div class="hat-display hat-char neutral" aria-hidden="true"></div>
+                    </div>
+                </div>
+                
+                <div id="opts-p1" class="options-container single-col">
+                    <button class="btn opt-btn magic-stone-btn" data-idx="0">選項 A</button>
+                    <button class="btn opt-btn magic-stone-btn" data-idx="1">選項 B</button>
+                    <button class="btn opt-btn magic-stone-btn" data-idx="2">選項 C</button>
+                    <button class="btn opt-btn magic-stone-btn" data-idx="3">選項 D</button>
+                </div>
+            </div>
+
+            <div id="shared-question-area" class="hidden parchment-bg magic-border">
+                 <div id="q-shared" class="question-content">
+                     </div>
+            </div>
+
+            <div id="p2-area" class="player-area p2-theme hidden">
+                 <div class="player-header">
+                    <!-- ✅ v2:emoji→icon -->
+                    <div id="wizard-p2" class="wizard-badge" data-icon="wizard">玩家二</div>
+                    <div class="hp-bar-container magic-border" title="魔法成功率">
+                        <div class="hp-bar" id="hp-p2" style="width: 100%;"></div>
+                        <span class="hp-text">魔法成功率</span>
+                    </div>
+                    <div class="score-box magic-text">魔力: <span id="score-p2">0</span></div>
+                </div>
+
+                <div class="status-overlay">
+                    <div id="warn-p2" class="warn-text hidden">魔力告急!</div>
+                    <div id="combo-p2" class="combo-text hidden">魔力 COMBO x2!</div>
+                </div>
+
+                <div id="q-container-p2" class="question-container parchment-bg hidden">
+                    <div class="hat-display hat-char neutral" aria-hidden="true"></div>
+                    <div id="q-p2" class="question-content"></div>
+                </div>
+
+                <div id="opts-p2" class="options-container single-col">
+                    <button class="btn opt-btn magic-stone-btn" data-idx="0">選項 A</button>
+                    <button class="btn opt-btn magic-stone-btn" data-idx="1">選項 B</button>
+                    <button class="btn opt-btn magic-stone-btn" data-idx="2">選項 C</button>
+                    <button class="btn opt-btn magic-stone-btn" data-idx="3">選項 D</button>
+                </div>
+            </div>
+
+        </div> <div id="time-bar-container" class="magic-border bottom-bar">
+            <div id="time-bar"></div>
+        </div>
+
+    </div> <div id="result-modal" class="modal hidden">
+        <div class="modal-content magic-scroll">
+            <h2 id="result-title" class="magical-text">練習結束</h2>
+            <p id="result-msg" class="result-detail">結果...</p>
+            <div id="result-stats" class="result-detail"></div>
+            <button id="btn-show-story" class="btn magic-btn genius-btn hidden">✨ 解鎖劇情</button>
+            <button id="btn-restart" class="btn magic-btn">再次練習</button>
+            <button id="btn-next-level" class="btn magic-btn boss-btn">到下一關 →</button>
+            <button id="btn-menu" class="btn magic-btn">返回大廳</button>
+        </div>
+    </div>
+
+    <div id="ref-modal" class="modal hidden">
+        <div class="modal-content ref-content magic-scroll">
+            <span id="btn-close-ref" class="close-btn">×</span>
+            <h3 class="magical-text">官能基分類總表</h3>
+            <div id="ref-img-container">
+                <p>（尚未載入參考圖）</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 故事對話框 -->
+    <div id="story-modal" class="modal hidden">
+        <div class="modal-content magic-scroll story-modal-content">
+            <div id="story-speaker-row" class="story-speaker-row">
+                <div id="story-speaker-hat" class="story-hat hat-char neutral" aria-hidden="true"></div>
+                <span id="story-speaker-emoji" class="story-speaker-emoji hidden">🧙</span>
+                <span id="story-speaker-name" class="story-speaker-name">分類帽</span>
+            </div>
+            <div id="story-bubble" class="story-bubble parchment-bg">
+                <p id="story-text"></p>
+            </div>
+            <div class="story-footer">
+                <div id="story-dots" class="story-dots"></div>
+                <div class="story-btn-row">
+                    <button id="btn-story-skip" class="btn magic-btn">略過全部</button>
+                    <button id="btn-story-next" class="btn magic-btn boss-btn">繼續 →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 角色選擇彈窗 -->
+    <div id="wizard-picker" class="modal hidden">
+        <div class="modal-content magic-scroll wizard-picker-content">
+            <h2 class="magical-text" id="picker-title">選擇你的魔法師</h2>
+            <p class="picker-subtitle" id="picker-subtitle">選一個身份，或輸入自訂名稱</p>
+            <div class="wizard-grid" id="wizard-grid"></div>
+            <div class="custom-name-row">
+                <input type="text" id="custom-name-input" class="magic-input" placeholder="自訂名稱（最多 12 字）" maxlength="12" autocomplete="off">
+            </div>
+            <button id="btn-picker-confirm" class="btn magic-btn boss-btn" disabled>確認身份 ✓</button>
+            <button id="btn-picker-cancel" class="btn magic-btn">取消</button>
+        </div>
+    </div>
+
+    <!-- 圖鑑 Modal -->
+    <div id="codex-modal" class="modal hidden">
+        <div class="modal-content magic-scroll codex-modal-content">
+            <span id="btn-close-codex" class="close-btn">×</span>
+            <!-- ✅ v2:emoji→icon -->
+            <h2 class="magical-text" data-icon="codex">分類帽圖鑑</h2>
+            <p class="codex-subtitle">通過關卡解鎖劇情與梗圖。點關卡看劇情。</p>
+            <div id="codex-level-list" class="codex-level-list"></div>
+            <div id="codex-detail" class="codex-detail hidden">
+                <button id="btn-codex-back" class="btn magic-btn" data-icon="back">返回列表</button>
+                <h3 id="codex-detail-title" class="magical-text"></h3>
+                <div id="codex-detail-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新手導覽 Modal -->
+    <div id="tutorial-modal" class="modal hidden">
+        <div class="modal-content magic-scroll tutorial-modal-content">
+            <h2 class="magical-text">新手導覽</h2>
+            <div id="tutorial-slide" class="tutorial-slide">
+                <div id="tutorial-icon" class="tutorial-icon">🎩</div>
+                <h3 id="tutorial-title" class="tutorial-title"></h3>
+                <p id="tutorial-text" class="tutorial-text"></p>
+            </div>
+            <div class="tutorial-footer">
+                <div id="tutorial-dots" class="story-dots"></div>
+                <div class="tutorial-btn-row">
+                    <button id="btn-tutorial-prev" class="btn magic-btn">← 上一頁</button>
+                    <button id="btn-tutorial-skip" class="btn magic-btn">略過</button>
+                    <button id="btn-tutorial-next" class="btn magic-btn boss-btn">下一頁 →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 勳章解鎖 Toast -->
+    <div id="badge-toast" class="badge-toast hidden"></div>
+
+    <!-- 匯入存檔 Modal -->
+    <div id="import-modal" class="modal hidden">
+        <div class="modal-content magic-scroll import-modal-content">
+            <!-- ✅ v2:emoji→icon -->
+            <h3 class="magical-text" data-icon="import">匯入存檔</h3>
+            <p class="import-hint">選擇之前「匯出」下載的 .json 檔案：</p>
+            <input type="file" id="import-file" accept=".json,application/json" class="import-file-input">
+            <p class="import-hint" style="margin-top:14px;">或直接貼上 JSON 文字：</p>
+            <textarea id="import-textarea" class="magic-input import-textarea" rows="6" placeholder='{"version":1,"totalCorrect":0,...}'></textarea>
+            <div class="import-btn-row">
+                <button id="btn-import-confirm" class="btn magic-btn boss-btn">確認匯入 ✓</button>
+                <button id="btn-import-cancel" class="btn magic-btn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 音效由 Web Audio API 即時合成（game.js 的 fallbackSound）；如要改用音檔，
+         放回 <audio id="se-correct" src="…"> 等元素即可，playSound 會自動優先使用音檔 -->
+
+    <script src="data.js"></script>
+    <script src="story.js"></script>
+    <script src="save.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

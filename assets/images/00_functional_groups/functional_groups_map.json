@@ -1,0 +1,104 @@
+{
+  "generated": "2026-05-12T19:59:09.852429",
+  "total": 14,
+  "groups": [
+    {
+      "id": 1,
+      "en_name": "alkane",
+      "zh_name": "烷烴",
+      "smiles": "CC",
+      "file": "fg_01_alkane.svg"
+    },
+    {
+      "id": 2,
+      "en_name": "alkene",
+      "zh_name": "烯烴",
+      "smiles": "C=C",
+      "file": "fg_02_alkene.svg"
+    },
+    {
+      "id": 3,
+      "en_name": "alkyne",
+      "zh_name": "炔烴",
+      "smiles": "C#C",
+      "file": "fg_03_alkyne.svg"
+    },
+    {
+      "id": 4,
+      "en_name": "alcohol",
+      "zh_name": "醇",
+      "smiles": "CO",
+      "file": "fg_04_alcohol.svg"
+    },
+    {
+      "id": 5,
+      "en_name": "aldehyde",
+      "zh_name": "醛",
+      "smiles": "CC=O",
+      "file": "fg_05_aldehyde.svg"
+    },
+    {
+      "id": 6,
+      "en_name": "ketone",
+      "zh_name": "酮",
+      "smiles": "CC(C)=O",
+      "file": "fg_06_ketone.svg"
+    },
+    {
+      "id": 7,
+      "en_name": "carboxylic_acid",
+      "zh_name": "羧酸",
+      "smiles": "CC(=O)O",
+      "file": "fg_07_carboxylic_acid.svg"
+    },
+    {
+      "id": 8,
+      "en_name": "ester",
+      "zh_name": "酯",
+      "smiles": "COC(C)=O",
+      "file": "fg_08_ester.svg"
+    },
+    {
+      "id": 9,
+      "en_name": "ether",
+      "zh_name": "醚",
+      "smiles": "COC",
+      "file": "fg_09_ether.svg"
+    },
+    {
+      "id": 10,
+      "en_name": "amine",
+      "zh_name": "胺",
+      "smiles": "CN",
+      "file": "fg_10_amine.svg"
+    },
+    {
+      "id": 11,
+      "en_name": "aromatic",
+      "zh_name": "芳香烴",
+      "smiles": "c1ccccc1",
+      "file": "fg_11_aromatic.svg"
+    },
+    {
+      "id": 12,
+      "en_name": "halide",
+      "zh_name": "鹵化物",
+      "smiles": "CCl",
+      "file": "fg_12_halide.svg"
+    },
+    {
+      "id": 13,
+      "en_name": "phenol",
+      "zh_name": "酚",
+      "smiles": "Oc1ccccc1",
+      "file": "fg_13_phenol.svg"
+    },
+    {
+      "id": 14,
+      "en_name": "aromatic_amine",
+      "zh_name": "芳香胺",
+      "smiles": "Nc1ccccc1",
+      "file": "fg_14_aromatic_amine.svg"
+    }
+  ]
+}

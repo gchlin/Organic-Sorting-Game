@@ -1,0 +1,386 @@
+/* ============================================================
+   style-visual-v2.css — 視覺升級層 (Visual Polish Layer)
+   ------------------------------------------------------------
+   ⚠️ 規則：
+   1. 這個檔案只覆蓋外觀（顏色/字體/邊框/陰影/動畫）
+   2. 絕對不動 layout（flex / grid / 寬高 / 定位）
+   3. 永遠在 style.css 之後載入
+   4. 用 data-icon="<name>" 替換 emoji（HTML 文字保留語義）
+   ============================================================ */
+
+/* ---------- 新增的色票補充 ---------- */
+:root {
+    --hp-gold-light: #f5d76e;
+    --hp-gold-deep: #8c6b1d;
+    --hp-glass-dark: #0a0a0d;
+    --hp-glass-mid: #1a1a1f;
+    --hp-crimson-glow: rgba(192, 57, 43, 0.65);
+}
+
+/* ============================================================
+   1. 計時條：玻璃管 + 金色魔藥液 + 上升氣泡（方向 B）
+   ============================================================ */
+#time-bar-container.bottom-bar {
+    height: 22px;
+    background: linear-gradient(to bottom,
+        var(--hp-glass-dark) 0%,
+        var(--hp-glass-mid) 50%,
+        var(--hp-glass-dark) 100%);
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    box-shadow:
+        inset 0 2px 6px rgba(0, 0, 0, 0.85),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.06),
+        0 0 12px rgba(0, 0, 0, 0.5);
+}
+
+/* 玻璃高光（頂部反光） */
+#time-bar-container.bottom-bar::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 45%;
+    background: linear-gradient(to bottom,
+        rgba(255, 255, 255, 0.14),
+        rgba(255, 255, 255, 0.02) 60%,
+        transparent);
+    pointer-events: none;
+    border-radius: 12px 12px 0 0;
+    z-index: 2;
+}
+
+/* 液體本體：金色魔藥漸層 */
+#time-bar {
+    background: linear-gradient(to bottom,
+        #fff5c0 0%,
+        var(--hp-gold-light) 25%,
+        var(--hp-gold) 55%,
+        var(--hp-gold-deep) 100%) !important;
+    box-shadow:
+        inset 0 2px 4px rgba(255, 245, 200, 0.55),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.35),
+        0 0 16px rgba(212, 175, 55, 0.55) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 上升的氣泡（用 background-position 動畫達成） */
+#time-bar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(circle 1.5px at 12% 80%, rgba(255, 255, 255, 0.75), transparent 70%),
+        radial-gradient(circle 1px at 28% 60%, rgba(255, 255, 255, 0.6), transparent 70%),
+        radial-gradient(circle 2px at 45% 90%, rgba(255, 255, 255, 0.8), transparent 70%),
+        radial-gradient(circle 1px at 62% 50%, rgba(255, 255, 255, 0.65), transparent 70%),
+        radial-gradient(circle 1.5px at 78% 75%, rgba(255, 255, 255, 0.7), transparent 70%),
+        radial-gradient(circle 1px at 92% 65%, rgba(255, 255, 255, 0.55), transparent 70%);
+    background-size: 100% 200%;
+    background-repeat: repeat-y;
+    animation: bubble-rise 2.8s linear infinite;
+    pointer-events: none;
+}
+
+/* 液面波光（橫向掃過） */
+#time-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 8px;
+    height: 100%;
+    background: linear-gradient(to right,
+        transparent,
+        rgba(255, 255, 240, 0.85));
+    box-shadow: 0 0 8px rgba(255, 245, 200, 0.9);
+    pointer-events: none;
+}
+
+@keyframes bubble-rise {
+    0%   { background-position: 0% 100%; }
+    100% { background-position: 0% 0%; }
+}
+
+/* 危急狀態：血紅 + 脈動 */
+#time-bar.time-running-out {
+    background: linear-gradient(to bottom,
+        #ff8a8a 0%,
+        #e74c3c 30%,
+        var(--hp-red-bright) 60%,
+        var(--hp-red-dark) 100%) !important;
+    box-shadow:
+        inset 0 2px 4px rgba(255, 200, 200, 0.55),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.4),
+        0 0 20px var(--hp-crimson-glow) !important;
+    animation: critical-pulse 0.55s ease-in-out infinite alternate;
+}
+
+@keyframes critical-pulse {
+    from { filter: brightness(1) saturate(1); }
+    to   { filter: brightness(1.25) saturate(1.3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #time-bar::before { animation: none; }
+    #time-bar.time-running-out { animation: none; }
+}
+
+/* ============================================================
+   2. HP 條：金色魔力流（取代外星綠光）
+   ============================================================ */
+.hp-bar {
+    background: linear-gradient(to bottom,
+        var(--hp-gold-light) 0%,
+        var(--hp-gold) 50%,
+        var(--hp-gold-deep) 100%) !important;
+    box-shadow:
+        inset 0 1px 2px rgba(255, 245, 200, 0.65),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.35),
+        0 0 8px rgba(212, 175, 55, 0.45) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.hp-bar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.35) 50%,
+        transparent 100%);
+    animation: hp-shimmer 3.5s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes hp-shimmer {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+}
+
+/* 低魔力時轉紅 — JS 端只要 width < 30% 時加 class .hp-low 即可 */
+.hp-bar.hp-low {
+    background: linear-gradient(to bottom,
+        #ff8a8a 0%,
+        var(--hp-red-bright) 50%,
+        var(--hp-red-dark) 100%) !important;
+    box-shadow: 0 0 12px var(--hp-crimson-glow) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hp-bar::after { animation: none; }
+}
+
+/* ============================================================
+   3. data-icon 系統：emoji 文字保留語義，視覺用 SVG mask
+   ============================================================
+   用法：
+     <button data-icon="codex">圖鑑</button>
+     <button data-icon="export">匯出存檔</button>
+   ============================================================ */
+[data-icon]::before {
+    content: '';
+    display: inline-block;
+    width: 1.15em;
+    height: 1.15em;
+    margin-right: 8px;
+    vertical-align: -0.22em;
+    background-color: currentColor;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    flex-shrink: 0;
+    transition: filter 0.2s;
+}
+
+[data-icon="codex"]::before     { -webkit-mask-image: url('assets/icons/codex.svg');     mask-image: url('assets/icons/codex.svg'); }
+[data-icon="sound-on"]::before  { -webkit-mask-image: url('assets/icons/sound-on.svg');  mask-image: url('assets/icons/sound-on.svg'); }
+[data-icon="sound-off"]::before { -webkit-mask-image: url('assets/icons/sound-off.svg'); mask-image: url('assets/icons/sound-off.svg'); }
+[data-icon="export"]::before    { -webkit-mask-image: url('assets/icons/export.svg');    mask-image: url('assets/icons/export.svg'); }
+[data-icon="import"]::before    { -webkit-mask-image: url('assets/icons/import.svg');    mask-image: url('assets/icons/import.svg'); }
+[data-icon="reset"]::before     { -webkit-mask-image: url('assets/icons/reset.svg');     mask-image: url('assets/icons/reset.svg'); }
+[data-icon="wizard"]::before    { -webkit-mask-image: url('assets/icons/wizard.svg');    mask-image: url('assets/icons/wizard.svg'); }
+[data-icon="swords"]::before    { -webkit-mask-image: url('assets/icons/swords.svg');    mask-image: url('assets/icons/swords.svg'); }
+[data-icon="flask"]::before     { -webkit-mask-image: url('assets/icons/flask.svg');     mask-image: url('assets/icons/flask.svg'); }
+[data-icon="hourglass"]::before { -webkit-mask-image: url('assets/icons/hourglass.svg'); mask-image: url('assets/icons/hourglass.svg'); }
+[data-icon="quill"]::before     { -webkit-mask-image: url('assets/icons/quill.svg');     mask-image: url('assets/icons/quill.svg'); }
+[data-icon="close"]::before     { -webkit-mask-image: url('assets/icons/close.svg');     mask-image: url('assets/icons/close.svg'); }
+[data-icon="check"]::before     { -webkit-mask-image: url('assets/icons/check.svg');     mask-image: url('assets/icons/check.svg'); }
+[data-icon="back"]::before      { -webkit-mask-image: url('assets/icons/back.svg');      mask-image: url('assets/icons/back.svg'); }
+[data-icon="books"]::before     { -webkit-mask-image: url('assets/icons/books.svg');     mask-image: url('assets/icons/books.svg'); }
+[data-icon="medal"]::before     { -webkit-mask-image: url('assets/icons/medal.svg');     mask-image: url('assets/icons/medal.svg'); }
+
+/* icon-only 按鈕（沒有文字）：移除 margin */
+.icon-only[data-icon]::before {
+    margin-right: 0;
+}
+
+/* hover 時 icon 跟著 text color 走（currentColor 自動處理） */
+
+/* ============================================================
+   4. Modal 關閉按鈕：圓形描邊 + hover 旋轉 90°
+   ============================================================ */
+.close-btn {
+    font-size: 0 !important;
+    width: 34px;
+    height: 34px;
+    border: 1.5px solid rgba(212, 175, 55, 0.55);
+    border-radius: 50%;
+    background: rgba(20, 20, 25, 0.6);
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    color: var(--hp-gold) !important;
+    cursor: pointer;
+    transition: transform 0.35s ease, border-color 0.25s, background 0.25s, box-shadow 0.25s;
+    top: 12px !important;
+    right: 12px !important;
+}
+
+.close-btn::before {
+    content: '';
+    width: 14px;
+    height: 14px;
+    background-color: currentColor;
+    -webkit-mask: url('assets/icons/close.svg') center/contain no-repeat;
+    mask: url('assets/icons/close.svg') center/contain no-repeat;
+}
+
+.close-btn:hover {
+    transform: rotate(90deg);
+    border-color: var(--hp-gold);
+    background: rgba(127, 9, 9, 0.7);
+    color: #fff5c0 !important;
+    box-shadow: 0 0 12px var(--hp-gold-glow);
+}
+
+/* ============================================================
+   5. 主題色微調：紫色競技場 → 酒紅祖母綠對決感
+   ============================================================ */
+#duel-arena {
+    background:
+        radial-gradient(circle at 25% 130%, rgba(127, 9, 9, 0.35), transparent 55%),
+        radial-gradient(circle at 75% 130%, rgba(15, 77, 15, 0.35), transparent 55%),
+        linear-gradient(180deg, rgba(25, 18, 15, 0.7), rgba(10, 8, 8, 0.92)) !important;
+    border-bottom: 2px solid rgba(212, 175, 55, 0.35) !important;
+}
+
+/* ============================================================
+   6. boss-btn / genius-btn 色調收斂
+   ============================================================ */
+.boss-btn {
+    background: linear-gradient(to bottom,
+        var(--hp-red-dark) 0%,
+        #5a0707 60%,
+        #2a0303 100%) !important;
+    border-color: rgba(192, 57, 43, 0.7) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 180, 180, 0.15),
+        inset 0 -8px 16px rgba(255, 100, 50, 0.18),
+        0 4px 6px rgba(0, 0, 0, 0.5) !important;
+}
+.boss-btn:hover {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 200, 200, 0.25),
+        inset 0 -8px 20px rgba(255, 120, 60, 0.3),
+        0 0 18px var(--hp-red-bright) !important;
+}
+
+.genius-btn {
+    background: linear-gradient(to bottom, #1a2545, #0e1a40) !important;
+    border-color: rgba(180, 195, 230, 0.65) !important;
+    color: #d4dcf0 !important;
+}
+.genius-btn:hover {
+    border-color: #c0d0ff !important;
+    color: #fff !important;
+    box-shadow: 0 0 16px rgba(140, 170, 255, 0.55) !important;
+}
+
+/* ============================================================
+   7. 進度面板：等級 chip 從膠囊改為蠟封樣式
+   ============================================================ */
+.prog-level-chip {
+    border-radius: 50% !important;
+    width: 26px;
+    height: 26px;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px dashed rgba(212, 175, 55, 0.35) !important;
+    color: rgba(212, 175, 55, 0.55) !important;
+}
+.prog-level-chip.cleared {
+    background: radial-gradient(circle at 35% 30%,
+        #d44, #7f0909 60%, #4a0505) !important;
+    border: 1px solid #7f0909 !important;
+    color: #fff5c0 !important;
+    box-shadow:
+        inset -2px -2px 4px rgba(0, 0, 0, 0.5),
+        inset 2px 2px 3px rgba(255, 200, 200, 0.25),
+        0 0 6px rgba(127, 9, 9, 0.6) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* ============================================================
+   8. 標題字體升級（如載入了 Cinzel）
+   ------------------------------------------------------------
+   在 index.html <head> 加：
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap">
+   ============================================================ */
+.magical-text,
+.game-title,
+.menu-heading,
+#result-title,
+.tutorial-title,
+.story-speaker-name {
+    font-family: "Cinzel", "Georgia", serif;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+/* ============================================================
+   9. 鍵盤提示 key-hint：更像實體按鍵
+   ============================================================ */
+.key-hint {
+    background: linear-gradient(to bottom, #2a2520, #1a1612) !important;
+    border: 1px solid rgba(212, 175, 55, 0.45) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 220, 150, 0.15),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.4),
+        0 1px 2px rgba(0, 0, 0, 0.5) !important;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.8);
+}
+
+/* ============================================================
+   10. 競技場飄浮 emoji（如果無法移除）→ 半透明柔化
+   ============================================================ */
+.arena-floaty {
+    opacity: 0.15 !important;
+    filter: sepia(0.5) hue-rotate(-20deg);
+}
+
+/* ============================================================
+   11. Combo 文字：加描邊與背光，不再像純文字
+   ============================================================ */
+.combo-text {
+    text-shadow:
+        0 0 4px var(--hp-gold),
+        0 0 12px var(--hp-gold-glow),
+        2px 2px 0 #000,
+        -2px -2px 0 #000,
+        2px -2px 0 #000,
+        -2px 2px 0 #000 !important;
+}

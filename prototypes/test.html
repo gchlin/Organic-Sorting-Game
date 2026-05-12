@@ -26,8 +26,45 @@
     <script>
         const container = document.getElementById('container');
 
+        // ── 官能基圖片預覽（00_functional_groups，不需 data.js）──
+        const fgGroups = [
+            { id:"01", en:"alkane",          zh:"烷烴" },
+            { id:"02", en:"alkene",          zh:"烯烴" },
+            { id:"03", en:"alkyne",          zh:"炔烴" },
+            { id:"04", en:"alcohol",         zh:"醇" },
+            { id:"05", en:"aldehyde",        zh:"醛" },
+            { id:"06", en:"ketone",          zh:"酮" },
+            { id:"07", en:"carboxylic_acid", zh:"羧酸" },
+            { id:"08", en:"ester",           zh:"酯" },
+            { id:"09", en:"ether",           zh:"醚" },
+            { id:"10", en:"amine",           zh:"胺" },
+            { id:"11", en:"aromatic",        zh:"芳香烴" },
+            { id:"12", en:"halide",          zh:"鹵化物" },
+            { id:"13", en:"phenol",          zh:"酚" },
+            { id:"14", en:"aromatic_amine",  zh:"芳香胺" },
+        ];
+        const fgSection = document.createElement('div');
+        fgSection.className = 'level-section';
+        fgSection.innerHTML = '<h2>官能基圖片 / FUNCTIONAL GROUPS (共 14 張)</h2>';
+        const fgGrid = document.createElement('div');
+        fgGrid.className = 'grid';
+        fgGroups.forEach(g => {
+            const filename = `fg_${g.id}_${g.en}.svg`;
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <img src="../assets/images/00_functional_groups/${filename}"
+                     onerror="this.alt='❌ 找不到圖';">
+                <div class="name">${g.id}. ${g.zh}</div>
+                <div class="key">${filename}</div>
+            `;
+            fgGrid.appendChild(card);
+        });
+        fgSection.appendChild(fgGrid);
+        container.appendChild(fgSection);
+
         if (typeof QuestionSets === 'undefined' || typeof AnswerBank === 'undefined') {
-            container.innerHTML = "<h2 class='error'>錯誤：無法讀取 data.js，請確認檔案是否存在。</h2>";
+            container.innerHTML += "<h2 class='error'>錯誤：無法讀取 data.js，請確認檔案是否存在。</h2>";
         } else {
             // 遍歷所有關卡
             for (const [levelName, qList] of Object.entries(QuestionSets)) {
