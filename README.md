@@ -18,15 +18,25 @@
 | 6 | 綜合題（Level 1~5 混合） |
 | 99 | 資優全英挑戰（看圖選英文分類） |
 
+## 功能
+- **分類帽角色**：用 `Sorting_Hat.webp` 當身體、CSS 疊上眼睛/眉毛/嘴巴，會隨遊戲做表情（待機/答對/答錯/思考/眨眼），瞳孔還會追滑鼠。首頁標題、新手導覽、劇情對話框的「帽子」都是這個角色。
+- **新手導覽**：首次進站自動跳出 6 頁說明（怎麼玩、怎麼按、三種模式…）；首頁「新手導覽」按鈕可隨時重看。
+- **提示模式（自我修煉）**：預設關。按下方「💡 需要提示？」（或按 `H`）開啟後，答錯時分類帽會講清楚這題屬於哪一類、怎麼看出來；連錯兩題時也會提醒你開提示。
+- **圖鑑**：首頁「📔 圖鑑」。通過的關卡可回顧劇情（可收合）、看該關所有化合物的小知識卡片（結構圖+名稱，點開有工業用途/常見反應等一句說明），最後附該關梗圖。
+- **劇情**：每關答對率達 60%（≥4 題）通關後解鎖；結算頁按「✨ 解鎖劇情」（或按 `S`）播放，可用 `←/→` 翻頁、長按空白鍵跳過全部。
+- **勳章**：累積答對 10 / 50 / 200 / 500 / 1000 題各解鎖一枚，顯示在首頁進度面板。
+- **存檔**：自動存在瀏覽器 localStorage。可「📤 匯出存檔」下載成 `.json` 檔、「📥 匯入存檔」選檔案或貼文字還原、「🗑️ 重置」清空。
+
 ## 操作
 
 - 單人模式：滑鼠 / 觸控，或鍵盤 `A/F/Z/C`、數字鍵 / 小鍵盤 `4/6/1/3`，對應畫面 2x2 選項位置。
-- Duel 桌面模式：左側玩家用 `A/F/Z/C`，右側玩家用數字鍵 / 小鍵盤 `4/6/1/3`。
+- Duel 桌面模式：左側玩家用 `A/F/Z/C`，右側玩家用數字鍵 / 小鍵盤 `4/6/1/3`。Duel 兩邊題目順序相同（公平），選項順序各自隨機（防作弊）。
 - Duel 手機模式：維持橫放觸控版面。
-- 全域控制：遊戲中 `Esc` / `M` 返回大廳，`R` 重新開始本關；結算畫面 `Enter` / `R` 再次實驗，`Esc` / `M` 返回大廳。
-- 主選單快捷：`1-6` 開 Practice Level 1-6，`9` 開 Level 99，`Q/W/E` 開 Time Attack 三關，`U/I/O` 開 Duel 三關。
-- 方向鍵可在目前畫面中的按鈕間移動焦點，`Enter` / `Space` 執行目前選到的按鈕；可不用滑鼠完成關卡選擇、答題、返回與重開。畫面上的快捷鍵都以 `[A]`、`[4]` 這類中括弧提示。
-- 若未來提供自定義快捷鍵，只開放答題選項鍵；主選單與返回 / 重開 / 關閉等系統快捷鍵固定。
+- 遊戲中：`Esc`/`M` 返回大廳，`R` 重新開始本關，`H` 切換提示模式（自我修煉）。
+- 結算畫面：`Enter` 確認目前選到的按鈕，`N` 到下一關，`R` 再次練習，`S` 解鎖/重播劇情，`Esc`/`M` 返回大廳。
+- 主選單：`1-6` 開 Practice Level 1-6，`9` 開 Level 99，`Q/W/E` 開 Time Attack 三關，`U/I/O` 開 Duel 三關，`T` 新手導覽，`C` 圖鑑，`H` 看分類總表（若有）。
+- 方向鍵可在目前畫面中的按鈕間移動焦點，`Enter`/`Space` 執行；可全程不用滑鼠。畫面上的快捷鍵都以 `[A]`、`[4]`、`[H]` 這類中括弧提示。
+- 若未來提供自定義快捷鍵，只開放答題選項鍵；系統快捷鍵固定。
 
 ## 新增分子
 
@@ -48,19 +58,25 @@
 | 芳香烴 | 鄰-二甲苯、間-二甲苯、對-二甲苯、乙苯、萘 |
 | 酚 | 鄰-甲酚、間-甲酚、對-甲酚、兒茶酚、間苯二酚 |
 
-## 檔案
-- `index(organic).html` — 主頁面
-- `data(organic).js` — 答案庫 `AnswerBank` + 各關卡題庫 `QuestionSets`
-- `game(organic).js` — 遊戲邏輯
-- `style(organic).css` — 樣式
-- `assets/images/` — 化合物 SVG 結構式（81 個分子，14 個資料夾；題庫類別維持現有範圍，含 phenol 類）
-- `test.html` / `testquestion.html` — 測試頁面
+## 專案結構
+```
+index.html          主頁面（GitHub Pages 入口）
+game.js             遊戲邏輯
+data.js             答案庫 AnswerBank + 各關題庫 QuestionSets + 化合物小知識 CompoundFacts
+story.js            各關劇情腳本 StoryScripts
+save.js             本地存檔模組（localStorage）
+style.css           樣式
+assets/images/      化合物 SVG 結構式（14 個官能基資料夾）+ character/（分類帽圖）+ meme/（梗圖）
+docs/               設計與討論文件（設計決策清單、化學審查清單、AI 協作記錄等）
+prototypes/         實驗 / 早期測試頁（hat-demo、wizard-prototype、test、testquestion）
+examples/           範例存檔（full-unlock-save.json：全部通關，匯入即可測試圖鑑）
+```
 
-## 評估與討論文件
-- `claude_check.md` — Claude 的評估清單
-- `GAME_IMPROVEMENTS (gpt check).md` — GPT 的改進建議
-- `gpt and claude.md` — GPT × Claude 逐輪討論記錄
-- `assets/images/題庫擴充建議.md` — 分子題庫擴充草案與已新增項目來源
+## 部署到 GitHub Pages
+1. 把整個 repo push 到 GitHub。
+2. Repo → Settings → Pages → Source 選 `Deploy from a branch`，branch 選 `main`、資料夾 `/ (root)`。
+3. 幾分鐘後可在 `https://<帳號>.github.io/<repo>/` 開始玩（`index.html` 會自動當首頁）。
+> 只有 `index.html` + `*.js` + `style.css` + `assets/` 是執行必需；`docs/`、`prototypes/`、`examples/` 可留可不留，不影響遊戲。
 
 ---
 

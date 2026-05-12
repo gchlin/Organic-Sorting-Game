@@ -22,7 +22,7 @@
 
     <div id="container"></div>
 
-    <script src="data(organic).js"></script>
+    <script src="../data.js"></script>
     <script>
         const container = document.getElementById('container');
 
@@ -51,7 +51,7 @@
                     }
 
                     card.innerHTML = `
-                        <img src="${q.qContent}" onerror="this.src=''; this.alt='圖片路徑錯誤!'; this.style.color='red';">
+                        <img src="../${q.qContent}" onerror="this.src=''; this.alt='圖片路徑錯誤!'; this.style.color='red';">
                         <div class="name">${answerText}</div>
                         <div class="key">${q.aKey}</div>
                     `;

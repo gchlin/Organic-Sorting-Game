@@ -966,6 +966,19 @@ body.countdown-active .hat-display {
     50% { transform: translateY(-2px); box-shadow: 0 0 20px rgba(88, 214, 141, 0.85), inset 0 0 14px rgba(155, 231, 177, 0.24); }
 }
 
+/* 自我修煉的「提示模式」開關按鈕 */
+.practice-hint-btn {
+    display: block;
+    margin: 6px auto;
+    font-size: 0.9rem;
+    padding: 6px 14px;
+}
+.practice-hint-btn.hint-on {
+    border-color: var(--hp-gold);
+    background: linear-gradient(to bottom, #5a4a20, #3a3015);
+    box-shadow: 0 0 14px rgba(212,175,55,0.45);
+}
+
 .practice-why-hint {
     margin: 6px 0;
     padding: 8px 12px;
@@ -974,7 +987,7 @@ body.countdown-active .hat-display {
     background: rgba(20, 20, 25, 0.78);
     color: var(--hp-parchment);
     font-size: 1rem;
-    line-height: 1.35;
+    line-height: 1.4;
     text-align: center;
     box-shadow: 0 0 12px rgba(0,0,0,0.35);
 }

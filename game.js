@@ -46,15 +46,22 @@ const Game = (function() {
     // 主線關卡順序（決定「目前學到哪」→ 干擾選項只能從學過的分子裡抽）
     const MAIN_LEVELS = ['level1', 'level2', 'level3', 'level4', 'level5', 'level6'];
 
-    // 關卡資訊（名稱、對應梗圖檔名；圖鑑與「下一關」用）
+    // 關卡資訊（名稱、對應梗圖檔名陣列；圖鑑與「下一關」用）
+    // 梗圖命名規則：依關卡順序 → 第 N 關用 memeN.jpg；之後若一關有多張改成 ['memeN-1.jpg','memeN-2.jpg', …]
     const LEVEL_INFO = {
-        level1:  { name: 'Level 1：碳氫骨架基礎',      meme: 'meme1.jpg' },
-        level2:  { name: 'Level 2：單鍵氧家族（醇醚）', meme: 'meme2.jpg' },
-        level3:  { name: 'Level 3：雙鍵氧家族（醛酮）', meme: null },
-        level4:  { name: 'Level 4：雙氧複合（酸酯）',   meme: null },
-        level5:  { name: 'Level 5：雜原子與鹵素',      meme: null },
-        level6:  { name: 'Level 6：終極分類帽（綜合）', meme: null },
-        level99: { name: 'Level 99：資優全英挑戰',     meme: null },
+        level1:  { name: 'Level 1：碳氫骨架基礎',      memes: ['meme1.jpg'] },
+        level2:  { name: 'Level 2：單鍵氧家族（醇醚）', memes: ['meme2.jpg'] },
+        level3:  { name: 'Level 3：雙鍵氧家族（醛酮）', memes: ['meme3.jpg'] },
+        level4:  { name: 'Level 4：雙氧複合（酸酯）',   memes: ['meme4.jpg'] },
+        level5:  { name: 'Level 5：雜原子與鹵素',      memes: ['meme5.jpg'] },
+        level6:  { name: 'Level 6：終極分類帽（綜合）', memes: ['meme6.jpg'] },
+        level99: { name: 'Level 99：資優全英挑戰',     memes: ['meme7.jpg'] },
+    };
+    // 官能基類別中文名（提示文字用，讓玩家知道「這一類」到底是哪一類）
+    const CATEGORY_NAMES = {
+        alkane: '烷類', alkene: '烯類', alkyne: '炔類', alcohol: '醇', ether: '醚',
+        aldehyde: '醛', ketone: '酮', carboxylic: '羧酸', ester: '酯', amine: '胺',
+        aromatic: '芳香烴', halide: '鹵化物', phenol: '酚'
     };
     const LEVEL_ORDER = ['level1','level2','level3','level4','level5','level6','level99'];
     function _nextLevelKey(levelKey) {
@@ -126,9 +133,11 @@ const Game = (function() {
         CAT_PHENOL: 'phenol'
     };
     const COACH_LINES = {
-        intro: "先看結構裡最醒目的官能基，再選分類。",
+        intro: "先看結構裡最醒目的官能基，再選分類。需要提示就按下方的「💡 提示」。",
         correct: ["答對了，這頂帽子認同你的判斷。", "很好，官能基抓得準。", "分類成功，下一個結構。"],
-        streak: "連錯幾題時，先找氧、氮、鹵素，再看有沒有 C=O 或苯環。"
+        streak: "連錯幾題時，先找氧、氮、鹵素，再看有沒有 C=O 或苯環。",
+        // 開啟提示時，分類帽給的「怎麼看」判斷流程
+        guide: "判斷順序：① 有苯環嗎？②有 C=O 嗎—接 H 是醛、夾在中間是酮、配 -OH 是羧酸、配 -O-碳 是酯。③ 有 -OH 嗎—接苯環是酚、接飽和碳是醇；C-O-C 是醚。④ 有 N 是胺、有 F/Cl/Br/I 是鹵化物、有 C=C 是烯、C≡C 是炔；都沒有就是烷。"
     };
     let isDuelDesktop = false;
     let _devQuickWin = true;       // ← true 開啟測試模式（答對 DEV_WIN_AFTER 題即結算）；` 鍵也可即時切換
@@ -141,6 +150,7 @@ const Game = (function() {
     let practiceCoachEl = null;
     let practiceCoachBubbleEl = null;
     let practiceWhyEl = null;
+    let practiceHintBtn = null;
 
     const DUEL_WIN_TARGET = 8;
     const DUEL_READING_MS = 1500;
@@ -756,10 +766,16 @@ const Game = (function() {
         }
     }
 
+    let _practiceHintOn = false;   // 自我修煉的「提示模式」（預設關）
+
     function setupPracticeFeedback(mode) {
         ensurePracticeFeedbackUI();
+        _practiceHintOn = false;
+        _updatePracticeHintBtn();
+        if (practiceHintBtn) practiceHintBtn.classList.toggle('hidden', mode !== 'practice');
         if (mode === 'practice') {
             setPracticeCoachText(COACH_LINES.intro);
+            if (practiceWhyEl) { practiceWhyEl.textContent = ''; practiceWhyEl.classList.add('hidden'); }
         } else if (mode === 'speed') {
             setPracticeCoachText('⚡ 加油！');
         } else {
@@ -772,11 +788,40 @@ const Game = (function() {
         if (!practiceCoachBubbleEl) {
             practiceCoachBubbleEl = document.getElementById('practice-coach-bubble');
         }
+        if (!practiceHintBtn) {
+            practiceHintBtn = document.createElement('button');
+            practiceHintBtn.id = 'practice-hint-btn';
+            practiceHintBtn.className = 'btn magic-btn practice-hint-btn hidden';
+            practiceHintBtn.type = 'button';
+            practiceHintBtn.addEventListener('click', togglePracticeHint);
+            UI.qContainerP1.insertAdjacentElement('afterend', practiceHintBtn);
+            addButtonHint(practiceHintBtn, 'H');
+        }
         if (!practiceWhyEl) {
             practiceWhyEl = document.createElement('div');
             practiceWhyEl.id = 'practice-why-hint';
             practiceWhyEl.className = 'practice-why-hint hidden';
-            UI.qContainerP1.insertAdjacentElement('afterend', practiceWhyEl);
+            practiceHintBtn.insertAdjacentElement('afterend', practiceWhyEl);
+        }
+    }
+
+    function _updatePracticeHintBtn() {
+        if (!practiceHintBtn) return;
+        setBtnText(practiceHintBtn, _practiceHintOn ? '💡 提示模式：開（點此關閉）' : '💡 需要提示？');
+        practiceHintBtn.classList.toggle('hint-on', _practiceHintOn);
+    }
+
+    function togglePracticeHint() {
+        if (currentMode !== 'practice') return;
+        _practiceHintOn = !_practiceHintOn;
+        _updatePracticeHintBtn();
+        if (_practiceHintOn) {
+            setPracticeCoachText(COACH_LINES.guide);
+            // 若這題已經答錯過，順手把這題的詳細說明補上
+            if (practiceWrongStreak > 0) showPracticeWrongHint(true);
+        } else {
+            if (practiceWhyEl) { practiceWhyEl.textContent = ''; practiceWhyEl.classList.add('hidden'); }
+            setPracticeCoachText(COACH_LINES.intro);
         }
     }
 
@@ -986,10 +1031,11 @@ const Game = (function() {
                 });
                 html += `</div>`;
             }
-            // 3) 梗圖：只放圖、不寫字、擺最後（沒有就不顯示）
-            if (info.meme) {
-                html += `<img class="codex-meme-img" src="assets/images/meme/${info.meme}" alt="" loading="lazy">`;
-            }
+            // 3) 梗圖：只放圖、不寫字、擺最後（沒有就不顯示；一關可有多張）
+            const memes = (info.memes && info.memes.length) ? info.memes : (info.meme ? [info.meme] : []);
+            memes.forEach(m => {
+                html += `<img class="codex-meme-img" src="assets/images/meme/${m}" alt="" loading="lazy">`;
+            });
         }
 
         UI.codexDetailBody.innerHTML = html;
@@ -1772,6 +1818,11 @@ const Game = (function() {
                 startGame(currentMode, currentLevel);
                 return true;
             }
+            if (e.code === 'KeyH' && currentMode === 'practice') {
+                e.preventDefault();
+                togglePracticeHint();
+                return true;
+            }
         }
 
         return false;
@@ -2011,21 +2062,43 @@ const Game = (function() {
         container.querySelectorAll('.reveal-correct').forEach(el => el.classList.remove('reveal-correct'));
     }
 
-    function showPracticeWrongHint() {
-        if (currentMode !== 'practice') return;
+    function _categoryNameOf(answerKey) {
+        const cat = getAnswerCategory(answerKey);
+        return (cat && CATEGORY_NAMES[cat]) ? CATEGORY_NAMES[cat] : '這一類';
+    }
 
-        practiceWrongStreak++;
-        const hint = getWhyHintForAnswer(correctAnswerKey);
-        if (!hint) return;
+    // fromToggle = true 表示是玩家剛按下「提示」、把這題已答錯的詳細說明補上（不再 +1 連錯數）
+    function showPracticeWrongHint(fromToggle) {
+        if (currentMode !== 'practice') return;
+        if (!fromToggle) practiceWrongStreak++;
 
         ensurePracticeFeedbackUI();
-        practiceWhyEl.textContent = `這個結構${hint}，所以歸在這一類。`;
-        practiceWhyEl.classList.remove('hidden');
+        const hint = getWhyHintForAnswer(correctAnswerKey);
+        const catName = _categoryNameOf(correctAnswerKey);
+        const ab = (typeof AnswerBank !== 'undefined') ? AnswerBank[correctAnswerKey] : null;
+        const molName = ab ? ab.content : '';
 
-        const coachText = practiceWrongStreak >= 3
-            ? `再看一次，這個結構${hint}。${COACH_LINES.streak}`
-            : `沒看出來嗎？這個結構${hint}，所以歸在這一類。`;
-        setPracticeCoachText(coachText);
+        if (_practiceHintOn) {
+            // 提示模式開：講清楚——這是哪一類、怎麼看出來的
+            const why = hint ? `——${hint}。` : '。';
+            practiceWhyEl.textContent = `${molName ? `「${molName}」` : '這個結構'}屬於「${catName}」${why}`;
+            practiceWhyEl.classList.remove('hidden');
+            const coachText = practiceWrongStreak >= 3
+                ? `${molName ? `「${molName}」` : '這個結構'}是「${catName}」${why}${COACH_LINES.streak}`
+                : COACH_LINES.guide;
+            setPracticeCoachText(coachText);
+        } else {
+            // 提示模式關：不直接給答案，連錯兩次就提醒怎麼打開提示
+            practiceWhyEl.textContent = '';
+            practiceWhyEl.classList.add('hidden');
+            if (practiceWrongStreak >= 3) {
+                setPracticeCoachText('還是卡關？按一下下方的「💡 需要提示？」（或按 H），我就講清楚怎麼判斷。');
+            } else if (practiceWrongStreak === 2) {
+                setPracticeCoachText('連錯兩題了——按下方的「💡 需要提示？」（或按 H），我就告訴你這題該看哪裡。');
+            } else {
+                setPracticeCoachText('再看一次。先找最醒目的官能基。');
+            }
+        }
         // 答錯的「失望」過後，帽子轉成「思考」陪你看提示
         setTimeout(() => { if (isVisible(UI.game) && currentMode === 'practice') setHatExpr('thinking'); }, 1500);
     }
