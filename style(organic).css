@@ -322,24 +322,28 @@ body, html {
 /* 帽子 + 說話泡泡的包裝 */
 .hat-coach-wrap {
     flex-shrink: 0;
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 6px;
 }
 
 .hat-display {
     flex-shrink: 0;
     align-self: center;
-    width:  clamp(48px, 7vw, 72px);
-    height: clamp(48px, 7vw, 72px);
+    height: 70%;            /* 題目區高度的 70% */
+    width:  auto;
+    aspect-ratio: 1 / 1;
+    min-height: 48px;
     filter: drop-shadow(0 0 8px rgba(212,175,55,0.55));
     user-select: none;
     pointer-events: none;
 }
 body.duel-desktop .hat-display {
-    width:  clamp(36px, 4vw, 52px);
-    height: clamp(36px, 4vw, 52px);
+    height: 55%;
+    min-height: 36px;
 }
 body.duel-mode .wizard-avatar {
     display: none;
@@ -1078,14 +1082,81 @@ body.countdown-active .hat-display {
     gap: 8px;
 }
 
-/* 結算頁解鎖故事的按鈕 */
+/* 結算頁解鎖故事的按鈕（顯示與否由 .hidden class 控制） */
 #btn-show-story {
-    display: none;
     margin-top: 10px;
 }
 
-#btn-show-story.visible {
-    display: inline-block;
+/* ===== 圖鑑 Modal ===== */
+.codex-modal-content {
+    max-width: 640px;
+    width: 94vw;
+    max-height: 88vh;
+    overflow-y: auto;
+    text-align: center;
+}
+.codex-subtitle {
+    color: var(--hp-parchment-dark);
+    font-size: 0.9rem;
+    margin: 6px 0 16px;
+}
+.codex-level-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.codex-level-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    text-align: left;
+    border: 2px solid rgba(212,175,55,0.4);
+    background: rgba(30,20,45,0.85);
+    color: var(--hp-parchment);
+    border-radius: 8px;
+    cursor: pointer;
+}
+.codex-level-card.cleared { border-color: rgba(120,200,120,0.6); }
+.codex-level-card.locked { opacity: 0.6; }
+.codex-level-card:hover { background: rgba(50,35,70,0.95); }
+.codex-lv-name { font-weight: bold; }
+.codex-lv-state { font-size: 0.85rem; white-space: nowrap; margin-left: 12px; }
+
+.codex-detail { text-align: left; }
+.codex-detail h3 { text-align: center; margin: 12px 0; }
+#btn-codex-back { margin-bottom: 8px; }
+.codex-section-title {
+    font-weight: bold;
+    color: var(--hp-gold);
+    margin: 16px 0 8px;
+    border-bottom: 1px solid rgba(212,175,55,0.3);
+    padding-bottom: 4px;
+}
+.codex-story { display: flex; flex-direction: column; gap: 8px; }
+.codex-line {
+    margin: 0;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: rgba(20,12,35,0.7);
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+.codex-line-hat strong { color: var(--hp-gold); }
+.codex-line-wiz strong { color: #fff; }
+.codex-meme-img {
+    display: block;
+    max-width: 100%;
+    max-height: 60vh;
+    margin: 8px auto 0;
+    border-radius: 8px;
+    border: 1px solid rgba(212,175,55,0.4);
+}
+.codex-locked-msg {
+    text-align: center;
+    color: var(--hp-parchment-dark);
+    padding: 20px;
+    font-size: 0.95rem;
 }
 
 /* ===== 角色選擇彈窗 ===== */

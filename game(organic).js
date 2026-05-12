@@ -45,6 +45,23 @@ const Game = (function() {
     let questionQueueLevel = null;
     // 主線關卡順序（決定「目前學到哪」→ 干擾選項只能從學過的分子裡抽）
     const MAIN_LEVELS = ['level1', 'level2', 'level3', 'level4', 'level5', 'level6'];
+
+    // 關卡資訊（名稱、對應梗圖檔名；圖鑑與「下一關」用）
+    const LEVEL_INFO = {
+        level1:  { name: 'Level 1：碳氫骨架基礎',      meme: 'meme1.jpg' },
+        level2:  { name: 'Level 2：單鍵氧家族（醇醚）', meme: 'meme2.jpg' },
+        level3:  { name: 'Level 3：雙鍵氧家族（醛酮）', meme: null },
+        level4:  { name: 'Level 4：雙氧複合（酸酯）',   meme: null },
+        level5:  { name: 'Level 5：雜原子與鹵素',      meme: null },
+        level6:  { name: 'Level 6：終極分類帽（綜合）', meme: null },
+        level99: { name: 'Level 99：資優全英挑戰',     meme: null },
+    };
+    const LEVEL_ORDER = ['level1','level2','level3','level4','level5','level6','level99'];
+    function _nextLevelKey(levelKey) {
+        const i = LEVEL_ORDER.indexOf(levelKey);
+        return (i >= 0 && i < LEVEL_ORDER.length - 1) ? LEVEL_ORDER[i + 1] : null;
+    }
+    let _autoStoryTimer = null;   // endGame 後自動播劇情的計時器（換頁時要清掉）
     const DESKTOP_DUEL_QUERY = '(min-width: 900px) and (pointer: fine)';
     const ANSWER_KEY_BINDINGS = {
         solo: [
@@ -174,6 +191,7 @@ const Game = (function() {
         resultMsg: document.getElementById('result-msg'),
         resultStats: document.getElementById('result-stats'),
         btnRestart: document.getElementById('btn-restart'),
+        btnNextLevel: document.getElementById('btn-next-level'),
         btnMenu: document.getElementById('btn-menu'),
         btnBack: document.getElementById('btn-back'),
         btnShowRef: document.getElementById('btn-show-ref'),
@@ -196,7 +214,15 @@ const Game = (function() {
         wizardGrid: document.getElementById('wizard-grid'),
         customNameInput: document.getElementById('custom-name-input'),
         btnPickerConfirm: document.getElementById('btn-picker-confirm'),
-        btnPickerCancel: document.getElementById('btn-picker-cancel')
+        btnPickerCancel: document.getElementById('btn-picker-cancel'),
+        codexModal: document.getElementById('codex-modal'),
+        btnOpenCodex: document.getElementById('btn-open-codex'),
+        btnCloseCodex: document.getElementById('btn-close-codex'),
+        codexLevelList: document.getElementById('codex-level-list'),
+        codexDetail: document.getElementById('codex-detail'),
+        codexDetailTitle: document.getElementById('codex-detail-title'),
+        codexDetailBody: document.getElementById('codex-detail-body'),
+        btnCodexBack: document.getElementById('btn-codex-back')
     };
 
     // 音效 Context
@@ -442,6 +468,13 @@ const Game = (function() {
         UI.btnBack.addEventListener('click', showMenu);
         UI.btnMenu.addEventListener('click', showMenu);
         UI.btnRestart.addEventListener('click', () => startGame(currentMode, currentLevel));
+        if (UI.btnNextLevel) UI.btnNextLevel.addEventListener('click', () => {
+            const nextLv = _nextLevelKey(currentLevel);
+            if (nextLv) startGame(currentMode, nextLv);
+        });
+        if (UI.btnOpenCodex) UI.btnOpenCodex.addEventListener('click', openCodex);
+        if (UI.btnCloseCodex) UI.btnCloseCodex.addEventListener('click', closeCodex);
+        if (UI.btnCodexBack) UI.btnCodexBack.addEventListener('click', codexShowList);
         if (UI.btnShowRef) UI.btnShowRef.addEventListener('click', showReference);
         if (UI.btnCloseRef) {
             UI.btnCloseRef.setAttribute('role', 'button');
@@ -461,9 +494,11 @@ const Game = (function() {
 
         if (UI.btnShowStory) {
             UI.btnShowStory.addEventListener('click', () => {
+                if (_autoStoryTimer) { clearTimeout(_autoStoryTimer); _autoStoryTimer = null; }
                 UI.resultModal.classList.add('hidden');
                 showStory(currentLevel, () => {
                     UI.resultModal.classList.remove('hidden');
+                    _focusResultDefault();
                 });
             });
         }
@@ -541,6 +576,7 @@ const Game = (function() {
 
     // --- 遊戲流程 ---
     function startGame(mode, level) {
+        if (_autoStoryTimer) { clearTimeout(_autoStoryTimer); _autoStoryTimer = null; }
         currentMode = mode;
         currentLevel = level;
         gameActive = true;
@@ -768,6 +804,7 @@ const Game = (function() {
     function showMenu() {
         gameActive = false;
         clearInterval(timerInterval);
+        if (_autoStoryTimer) { clearTimeout(_autoStoryTimer); _autoStoryTimer = null; }
         ['p1', 'p2'].forEach(p => {
             if (readingTimers[p]) { clearTimeout(readingTimers[p]); readingTimers[p] = null; }
         });
@@ -776,6 +813,7 @@ const Game = (function() {
         UI.game.classList.add('hidden');
         UI.resultModal.classList.add('hidden');
         if (UI.storyModal) UI.storyModal.classList.add('hidden');
+        if (UI.codexModal) UI.codexModal.classList.add('hidden');
         UI.menu.classList.remove('hidden');
         document.body.classList.remove('duel-mode', 'duel-desktop', 'duel-mobile', 'countdown-active');
         updateMenuProgress();
@@ -790,6 +828,78 @@ const Game = (function() {
     function closeReference() {
         if (UI.refModal) UI.refModal.classList.add('hidden');
         if (UI.btnShowRef && !UI.btnShowRef.classList.contains('hidden')) UI.btnShowRef.focus();
+    }
+
+    // --- 圖鑑 (Codex) ---
+    function openCodex() {
+        codexShowList();
+        if (UI.codexModal) UI.codexModal.classList.remove('hidden');
+        if (UI.btnCloseCodex) try { UI.btnCloseCodex.focus(); } catch(e) {}
+    }
+    function closeCodex() {
+        if (UI.codexModal) UI.codexModal.classList.add('hidden');
+        if (UI.btnOpenCodex) try { UI.btnOpenCodex.focus(); } catch(e) {}
+    }
+    function codexShowList() {
+        if (UI.codexDetail) UI.codexDetail.classList.add('hidden');
+        if (UI.codexLevelList) UI.codexLevelList.classList.remove('hidden');
+        _buildCodexList();
+    }
+    function _buildCodexList() {
+        if (!UI.codexLevelList) return;
+        UI.codexLevelList.innerHTML = '';
+        LEVEL_ORDER.forEach(lv => {
+            const info = LEVEL_INFO[lv];
+            if (!info) return;
+            const cleared = (typeof Save !== 'undefined') && Save.isLevelCleared(lv);
+            const card = document.createElement('button');
+            card.className = 'btn codex-level-card' + (cleared ? ' cleared' : ' locked');
+            card.innerHTML = `<span class="codex-lv-name">${info.name}</span>
+                              <span class="codex-lv-state">${cleared ? '✅ 已通過' : '🔒 未通過'}</span>`;
+            card.disabled = false;
+            card.addEventListener('click', () => codexShowLevel(lv));
+            UI.codexLevelList.appendChild(card);
+        });
+    }
+    function codexShowLevel(lv) {
+        const info = LEVEL_INFO[lv];
+        if (!info || !UI.codexDetail) return;
+        const cleared = (typeof Save !== 'undefined') && Save.isLevelCleared(lv);
+        UI.codexDetailTitle.textContent = info.name;
+        let html = '';
+
+        // 劇情
+        const script = (typeof StoryScripts !== 'undefined') ? StoryScripts[lv] : null;
+        if (!cleared) {
+            html += `<p class="codex-locked-msg">🔒 通過這一關後即可在這裡回顧劇情與梗圖。</p>`;
+        } else if (script && script.length) {
+            html += `<div class="codex-section-title">📖 劇情</div>`;
+            html += `<div class="codex-story">`;
+            script.forEach(line => {
+                const who = line.who === 'wiz'
+                    ? `${wizardPersonas.p1.emoji} ${wizardPersonas.p1.name}`
+                    : '🎩 分類帽';
+                const cls = line.who === 'wiz' ? 'codex-line-wiz' : 'codex-line-hat';
+                const text = line.text.replace(/\{name\}/g, wizardPersonas.p1.name || '你');
+                html += `<p class="codex-line ${cls}"><strong>${who}：</strong>${text}</p>`;
+            });
+            html += `</div>`;
+        }
+
+        // 梗圖
+        if (cleared) {
+            html += `<div class="codex-section-title">🖼️ 梗圖</div>`;
+            if (info.meme) {
+                html += `<img class="codex-meme-img" src="assets/images/meme/${info.meme}" alt="${info.name} 梗圖" loading="lazy">`;
+            } else {
+                html += `<p class="codex-locked-msg">😶 這一關的梗圖製作中…</p>`;
+            }
+        }
+
+        UI.codexDetailBody.innerHTML = html;
+        UI.codexLevelList.classList.add('hidden');
+        UI.codexDetail.classList.remove('hidden');
+        if (UI.btnCodexBack) try { UI.btnCodexBack.focus(); } catch(e) {}
     }
 
     function isVisible(el) {
@@ -837,7 +947,8 @@ const Game = (function() {
         });
 
         addButtonHint(UI.btnBack, 'Esc / M');
-        addButtonHint(UI.btnRestart, 'Enter / R');
+        addButtonHint(UI.btnRestart, 'R');
+        addButtonHint(UI.btnNextLevel, 'Enter / N');
         addButtonHint(UI.btnMenu, 'Esc / M');
         addButtonHint(UI.btnShowRef, 'H');
 
@@ -943,6 +1054,13 @@ const Game = (function() {
         }
     }
 
+    function _storyBack() {
+        if (_storyIdx > 0) {
+            _storyIdx--;
+            _storyRenderLine(_storyIdx);
+        }
+    }
+
     function _storyClose(finished) {
         UI.storyModal.classList.add('hidden');
         if (_storyOnDone) { const cb = _storyOnDone; _storyOnDone = null; cb(finished); }
@@ -967,10 +1085,15 @@ const Game = (function() {
     function endGame(resultType, winner) {
         gameActive = false;
         clearInterval(timerInterval);
+        if (_autoStoryTimer) { clearTimeout(_autoStoryTimer); _autoStoryTimer = null; }
         ['p1', 'p2'].forEach(p => {
             if (readingTimers[p]) { clearTimeout(readingTimers[p]); readingTimers[p] = null; }
         });
         UI.resultModal.classList.remove('hidden');
+
+        // 「到下一關」按鈕：練習/競速/對決都導到 LEVEL_ORDER 的下一關（同模式）；沒有下一關就隱藏
+        const nextLv = _nextLevelKey(currentLevel);
+        if (UI.btnNextLevel) UI.btnNextLevel.classList.toggle('hidden', !nextLv);
         
         let title = "", msg = "";
         if (currentMode === 'duel') {
@@ -1013,16 +1136,28 @@ const Game = (function() {
             if (hasScript && metThreshold) {
                 UI.btnShowStory.textContent = alreadyUnlocked ? '📖 重播劇情' : '✨ 解鎖劇情！';
                 UI.btnShowStory.classList.remove('hidden');
-                setTimeout(() => {
+                _autoStoryTimer = setTimeout(() => {
+                    _autoStoryTimer = null;
+                    if (!isVisible(UI.resultModal)) return; // 玩家已離開結算頁就不要硬跳劇情
                     UI.resultModal.classList.add('hidden');
                     showStory(currentLevel, () => {
                         UI.resultModal.classList.remove('hidden');
+                        _focusResultDefault();
                     });
                 }, 1200);
             } else {
                 UI.btnShowStory.classList.add('hidden');
             }
         }
+
+        _focusResultDefault();
+    }
+
+    // 結算頁預設聚焦「到下一關」（沒有就退而求其次聚焦「再次實驗」）
+    function _focusResultDefault() {
+        const target = (UI.btnNextLevel && !UI.btnNextLevel.classList.contains('hidden'))
+            ? UI.btnNextLevel : UI.btnRestart;
+        if (target) try { target.focus(); } catch(e) {}
     }
 
     function getRandomMsg(type) {
@@ -1261,19 +1396,29 @@ const Game = (function() {
     }
 
     function handleKeyboardInput(e) {
-        if (e.repeat) return;
-
-        // 劇情對話框鍵盤
+        // 劇情對話框鍵盤（在 e.repeat 檢查前，因為長按空白鍵 = 略過全部）
         if (isVisible(UI.storyModal)) {
-            if (e.code === 'Enter' || e.code === 'Space' || e.code === 'ArrowRight') {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (e.repeat) UI.btnStorySkip.click();   // 長按 → 略過全部
+                else UI.btnStoryNext.click();            // 單按 → 下一句
+                return;
+            }
+            if (e.repeat) return;
+            if (e.code === 'Enter' || e.code === 'ArrowRight') {
                 e.preventDefault();
                 UI.btnStoryNext.click();
-            } else if (e.code === 'Escape' || e.code === 'ArrowLeft') {
+            } else if (e.code === 'ArrowLeft') {
+                e.preventDefault();
+                _storyBack();                            // ← 上一句
+            } else if (e.code === 'Escape') {
                 e.preventDefault();
                 UI.btnStorySkip.click();
             }
             return;
         }
+
+        if (e.repeat) return;
 
         // 魔法師選擇框優先接管鍵盤
         if (isVisible(UI.wizardPicker)) {
@@ -1371,17 +1516,33 @@ const Game = (function() {
         }
 
         if (isVisible(UI.resultModal)) {
-            if (e.code === 'KeyR' || e.code === 'Enter') {
+            const nextAvail = UI.btnNextLevel && !UI.btnNextLevel.classList.contains('hidden');
+            if (e.code === 'Enter') {
                 e.preventDefault();
-                startGame(currentMode, currentLevel);
+                const f = document.activeElement;
+                if (f && [UI.btnRestart, UI.btnNextLevel, UI.btnMenu, UI.btnShowStory].includes(f) && !f.classList.contains('hidden')) {
+                    f.click();
+                } else if (nextAvail) {
+                    UI.btnNextLevel.click();
+                } else {
+                    UI.btnRestart.click();
+                }
                 return true;
             }
-            if (e.code === 'KeyM' || e.code === 'Escape') {
-                e.preventDefault();
-                showMenu();
-                return true;
-            }
+            if (e.code === 'KeyR') { e.preventDefault(); UI.btnRestart.click(); return true; }
+            if (e.code === 'KeyN' && nextAvail) { e.preventDefault(); UI.btnNextLevel.click(); return true; }
+            if (e.code === 'KeyM' || e.code === 'Escape') { e.preventDefault(); showMenu(); return true; }
             return false;
+        }
+
+        if (isVisible(UI.codexModal)) {
+            if (e.code === 'Escape' || e.code === 'KeyX') {
+                e.preventDefault();
+                if (UI.codexDetail && !UI.codexDetail.classList.contains('hidden')) codexShowList();
+                else closeCodex();
+            }
+            // 圖鑑開著時消化所有快捷鍵（避免觸發底下選單的關卡捷徑）；不 preventDefault 讓 Tab/Enter 原生行為仍可用
+            return true;
         }
 
         if (isVisible(UI.menu)) {
@@ -1416,6 +1577,7 @@ const Game = (function() {
     }
 
     function getActivePanel() {
+        if (isVisible(UI.codexModal)) return UI.codexModal;
         if (isVisible(UI.refModal)) return UI.refModal;
         if (isVisible(UI.resultModal)) return UI.resultModal;
         if (isVisible(UI.menu)) return UI.menu;
