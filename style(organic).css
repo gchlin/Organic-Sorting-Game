@@ -361,10 +361,10 @@ body.duel-mode .wizard-avatar {
 .arena-center-hat {
     position: absolute;
     left: 50%;
-    bottom: 14px;
+    bottom: 10px;
     transform: translateX(-50%);
-    width: 60px;
-    height: 60px;
+    width: clamp(40px, 10vh, 64px);
+    height: clamp(40px, 10vh, 64px);
     filter: drop-shadow(0 0 10px rgba(212,175,55,0.8));
     pointer-events: none;
 }
@@ -1010,8 +1010,7 @@ body.countdown-active .hat-display {
 .story-speaker-name {
     font-size: 1.1rem;
     font-weight: bold;
-    color: var(--hp-gold);
-    text-shadow: 0 0 8px rgba(212,175,55,0.5);
+    color: #7f0909;            /* 羊皮紙底 → 深紅色，分類帽 */
     letter-spacing: 0.05em;
 }
 
@@ -1040,8 +1039,7 @@ body.countdown-active .hat-display {
 }
 
 .story-modal-content.speaker-wiz .story-speaker-name {
-    color: #ffffff;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    color: #1a5c1a;            /* 羊皮紙底 → 深綠色，魔法師（玩家） */
 }
 
 .story-footer {
@@ -1096,7 +1094,7 @@ body.countdown-active .hat-display {
     text-align: center;
 }
 .codex-subtitle {
-    color: var(--hp-parchment-dark);
+    color: #5a4a3a;
     font-size: 0.9rem;
     margin: 6px 0 16px;
 }
@@ -1128,9 +1126,9 @@ body.countdown-active .hat-display {
 #btn-codex-back { margin-bottom: 8px; }
 .codex-section-title {
     font-weight: bold;
-    color: var(--hp-gold);
+    color: #7f0909;
     margin: 16px 0 8px;
-    border-bottom: 1px solid rgba(212,175,55,0.3);
+    border-bottom: 1px solid rgba(124,30,30,0.35);
     padding-bottom: 4px;
 }
 .codex-story { display: flex; flex-direction: column; gap: 8px; }
@@ -1154,7 +1152,7 @@ body.countdown-active .hat-display {
 }
 .codex-locked-msg {
     text-align: center;
-    color: var(--hp-parchment-dark);
+    color: #5a4a3a;
     padding: 20px;
     font-size: 0.95rem;
 }
@@ -1285,10 +1283,12 @@ body.countdown-active .hat-display {
    對決競技場 (Duel Arena) — 桌面 Duel 專用 juice 層
    =================================================== */
 
+/* 競技場高度：跟著視窗高度縮放，避免在矮視窗把選項擠出畫面被裁掉 */
+body.duel-desktop { --arena-h: clamp(84px, 20vh, 150px); }
 #duel-arena {
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 155px;
+    height: var(--arena-h, 150px);
     z-index: 15;
     pointer-events: none;
     overflow: hidden;
@@ -1298,9 +1298,9 @@ body.countdown-active .hat-display {
     border-bottom: 2px solid rgba(90,60,140,.45);
 }
 
-/* 桌面 Duel 顯示競技場，玩家區域下移 */
+/* 桌面 Duel 顯示競技場，玩家區域下移（padding 與 arena 高度一致） */
 body.duel-desktop #duel-arena { display: block; }
-body.duel-desktop #game-area  { padding-top: 155px; }
+body.duel-desktop #game-area  { padding-top: var(--arena-h, 150px); }
 /* 手機 Duel：隱藏競技場（空間不足） */
 body.duel-mobile  #duel-arena { display: none; }
 
@@ -1329,7 +1329,7 @@ body.duel-mobile  #duel-arena { display: none; }
     user-select: none;
     pointer-events: none;
 }
-.arena-wiz-emoji { font-size: 4rem; display: block; }
+.arena-wiz-emoji { font-size: clamp(2rem, 8vh, 4rem); display: block; }
 .arena-wiz-label {
     display: block;
     font-size: .68rem;

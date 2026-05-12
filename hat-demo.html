@@ -2,129 +2,327 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>分類帽動畫 Demo</title>
+<title>分類帽助理 Demo — Clippy 風格 + CSS 表情</title>
 <style>
+  :root {
+    --gold: #d4af37;
+  }
+  * { box-sizing: border-box; }
   body {
-    background: #1a0a2e;
+    margin: 0;
+    background: radial-gradient(circle at 50% 30%, #2a1448, #120824);
+    color: #f0e6c8;
+    font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding: 30px 16px 60px;
+    gap: 24px;
+  }
+  h1 { color: var(--gold); margin: 0; font-size: 1.4rem; }
+  .hint { opacity: 0.6; font-size: 0.85rem; text-align: center; max-width: 560px; line-height: 1.5; }
+
+  /* ============================================================
+     分類帽助理：Sorting_Hat.webp 當身體 + CSS 疊上去的眼睛
+     表情切換靠 .hat-assistant 加 class：
+       neutral / happy / sad / surprised / thinking / wink / annoyed / sleepy
+     ============================================================ */
+  .hat-assistant {
+    position: relative;
+    width: 180px;
+    height: 200px;
+    cursor: pointer;
+    user-select: none;
+    --eye-y: 52%;           /* 眼睛縱向位置（依素材調整） */
+    --eye-dx: 22px;         /* 兩眼間距的一半 */
+    --eye-w: 26px;
+    --eye-h: 30px;
+    --pupil: 11px;
+    animation: hatBob 3.4s ease-in-out infinite;
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,.5));
+  }
+  .hat-assistant .hat-img {
+    position: absolute;
+    inset: 0;
+    background: url('assets/images/character/Sorting_Hat.webp') no-repeat center / contain;
+  }
+
+  /* 眼睛：白眼球 + 黑瞳孔；放在帽子摺痕大概的位置 */
+  .eye {
+    position: absolute;
+    top: var(--eye-y);
+    width: var(--eye-w);
+    height: var(--eye-h);
+    background: #f4f0e2;
+    border: 2px solid #2a1c10;
+    border-radius: 50%;
+    box-shadow: inset 0 -3px 4px rgba(0,0,0,.15);
+    overflow: hidden;
+    transition: height .15s ease, transform .2s ease, border-radius .2s ease;
+  }
+  .eye.left  { left:  calc(50% - var(--eye-dx) - var(--eye-w)); }
+  .eye.right { left:  calc(50% + var(--eye-dx)); }
+  .pupil {
+    position: absolute;
+    left: 50%; top: 52%;
+    width: var(--pupil);
+    height: var(--pupil);
+    background: radial-gradient(circle at 35% 30%, #555, #000 60%);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: transform .18s ease;
+  }
+  /* 高光點 */
+  .pupil::after {
+    content: '';
+    position: absolute;
+    left: 22%; top: 18%;
+    width: 28%; height: 28%;
+    background: rgba(255,255,255,.85);
+    border-radius: 50%;
+  }
+  /* 眉毛（只在某些表情出現） */
+  .brow {
+    position: absolute;
+    top: calc(var(--eye-y) - 12px);
+    width: calc(var(--eye-w) + 6px);
+    height: 5px;
+    background: #2a1c10;
+    border-radius: 3px;
+    opacity: 0;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  .brow.left  { left: calc(50% - var(--eye-dx) - var(--eye-w) - 3px); transform-origin: right center; }
+  .brow.right { left: calc(50% + var(--eye-dx) - 3px); transform-origin: left center; }
+
+  /* ---- 眨眼（自動，所有表情共用，除了 surprised/sleepy 例外處理）---- */
+  @keyframes blink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    96%           { transform: scaleY(0.08); }
+  }
+  .hat-assistant:not(.surprised):not(.sleepy) .eye {
+    animation: blink 4.2s infinite;
+  }
+  .hat-assistant:not(.surprised):not(.sleepy) .eye.right { animation-delay: .05s; }
+
+  @keyframes hatBob {
+    0%,100% { transform: translateY(0) rotate(-1.5deg); }
+    50%     { transform: translateY(-8px) rotate(1.5deg); }
+  }
+
+  /* ================= 各種表情 ================= */
+  /* 開心：眼睛變成 ^ ^（下半圓彎月） */
+  .hat-assistant.happy .eye {
+    height: calc(var(--eye-h) * 0.5);
+    border-radius: 0 0 999px 999px / 0 0 60px 60px;
+    border-top-color: transparent;
+    background: #f4f0e2;
+  }
+  .hat-assistant.happy .pupil { display: none; }
+
+  /* 難過：眼睛往下垂、瞳孔朝下，眉毛內八 */
+  .hat-assistant.sad .pupil { transform: translate(-50%, 10%); }
+  .hat-assistant.sad .brow { opacity: 1; }
+  .hat-assistant.sad .brow.left  { transform: rotate(18deg)  translateY(2px); }
+  .hat-assistant.sad .brow.right { transform: rotate(-18deg) translateY(2px); }
+
+  /* 驚訝：眼睛睜大、瞳孔縮小 */
+  .hat-assistant.surprised .eye { height: calc(var(--eye-h) * 1.25); transform: translateY(-2px); }
+  .hat-assistant.surprised .pupil { width: 7px; height: 7px; }
+
+  /* 思考：眼睛往上看（瞳孔上移），單邊挑眉 */
+  .hat-assistant.thinking .pupil { transform: translate(-30%, -90%); }
+  .hat-assistant.thinking .brow.right { opacity: 1; transform: rotate(-12deg) translateY(-3px); }
+
+  /* 眨單眼（wink）：右眼閉、左眼正常笑 */
+  .hat-assistant.wink .eye.right { height: 4px; }
+  .hat-assistant.wink .eye.left  { height: calc(var(--eye-h) * 0.6); border-radius: 0 0 999px 999px; border-top-color: transparent; }
+  .hat-assistant.wink .eye.left .pupil { display: none; }
+  .hat-assistant.wink .eye.right { animation: none; }
+
+  /* 不爽 / 翻白眼（annoyed）：眼皮半垂（從上方蓋一半），眉壓低 */
+  .hat-assistant.annoyed .eye::before {
+    content: '';
+    position: absolute;
+    left: -2px; right: -2px; top: -2px;
+    height: 55%;
+    background: #2a1c10;
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  }
+  .hat-assistant.annoyed .pupil { transform: translate(-50%, -10%); }
+  .hat-assistant.annoyed .brow { opacity: 1; }
+  .hat-assistant.annoyed .brow.left  { transform: rotate(-14deg); }
+  .hat-assistant.annoyed .brow.right { transform: rotate(14deg);  }
+
+  /* 想睡（sleepy）：眼睛剩一條線、慢慢上下 */
+  .hat-assistant.sleepy .eye { height: 5px; animation: sleepyLine 2.6s ease-in-out infinite; }
+  @keyframes sleepyLine { 0%,100%{ height:5px; } 50%{ height:9px; } }
+
+  /* ================= 互動：滑鼠移動時瞳孔追蹤（JS） ================= */
+
+  /* ================= Demo 區塊 ================= */
+  .stage {
+    display: flex;
+    gap: 50px;
+    flex-wrap: wrap;
     justify-content: center;
-    min-height: 100vh;
-    font-family: sans-serif;
-    color: #f0e6c8;
-    gap: 40px;
+    align-items: flex-start;
   }
-  h2 { color: #d4af37; margin-bottom: 0; }
-  .row { display: flex; gap: 60px; align-items: flex-end; flex-wrap: wrap; justify-content: center; }
-  .demo-box { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-  .label { font-size: 0.85rem; opacity: 0.7; }
-
-  .hat {
-    width: 80px;
-    height: 80px;
-    image-rendering: pixelated;
-    background-image: url('assets/images/character/magichat.webp');
-    /* background-size 和 animation 由 JS 動態設定 */
-  }
-
-  @keyframes hat-float {
-    0%   { transform: translateY(0);    }
-    50%  { transform: translateY(-6px); }
-    100% { transform: translateY(0);    }
-  }
-  @keyframes hat-glow-filter {
-    0%   { filter: drop-shadow(0 0 4px  rgba(212,175,55,0.4)); }
-    50%  { filter: drop-shadow(0 0 18px rgba(212,175,55,1.0)); }
-    100% { filter: drop-shadow(0 0 4px  rgba(212,175,55,0.4)); }
-  }
+  .stage-col { display: flex; flex-direction: column; align-items: center; gap: 14px; }
 
   .bubble {
-    background: #2d1b4e;
-    border: 1px solid #d4af37;
-    border-radius: 10px;
+    background: #fdf6e3;
+    color: #2c2416;
+    border: 2px solid var(--gold);
+    border-radius: 12px;
     padding: 10px 16px;
-    max-width: 140px;
+    max-width: 180px;
     text-align: center;
-    font-size: 0.8rem;
+    font-size: 0.92rem;
+    line-height: 1.4;
     position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,.4);
   }
   .bubble::after {
     content: '';
     position: absolute;
-    bottom: -8px; left: 50%;
+    bottom: -10px; left: 50%;
     transform: translateX(-50%);
-    border: 8px solid transparent;
-    border-top-color: #d4af37;
+    border: 10px solid transparent;
+    border-top-color: var(--gold);
     border-bottom: none;
   }
+  .bubble::before {
+    content: '';
+    position: absolute;
+    bottom: -7px; left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: #fdf6e3;
+    border-bottom: none;
+    z-index: 1;
+  }
+
+  .expr-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 420px; }
+  .expr-buttons button {
+    background: #3a2458; color: #f0e6c8; border: 1px solid var(--gold);
+    border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: .85rem;
+  }
+  .expr-buttons button:hover { background: #4d2f70; }
+  .expr-buttons button.active { background: var(--gold); color: #2a1c10; font-weight: bold; }
+
+  .mini-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; max-width: 720px; }
+  .mini-cell { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .mini-cell .hat-assistant { width: 110px; height: 124px; --eye-y: 52%; --eye-dx: 14px; --eye-w: 17px; --eye-h: 20px; --pupil: 7px; animation-duration: 4s; }
+  .mini-cell .label { font-size: .78rem; opacity: .75; }
 </style>
 </head>
 <body>
 
-<h2>🎩 分類帽 Sprite Sheet 動畫 Demo</h2>
-<p id="info" style="opacity:0.5;font-size:0.75rem;">載入中…</p>
-<div class="row" id="row"></div>
-<p style="opacity:0.5; font-size:0.8rem;">哪個最好看就告訴我，直接套進遊戲</p>
+<h1>🎩 分類帽助理 — Clippy 風格（CSS 眼睛 + 表情）</h1>
+<p class="hint">
+  身體用現成的 <code>Sorting_Hat.webp</code>，眼睛、眉毛、表情全部用 CSS 疊上去做（不需要有眼睛的素材）。<br>
+  滑鼠移到帽子上瞳孔會追著你看；點一下會驚訝一下。下面按鈕可切換表情。<br>
+  眼睛位置如果跟素材對不準，調 <code>--eye-y / --eye-dx / --eye-w / --eye-h</code> 就好。
+</p>
+
+<div class="stage">
+  <div class="stage-col">
+    <div class="bubble" id="mainBubble">把碳看成氮了嗎？再看一次。</div>
+    <div class="hat-assistant neutral" id="mainHat" data-track="1">
+      <div class="hat-img"></div>
+      <div class="brow left"></div>
+      <div class="brow right"></div>
+      <div class="eye left"><div class="pupil"></div></div>
+      <div class="eye right"><div class="pupil"></div></div>
+    </div>
+  </div>
+
+  <div class="stage-col">
+    <div style="opacity:.7; font-size:.85rem;">切換表情：</div>
+    <div class="expr-buttons" id="exprButtons"></div>
+  </div>
+</div>
+
+<h2 style="color:var(--gold); margin-top:30px; font-size:1.1rem;">所有表情一覽</h2>
+<div class="mini-grid" id="miniGrid"></div>
+
+<p class="hint">告訴我要哪個當遊戲裡的分類帽（哪種表情對應「答對 / 答錯 / 待機 / 思考」），我就接進去。</p>
 
 <script>
-const SRC    = 'assets/images/character/magichat.webp';
-const FRAMES = 4;
-const SIZE   = 80; // 顯示大小 px
+const EXPRESSIONS = [
+  { key: 'neutral',   label: '😐 平靜（待機）', bubble: '坐好，我很忙。' },
+  { key: 'happy',     label: '😄 開心（答對）', bubble: '哦，總算對了一題。' },
+  { key: 'sad',       label: '😟 失望（答錯）', bubble: '試管又破了……' },
+  { key: 'surprised', label: '😲 驚訝',         bubble: '你居然選那個？' },
+  { key: 'thinking',  label: '🤔 思考（提示）', bubble: '嗯……先找有沒有雙鍵。' },
+  { key: 'wink',      label: '😉 眨眼（鼓勵）', bubble: '這次穩了，去吧。' },
+  { key: 'annoyed',   label: '😒 不爽',         bubble: '我都講幾遍了。' },
+  { key: 'sleepy',    label: '😪 想睡',         bubble: '快點答……我快睡著了。' },
+];
 
-const img = new Image();
-img.onload = () => {
-  const fw = img.naturalWidth;   // 整張寬
-  const fh = img.naturalHeight;  // 整張高
-  const scaledW = (fw / fh) * SIZE; // 等比例縮放後的總寬
-  const frameW  = scaledW / FRAMES; // 一格的寬
+const ALL_CLASSES = EXPRESSIONS.map(e => e.key);
+const mainHat = document.getElementById('mainHat');
+const mainBubble = document.getElementById('mainBubble');
 
-  document.getElementById('info').textContent =
-    `圖片：${fw}×${fh}px → 顯示 ${scaledW.toFixed(0)}×${SIZE}px，每格 ${frameW.toFixed(0)}px`;
+function setExpr(hatEl, key) {
+  hatEl.classList.remove(...ALL_CLASSES);
+  hatEl.classList.add(key);
+}
 
-  // 注入 @keyframes（background-position 從 0 跑到 -總寬）
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes sprite {
-      from { background-position: 0 0; }
-      to   { background-position: -${scaledW}px 0; }
-    }
-  `;
-  document.head.appendChild(style);
-
-  const configs = [
-    { label: '① 說話（快 8fps）',  bubble: '說話動畫',    fps: 8,  float: false, glow: false },
-    { label: '② 說話（慢 4fps）',  bubble: '慢速版',      fps: 4,  float: false, glow: false },
-    { label: '③ 飄浮 + 說話',     bubble: '飄浮待機',    fps: 4,  float: true,  glow: false },
-    { label: '④ 說話 + 發光 ✨',  bubble: '說話+光效',   fps: 8,  float: false, glow: true  },
-  ];
-
-  const row = document.getElementById('row');
-  configs.forEach(cfg => {
-    const dur = (FRAMES / cfg.fps).toFixed(2) + 's';
-    const extraAnim = cfg.float
-      ? `, hat-float 2s ease-in-out infinite`
-      : cfg.glow
-      ? `, hat-glow-filter 1.5s ease-in-out infinite`
-      : '';
-
-    const box = document.createElement('div');
-    box.className = 'demo-box';
-
-    const hatDiv = document.createElement('div');
-    hatDiv.className = 'hat';
-    hatDiv.style.backgroundSize = `${scaledW}px ${SIZE}px`;
-    hatDiv.style.animation = `sprite ${dur} steps(${FRAMES}) infinite` + extraAnim;
-
-    box.innerHTML = `<div class="bubble">${cfg.bubble}</div>`;
-    box.appendChild(hatDiv);
-    box.innerHTML += `<span class="label">${cfg.label}</span>`;
-    box.insertBefore(hatDiv, box.children[1]);
-
-    row.appendChild(box);
+// 按鈕
+const btnWrap = document.getElementById('exprButtons');
+EXPRESSIONS.forEach((e, i) => {
+  const b = document.createElement('button');
+  b.textContent = e.label;
+  if (i === 0) b.classList.add('active');
+  b.addEventListener('click', () => {
+    setExpr(mainHat, e.key);
+    mainBubble.textContent = e.bubble;
+    [...btnWrap.children].forEach(c => c.classList.remove('active'));
+    b.classList.add('active');
   });
-};
-img.src = SRC;
+  btnWrap.appendChild(b);
+});
+
+// 一覽小圖
+const miniGrid = document.getElementById('miniGrid');
+EXPRESSIONS.forEach(e => {
+  const cell = document.createElement('div');
+  cell.className = 'mini-cell';
+  cell.innerHTML = `
+    <div class="hat-assistant ${e.key}">
+      <div class="hat-img"></div>
+      <div class="brow left"></div><div class="brow right"></div>
+      <div class="eye left"><div class="pupil"></div></div>
+      <div class="eye right"><div class="pupil"></div></div>
+    </div>
+    <span class="label">${e.label}</span>`;
+  miniGrid.appendChild(cell);
+});
+
+// 瞳孔追蹤滑鼠（只對 data-track 的帽子）
+document.addEventListener('mousemove', (ev) => {
+  document.querySelectorAll('.hat-assistant[data-track] .eye').forEach(eye => {
+    const pupil = eye.querySelector('.pupil');
+    if (!pupil) return;
+    const r = eye.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    const ang = Math.atan2(ev.clientY - cy, ev.clientX - cx);
+    const max = 4; // px 偏移上限
+    pupil.style.transform = `translate(calc(-50% + ${Math.cos(ang)*max}px), calc(-50% + ${Math.sin(ang)*max}px))`;
+  });
+});
+
+// 點帽子 → 驚訝一下
+mainHat.addEventListener('click', () => {
+  const prev = ALL_CLASSES.find(c => mainHat.classList.contains(c)) || 'neutral';
+  setExpr(mainHat, 'surprised');
+  mainBubble.textContent = '幹嘛戳我！';
+  setTimeout(() => { setExpr(mainHat, prev); }, 900);
+});
 </script>
 </body>
 </html>

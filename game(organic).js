@@ -131,7 +131,8 @@ const Game = (function() {
         streak: "連錯幾題時，先找氧、氮、鹵素，再看有沒有 C=O 或苯環。"
     };
     let isDuelDesktop = false;
-    let _devQuickWin = true; // ← 改成 true 開啟測試模式（答對1題即結算）；` 鍵也可即時切換
+    let _devQuickWin = true;       // ← true 開啟測試模式（答對 DEV_WIN_AFTER 題即結算）；` 鍵也可即時切換
+    const DEV_WIN_AFTER = 2;       // 測試模式：答對幾題就過關
     let _muted = false;
     let practiceWrongStreak = 0;
     // Practice 一輪計數（用於 markLevelClear 門檻判斷：正確率 ≥ 60%）
@@ -151,6 +152,9 @@ const Game = (function() {
         p1: { queue: [], queueLevel: null, question: null, correctKey: '' },
         p2: { queue: [], queueLevel: null, question: null, correctKey: '' }
     };
+    // 對決：兩位玩家共用的題目順序（→ 兩邊第 N 題是同一分子，公平；選項順序仍各自獨立隨機，防作弊）
+    let _duelOrder = null;
+    let _duelOrderLevel = null;
 
     let currentQuestion = null;
     let correctAnswerKey = "";
@@ -612,6 +616,8 @@ const Game = (function() {
         // 強制重洗題目佇列
         questionQueue = [];
         questionQueueLevel = null;
+        _duelOrder = null;
+        _duelOrderLevel = null;
         currentQuestion = null;
         practiceWrongStreak = 0;
         practiceRoundTotal = 0;
@@ -1217,8 +1223,14 @@ const Game = (function() {
         if (!list || list.length === 0) return;
         const pq = duelQ[player];
 
+        // 共用題目順序：建一次，兩位玩家共用 → 第 N 題同一分子
+        if (_duelOrderLevel !== currentLevel || !_duelOrder || _duelOrder.length === 0) {
+            _duelOrder = shuffleArray([...list]);
+            _duelOrderLevel = currentLevel;
+        }
+
         if (pq.queueLevel !== currentLevel || pq.queue.length === 0) {
-            pq.queue = shuffleArray([...list]);
+            pq.queue = [..._duelOrder];   // 各自一份副本，但順序相同
             if (pq.question && pq.queue.length > 1 &&
                 pq.queue[pq.queue.length - 1] === pq.question) {
                 [pq.queue[0], pq.queue[pq.queue.length - 1]] =
@@ -1231,7 +1243,7 @@ const Game = (function() {
         pq.question = qData;
         pq.correctKey = qData.aKey;
 
-        const options = generateOptions(pq.correctKey, currentLevel);
+        const options = generateOptions(pq.correctKey, currentLevel);  // 各自獨立隨機 → 選項順序不同
         renderDuelQuestion(player, qData, options);
         startReadingPeriod(player);
     }
@@ -1488,7 +1500,7 @@ const Game = (function() {
             if (!indicator) {
                 indicator = document.createElement('div');
                 indicator.id = 'dev-quickwin-indicator';
-                indicator.textContent = '🔧 測試模式：答對1題即結算';
+                indicator.textContent = `🔧 測試模式：答對 ${DEV_WIN_AFTER} 題即結算`;
                 indicator.style.cssText = 'position:fixed;bottom:8px;left:50%;transform:translateX(-50%);background:#c0392b;color:#fff;padding:4px 14px;border-radius:8px;font-size:0.85rem;z-index:9999;pointer-events:none;font-family:sans-serif;';
                 document.body.appendChild(indicator);
             }
@@ -1693,7 +1705,8 @@ const Game = (function() {
             Save.seeMolecule(duelQ[player].correctKey);
             updateDuelProgress(player);
             duelArenaAttack(player);
-            if (_devQuickWin || players[player].correctCount >= DUEL_WIN_TARGET) {
+            const devWin = _devQuickWin && players[player].correctCount >= DEV_WIN_AFTER;
+            if (devWin || players[player].correctCount >= DUEL_WIN_TARGET) {
                 endGame('win', player);
                 return;
             }
@@ -1703,16 +1716,20 @@ const Game = (function() {
 
         // practice / speed mode
         if (_devQuickWin) {
-            // 測試模式：強制達門檻結算
-            practiceRoundTotal = STORY_MIN_ASKED;
-            practiceRoundCorrect = STORY_MIN_ASKED;
-            players[player].totalAsked = STORY_MIN_ASKED;
-            players[player].correctCount = STORY_MIN_ASKED;
+            // 測試模式：答對 DEV_WIN_AFTER 題就強制達門檻結算
             players[player].score += 10;
             updateStats(player);
             Save.addCorrect(1);
             Save.seeMolecule(correctAnswerKey);
-            setTimeout(() => endGame('win', player), 600);
+            if (players[player].correctCount >= DEV_WIN_AFTER) {
+                practiceRoundTotal = STORY_MIN_ASKED;
+                practiceRoundCorrect = STORY_MIN_ASKED;
+                players[player].totalAsked = STORY_MIN_ASKED;
+                players[player].correctCount = STORY_MIN_ASKED;
+                setTimeout(() => endGame('win', player), 600);
+            } else {
+                setTimeout(() => { nextQuestion(); }, 800);
+            }
             return;
         }
 
