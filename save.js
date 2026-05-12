@@ -43,7 +43,8 @@ const Save = (function () {
             storyUnlocked: [],      // 已解鎖劇情的關卡 ["level1", …]
             levelClears: {},        // 各關是否達門檻過 { "level1": true, … }
             bestScores: {},         // { "speed_level3": 120, "duel_level6": 80, … }
-            tutorialSeen: false     // 新手導覽是否已看過（首次進站自動跳出）
+            tutorialSeen: false,    // 全域新手導覽是否已看過（首次進站自動跳出）
+            levelTutorialsSeen: []  // 已看過「本關分類帽教學」的關卡 ["level1", …]（第一次進關自動跳出）
         };
     }
 
@@ -180,6 +181,8 @@ const Save = (function () {
 
     function markTutorialSeen() { if (!data.tutorialSeen) { data.tutorialSeen = true; persist(); } }
     function isTutorialSeen() { return !!data.tutorialSeen; }
+    function markLevelTutorialSeen(levelKey) { return addToSet('levelTutorialsSeen', levelKey); }
+    function isLevelTutorialSeen(levelKey) { return data.levelTutorialsSeen.includes(levelKey); }
 
     // 載入一次（模組初始化）
     load();
@@ -192,6 +195,7 @@ const Save = (function () {
         knows, isStoryUnlocked, isLevelCleared,
         unlockedBadges, allBadgeDefs, wrongList,
         markTutorialSeen, isTutorialSeen,
+        markLevelTutorialSeen, isLevelTutorialSeen,
         exportText, importText, reset
     };
 })();

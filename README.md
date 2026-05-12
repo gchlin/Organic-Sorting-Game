@@ -22,6 +22,7 @@
 ## 功能
 - **分類帽角色**：用 `Sorting_Hat.webp` 當身體、CSS 疊上眼睛/眉毛/嘴巴，會隨遊戲做表情（待機/答對/答錯/思考/眨眼），瞳孔還會追滑鼠。首頁標題、新手導覽、劇情對話框的「帽子」都是這個角色。
 - **新手導覽**：首次進站自動跳出 6 頁說明（怎麼玩、怎麼按、三種模式…）；首頁「新手導覽」按鈕可隨時重看。
+- **每關分類帽教學**：第一次進入某一關時，分類帽會先放 2~4 頁「這一關要認的官能基長什麼樣、怎麼一眼認出、常見陷阱」（配 `assets/images/00_functional_groups/` 的純結構示意圖），看完才開始；看過後不再強制，可在結算畫面按「📖 看本關教學」（或按 `T`）重看。文案在 `tutorial.js`（一句一句的，不用懂程式就能改）。
 - **提示模式（自我修煉）**：預設關。按下方「💡 需要提示？」（或按 `H`）開啟後，答錯時分類帽會講清楚這題屬於哪一類、怎麼看出來；連錯兩題時也會提醒你開提示。
 - **圖鑑**：首頁「📔 圖鑑」。通過的關卡可回顧劇情（可收合）、看該關所有化合物的小知識卡片（結構圖+名稱，點開有工業用途/常見反應等一句說明），最後附該關梗圖。
 - **劇情**：每關答對率達 60%（≥4 題）通關後解鎖；結算頁按「✨ 解鎖劇情」（或按 `S`）播放，可用 `←/→` 翻頁、長按空白鍵跳過全部。
@@ -34,7 +35,7 @@
 - Duel 桌面模式：左側玩家用 `A/F/Z/C`，右側玩家用數字鍵 / 小鍵盤 `4/6/1/3`。Duel 兩邊題目順序相同（公平），選項順序各自隨機（防作弊）。
 - Duel 手機模式：維持橫放觸控版面。
 - 遊戲中：`Esc`/`M` 返回大廳，`R` 重新開始本關，`H` 切換提示模式（自我修煉）。
-- 結算畫面：`Enter` 確認目前選到的按鈕，`N` 到下一關，`R` 再次練習，`S` 解鎖/重播劇情，`Esc`/`M` 返回大廳。
+- 結算畫面：`Enter` 確認目前選到的按鈕，`N` 到下一關，`R` 再次練習，`S` 解鎖/重播劇情，`T` 看本關教學，`Esc`/`M` 返回大廳。
 - 主選單：`1-6` 開 Practice Level 1-6，`9` 開 Level 99，`Q/W/E` 開 Time Attack 三關，`U/I/O` 開 Duel 三關，`T` 新手導覽，`C` 圖鑑，`H` 看分類總表（若有）。
 - 方向鍵可在目前畫面中的按鈕間移動焦點，`Enter`/`Space` 執行；可全程不用滑鼠。畫面上的快捷鍵都以 `[A]`、`[4]`、`[H]` 這類中括弧提示。
 - 若未來提供自定義快捷鍵，只開放答題選項鍵；系統快捷鍵固定。
@@ -67,9 +68,10 @@ index.html          主頁面（GitHub Pages 入口）
 game.js             遊戲邏輯
 data.js             答案庫 AnswerBank + 各關題庫 QuestionSets + 化合物小知識 CompoundFacts
 story.js            各關劇情腳本 StoryScripts
+tutorial.js         每關「分類帽教學」投影片 LevelTutorials（第一次進關自動跳）
 save.js             本地存檔模組（localStorage）
 style.css           樣式
-assets/images/      化合物 SVG 結構式（14 個官能基資料夾）+ character/（分類帽圖）+ meme/（梗圖）
+assets/images/      化合物 SVG 結構式（按官能基分資料夾）+ 00_functional_groups/（14 張純官能基示意圖，教學用）+ character/（分類帽圖）+ icons/（UI 圖示）+ meme/（梗圖）
 docs/               設計與討論文件（設計決策清單、化學審查清單、AI 協作記錄等）
 prototypes/         實驗 / 早期測試頁（hat-demo、wizard-prototype、test、testquestion）
 examples/           範例存檔（full-unlock-save.json：全部通關，匯入即可測試圖鑑）
@@ -165,7 +167,7 @@ examples/           範例存檔（full-unlock-save.json：全部通關，匯入
 
 **已裁決**
 - ✅ **新增「其他（暫未收錄的官能基）」桶**：段考會出、但不在 13 類內的**單官能基**化合物（醯胺、硝基、腈…）歸到「其他」。化學上 OK 的前提：標籤要明示「**非本課範圍**」、不可暗示「這分子沒有官能基」（醯胺/硝基明明有官能基）；不要當垃圾桶亂塞，某類分子累積夠多再「畢業」成獨立關。**多官能基藥物分子（阿斯巴甜、紫杉醇、阿司匹靈、柳酸、魯米諾、多巴胺…）一律不收。**
-- ✅ **每關「分類帽新手教學」**：現有的全域 6 頁新手導覽 modal 擴充成**可放圖片**；每關配一組 **2–4 頁**教學（這關官能基長這樣 → 怎麼一眼認出 → 常見陷阱），直接引用 `assets/images/00_functional_groups/fg_NN_*.svg`；進關前自動播一次，看過不再強制、可重看（沿用 `Save.markTutorialSeen` 那套，改成每關一個旗標）。這同時補上 §3 onboarding 與 §4「分類帽教練」。
+- ✅ **每關「分類帽新手教學」— 已實作（2026-05-12）**：新增 `tutorial.js`（`LevelTutorials[levelKey] = [{ img, title, text }, …]`，img 可為單一路徑或陣列、可省略；附一句一句的編輯說明，給非程式者改）；`game.js` 把 tutorial modal 一般化（`_tutSlides`/`_tutOnClose`/`_tutDoneLabel`、`_tutRender` 支援 `img` 渲染圖片、新增 `showLevelTutorial(levelKey, onDone)`、modal 標題動態化）；`startGame` 拆成 `startGame`（先檢查 `Save.isLevelTutorialSeen` → 第一次進關先播教學，看完再 `_doStartGame`）+ `_doStartGame`（原本的開局流程）；結算畫面加「📖 看本關教學」按鈕（`btn-show-tutorial`，鍵 `T`）可重看；`save.js` 加 `levelTutorialsSeen: []` + `markLevelTutorialSeen`/`isLevelTutorialSeen`（migrate 自動補）；`style.css` 加 `.tutorial-img`（單張大、`.multi` 並排縮小）；`examples/full-unlock-save.json` 補上 `levelTutorialsSeen` 全關卡 + `levelShell` 通關。文案是開發團隊寫的「零基礎友善」版（structure-first、不堆術語），之後可換成 NotebookLM/老師的課本式版本。這同時補上 §3 onboarding 與 §4「分類帽教練」。
 - ✅ **文案走「貼近課本用語」路線**：「為什麼」提示 / 新手教學 / 劇情文案的底稿改由 **NotebookLM**（已讀使用者上傳的高中化學課本，輸出本身就是課本衍生轉述）整理 → 再進 `化學審查清單.md` 給老師審。**不需要我們手上有課本 PDF**。給 NotebookLM 的指令要明寫「寫給零基礎學生、要具體舉例、不要堆術語」。
 - ✅ **新關卡「龜殼與它的產地」（苯環陷阱關）— 已實作**：`data.js` 新增 `LevelShell_List`（19 題，全是含苯環的化合物：苯酚/3 種甲酚/兒茶酚/間苯二酚/苯甲醇/苯甲醛/苯甲酸/苯胺/苯乙酮/苯甲酸甲酯/苯甲醚/氯苯/苯/甲苯/苯乙烯/鄰二甲苯/萘——全部沿用既有 SVG，零新圖），`QuestionSets.levelShell`。`game.js`：`LEVEL_INFO`/`LEVEL_ORDER`（排在 level6 與 level99 之間）各加一筆、`MENU_SHORTCUTS` 加 `Digit7`、`generateOptions` 修成「非主線關卡的干擾選項先從本關自己的分子抽」（這樣龜殼關的干擾項都是其他苯環衍生物 → 強化陷阱）、`startGame` 的關卡標題改成有 `titleShort` 就用它（龜殼關顯示「龜殼之地」而非「LEVELSHELL」）。`index.html` 三個模式各加一顆按鈕。`story.js` 加 `levelShell` 9 句劇情（毒舌帽風格，{name} 占位）。`prototypes/test.html` 會自動列出新關卡題庫。
 - ✅ **反向題型（題目=文字、選項=結構圖）= 中等改動，列近期獨立任務**：資料結構已鋪好路（`AnswerBank` 每筆有 `type`、每題有 `qType`，目前全是 `text`/`img`）；要改 `game.js` 三處硬編碼（`renderQuestion` 題目區、選項按鈕渲染、`getOptions` 干擾池）。做好之後「圖鑑實驗現象關 / 鑑定之眼」才有載體。先做完低風險的（其他桶 / 新手教學 / 龜殼關 / 課本式文案）再開這一輪。
@@ -176,6 +178,6 @@ examples/           範例存檔（full-unlock-save.json：全部通關，匯入
 
 **待辦**
 - [ ] 「其他」桶要收哪些分子的最終清單（草案見下節 / `化學審查清單.md §7`，SVG 已生 15 張在 `assets/images/15_amide/`…`19_acyl_chloride/`）→ 老師審完後接進 `data.js`（`AnswerBank` 加 `category:"other"` + 一個「其他」答案 + 編進關卡）。
-- [ ] NotebookLM 整理「課本式」的：13 類「為什麼」辨識提示、每關新手教學 2–4 頁文案、各關劇情擴寫（2026-05-12：第一版輸出不堪用，pending；需求包見 `docs/copy_for_notebooklm.json`）。
-- [ ] `game.js` modal 擴充支援圖片 + 每關教學投影片資料。
+- [ ] NotebookLM 整理「課本式」的：13 類「為什麼」辨識提示、每關新手教學 2–4 頁文案、各關劇情擴寫（2026-05-12：第一版輸出不堪用，pending；需求包見 `docs/copy_for_notebooklm.json`）→ 拿回來後直接換掉 `data.js` 的 `WHY_HINTS` / `tutorial.js` 的 `LevelTutorials` / `story.js` 裡的字。
+- [x] `game.js` modal 擴充支援圖片 + `tutorial.js` 每關教學投影片資料 — 2026-05-12 完成（文案先用開發團隊版）。
 - [x] 「龜殼與它的產地」題庫 + 關卡接線（`data.js` / `game.js` / `index.html` / `story.js`）— 2026-05-12 完成。

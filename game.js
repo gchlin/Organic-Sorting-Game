@@ -222,6 +222,7 @@ const Game = (function() {
         btnStoryNext: document.getElementById('btn-story-next'),
         btnStorySkip: document.getElementById('btn-story-skip'),
         btnShowStory: document.getElementById('btn-show-story'),
+        btnShowTutorial: document.getElementById('btn-show-tutorial'),
         wizardBadgeP1: document.getElementById('wizard-p1'),
         wizardBadgeP2: document.getElementById('wizard-p2'),
         wizardPicker: document.getElementById('wizard-picker'),
@@ -245,6 +246,7 @@ const Game = (function() {
         tutorialTitle: document.getElementById('tutorial-title'),
         tutorialText: document.getElementById('tutorial-text'),
         tutorialDots: document.getElementById('tutorial-dots'),
+        tutorialModalTitle: document.getElementById('tutorial-modal-title'),
         btnTutorialNext: document.getElementById('btn-tutorial-next'),
         btnTutorialPrev: document.getElementById('btn-tutorial-prev'),
         btnTutorialSkip: document.getElementById('btn-tutorial-skip')
@@ -569,6 +571,17 @@ const Game = (function() {
             });
         }
 
+        if (UI.btnShowTutorial) {
+            UI.btnShowTutorial.addEventListener('click', () => {
+                if (_autoStoryTimer) { clearTimeout(_autoStoryTimer); _autoStoryTimer = null; }
+                UI.resultModal.classList.add('hidden');
+                showLevelTutorial(currentLevel, () => {
+                    UI.resultModal.classList.remove('hidden');
+                    _focusResultDefault();
+                });
+            });
+        }
+
         // 靜音按鈕（首頁 + 遊戲中）
         const btnMute = document.getElementById('btn-mute');
         const btnMuteGame = document.getElementById('btn-mute-game');
@@ -669,6 +682,16 @@ const Game = (function() {
     // --- 遊戲流程 ---
     function startGame(mode, level) {
         if (_autoStoryTimer) { clearTimeout(_autoStoryTimer); _autoStoryTimer = null; }
+        // 第一次進這一關 → 先放分類帽的「本關教學」，看完再真正開始
+        if (typeof LevelTutorials !== 'undefined' && LevelTutorials[level]
+            && typeof Save !== 'undefined' && !Save.isLevelTutorialSeen(level)) {
+            showLevelTutorial(level, () => _doStartGame(mode, level));
+            return;
+        }
+        _doStartGame(mode, level);
+    }
+
+    function _doStartGame(mode, level) {
         currentMode = mode;
         currentLevel = level;
         gameActive = true;
@@ -1112,6 +1135,7 @@ const Game = (function() {
         addButtonHint(UI.btnMenu, 'Esc / M');
         addButtonHint(UI.btnShowRef, 'H');
         addButtonHint(UI.btnShowStory, 'S');
+        addButtonHint(UI.btnShowTutorial, 'T');
         // 首頁次要按鈕
         addButtonHint(UI.btnTutorial, 'T');
         addButtonHint(UI.btnOpenCodex, 'C');
@@ -1259,45 +1283,94 @@ const Game = (function() {
         { icon: '✨', title: '開始吧', text: '方向鍵選關卡、Enter 開始。隨時可以從首頁的「新手導覽」再看一次這份說明。去吧，別讓帽子等太久。' },
     ];
     let _tutIdx = 0;
-    function showTutorial(fromButton) {
-        if (!UI.tutorialModal) return;
-        if (!fromButton && !isVisible(UI.menu)) return;  // 自動跳出時，若玩家已離開大廳就不打擾
-        _tutIdx = 0;
+    let _tutSlides = TUTORIAL_SLIDES;     // 目前正在播的投影片陣列（全域導覽 or 某一關的教學）
+    let _tutDoneLabel = '開始遊戲 ✓';     // 最後一頁「下一頁」按鈕的文字
+    let _tutOnClose = null;               // 關閉時要做的事（標記已看、回到原畫面…）
+
+    function _renderTutDots() {
         if (!UI.tutorialDots) return;
         UI.tutorialDots.innerHTML = '';
-        TUTORIAL_SLIDES.forEach(() => {
+        _tutSlides.forEach(() => {
             const d = document.createElement('span'); d.className = 'story-dot'; UI.tutorialDots.appendChild(d);
         });
+    }
+    function _showTutorialModal(slides, opts) {
+        if (!UI.tutorialModal || !slides || !slides.length) { if (opts && opts.onClose) opts.onClose(); return; }
+        _tutSlides = slides;
+        _tutIdx = 0;
+        _tutDoneLabel = (opts && opts.doneLabel) || '開始遊戲 ✓';
+        _tutOnClose = (opts && opts.onClose) || null;
+        if (UI.tutorialModalTitle) UI.tutorialModalTitle.textContent = (opts && opts.title) || '新手導覽';
+        _renderTutDots();
         _tutRender();
         UI.tutorialModal.classList.remove('hidden');
         if (UI.btnTutorialNext) try { UI.btnTutorialNext.focus(); } catch(e) {}
     }
+    // 全域 6 頁「怎麼玩」導覽（首次進站自動跳 / 首頁按鈕重看）
+    function showTutorial(fromButton) {
+        if (!UI.tutorialModal) return;
+        if (!fromButton && !isVisible(UI.menu)) return;  // 自動跳出時，若玩家已離開大廳就不打擾
+        _showTutorialModal(TUTORIAL_SLIDES, {
+            title: '新手導覽',
+            doneLabel: '開始遊戲 ✓',
+            onClose: () => {
+                if (typeof Save !== 'undefined') Save.markTutorialSeen();
+                focusFirstAvailableControl(UI.menu);
+            }
+        });
+    }
+    // 某一關的「分類帽教學」（第一次進關自動跳 / 結算頁「看本關教學」重看）
+    function showLevelTutorial(levelKey, onDone) {
+        const slides = (typeof LevelTutorials !== 'undefined') ? LevelTutorials[levelKey] : null;
+        if (!slides || !slides.length) { if (onDone) onDone(); return; }
+        const info = (typeof LEVEL_INFO !== 'undefined') ? LEVEL_INFO[levelKey] : null;
+        const lvName = info ? (info.titleShort || info.name) : levelKey;
+        _showTutorialModal(slides, {
+            title: lvName + ' · 分類帽教學',
+            doneLabel: '看完了 ✓',
+            onClose: () => {
+                if (typeof Save !== 'undefined') Save.markLevelTutorialSeen(levelKey);
+                if (onDone) onDone();
+            }
+        });
+    }
     function _tutRender() {
-        const s = TUTORIAL_SLIDES[_tutIdx];
-        if (s.icon === 'hat') {
+        const s = _tutSlides[_tutIdx];
+        if (s.img) {
+            const imgs = Array.isArray(s.img) ? s.img : [s.img];
+            UI.tutorialIcon.classList.toggle('multi', imgs.length > 1);
+            UI.tutorialIcon.innerHTML = imgs.map(src =>
+                `<img class="tutorial-img" src="${src}" alt="" onerror="this.style.display='none'">`).join('');
+        } else if (s.icon === 'hat') {
+            UI.tutorialIcon.classList.remove('multi');
             UI.tutorialIcon.innerHTML = '<div class="hat-char neutral"></div>';
             buildHatChar(UI.tutorialIcon.firstElementChild);
-        } else {
+        } else if (s.icon) {
+            UI.tutorialIcon.classList.remove('multi');
             UI.tutorialIcon.textContent = s.icon;
+        } else {
+            UI.tutorialIcon.classList.remove('multi');
+            UI.tutorialIcon.innerHTML = '<div class="hat-char neutral"></div>';
+            buildHatChar(UI.tutorialIcon.firstElementChild);
         }
-        UI.tutorialTitle.textContent = s.title;
-        UI.tutorialText.textContent = s.text;
+        UI.tutorialTitle.textContent = s.title || '';
+        UI.tutorialText.textContent = s.text || '';
         UI.tutorialDots.querySelectorAll('.story-dot').forEach((d, i) => {
             d.classList.toggle('done', i < _tutIdx);
             d.classList.toggle('current', i === _tutIdx);
         });
         UI.btnTutorialPrev.disabled = (_tutIdx === 0);
-        setBtnText(UI.btnTutorialNext, (_tutIdx === TUTORIAL_SLIDES.length - 1) ? '開始遊戲 ✓' : '下一頁 →');
+        setBtnText(UI.btnTutorialNext, (_tutIdx === _tutSlides.length - 1) ? _tutDoneLabel : '下一頁 →');
     }
     function _tutNext() {
-        if (_tutIdx >= TUTORIAL_SLIDES.length - 1) { _tutClose(); return; }
+        if (_tutIdx >= _tutSlides.length - 1) { _tutClose(); return; }
         _tutIdx++; _tutRender();
     }
     function _tutPrev() { if (_tutIdx > 0) { _tutIdx--; _tutRender(); } }
     function _tutClose() {
         UI.tutorialModal.classList.add('hidden');
-        if (typeof Save !== 'undefined') Save.markTutorialSeen();
-        focusFirstAvailableControl(UI.menu);
+        const cb = _tutOnClose; _tutOnClose = null;
+        if (cb) cb();
     }
     function initTutorialListeners() {
         if (UI.btnTutorial)     UI.btnTutorial.addEventListener('click', () => showTutorial(true));
@@ -1376,6 +1449,12 @@ const Game = (function() {
             } else {
                 UI.btnShowStory.classList.add('hidden');
             }
+        }
+
+        // 本關有教學頁 → 顯示「看本關教學」按鈕（隨時可重看）
+        if (UI.btnShowTutorial) {
+            const hasTut = (typeof LevelTutorials !== 'undefined') && !!LevelTutorials[currentLevel];
+            UI.btnShowTutorial.classList.toggle('hidden', !hasTut);
         }
 
         _focusResultDefault(freshStory);
@@ -1770,7 +1849,7 @@ const Game = (function() {
             if (e.code === 'Enter') {
                 e.preventDefault();
                 const f = document.activeElement;
-                if (f && [UI.btnRestart, UI.btnNextLevel, UI.btnMenu, UI.btnShowStory].includes(f) && !f.classList.contains('hidden')) {
+                if (f && [UI.btnRestart, UI.btnNextLevel, UI.btnMenu, UI.btnShowStory, UI.btnShowTutorial].includes(f) && !f.classList.contains('hidden')) {
                     f.click();
                 } else if (nextAvail) {
                     UI.btnNextLevel.click();
@@ -1782,6 +1861,7 @@ const Game = (function() {
             if (e.code === 'KeyR') { e.preventDefault(); UI.btnRestart.click(); return true; }
             if (e.code === 'KeyN' && nextAvail) { e.preventDefault(); UI.btnNextLevel.click(); return true; }
             if (e.code === 'KeyS' && UI.btnShowStory && !UI.btnShowStory.classList.contains('hidden')) { e.preventDefault(); UI.btnShowStory.click(); return true; }
+            if (e.code === 'KeyT' && UI.btnShowTutorial && !UI.btnShowTutorial.classList.contains('hidden')) { e.preventDefault(); UI.btnShowTutorial.click(); return true; }
             if (e.code === 'KeyM' || e.code === 'Escape') { e.preventDefault(); showMenu(); return true; }
             return false;
         }
