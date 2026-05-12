@@ -461,29 +461,32 @@ const Game = (function() {
     // --- 初始化 ---
     // --- 分類帽角色（CSS 五官 + 表情）---
     const HAT_EXPRS = ['neutral', 'happy', 'sad', 'surprised', 'thinking', 'wink'];
+    const HAT_INNER =
+        '<div class="hat-img"></div>' +
+        '<div class="brow left"></div><div class="brow right"></div>' +
+        '<div class="eye left"><div class="pupil"></div></div>' +
+        '<div class="eye right"><div class="pupil"></div></div>' +
+        '<div class="mouth"></div>';
     let _hatExprTimer = null;
+    let _hatMouseBound = false;
+    function buildHatChar(el) { if (el && !el.querySelector('.hat-img')) el.innerHTML = HAT_INNER; }
     function initHatChars() {
-        document.querySelectorAll('.hat-char').forEach(h => {
-            if (h.querySelector('.hat-img')) return; // 已建好
-            h.innerHTML =
-                '<div class="hat-img"></div>' +
-                '<div class="brow left"></div><div class="brow right"></div>' +
-                '<div class="eye left"><div class="pupil"></div></div>' +
-                '<div class="eye right"><div class="pupil"></div></div>' +
-                '<div class="mouth"></div>';
-        });
-        // 瞳孔追滑鼠（只在遊戲畫面，淡淡地看你）
-        document.addEventListener('mousemove', (ev) => {
-            if (!isVisible(UI.game)) return;
-            document.querySelectorAll('.hat-char:not(.surprised):not(.sleepy) .eye').forEach(eye => {
-                const p = eye.querySelector('.pupil');
-                if (!p) return;
-                const r = eye.getBoundingClientRect();
-                const ang = Math.atan2(ev.clientY - (r.top + r.height/2), ev.clientX - (r.left + r.width/2));
-                const m = Math.max(2, r.width * 0.16);
-                p.style.transform = `translate(calc(-50% + ${Math.cos(ang)*m}px), calc(-50% + ${Math.sin(ang)*m}px))`;
+        document.querySelectorAll('.hat-char').forEach(buildHatChar);
+        if (!_hatMouseBound) {
+            _hatMouseBound = true;
+            document.addEventListener('mousemove', (ev) => {
+                // 瞳孔淡淡地追滑鼠（遊戲、新手導覽、劇情都看）
+                document.querySelectorAll('.hat-char:not(.surprised):not(.sleepy) .eye').forEach(eye => {
+                    const p = eye.querySelector('.pupil');
+                    if (!p) return;
+                    const r = eye.getBoundingClientRect();
+                    if (!r.width) return;
+                    const ang = Math.atan2(ev.clientY - (r.top + r.height/2), ev.clientX - (r.left + r.width/2));
+                    const m = Math.max(2, r.width * 0.16);
+                    p.style.transform = `translate(calc(-50% + ${Math.cos(ang)*m}px), calc(-50% + ${Math.sin(ang)*m}px))`;
+                });
             });
-        });
+        }
     }
     // 設定所有分類帽表情；ms > 0 時自動回到 neutral
     function setHatExpr(expr, ms) {
@@ -648,7 +651,7 @@ const Game = (function() {
             duelQ[p] = { queue: [], queueLevel: null, question: null, correctKey: '' };
             const warnEl = (p === 'p1') ? UI.warnP1 : UI.warnP2;
             warnEl.classList.add('hidden');
-            warnEl.textContent = '快炸了!';
+            warnEl.textContent = '魔力告急!';
             const optsEl = (p === 'p1') ? UI.optsP1 : UI.optsP2;
             optsEl.classList.remove('locked-area');
         });
@@ -662,7 +665,7 @@ const Game = (function() {
         if (mode === 'duel') {
             document.querySelectorAll('.hp-text').forEach(el => el.textContent = `進度 0/${DUEL_WIN_TARGET}`);
         } else {
-            document.querySelectorAll('.hp-text').forEach(el => el.textContent = '反應產率');
+            document.querySelectorAll('.hp-text').forEach(el => el.textContent = '魔法成功率');
         }
         UI.timeBar.classList.remove('time-running-out');
         // 強制重洗題目佇列
@@ -998,6 +1001,13 @@ const Game = (function() {
         hint.textContent = `[${label}]`;
         el.prepend(hint);
     }
+    // 改按鈕文字，但保留前面的 [快捷鍵] 標籤
+    function setBtnText(el, text) {
+        if (!el) return;
+        const hint = el.querySelector('.button-hotkey');
+        el.textContent = text;
+        if (hint) el.prepend(hint);
+    }
 
     function applyKeyboardHints() {
         Object.entries(MENU_SHORTCUTS).forEach(([code, target]) => {
@@ -1010,9 +1020,23 @@ const Game = (function() {
         addButtonHint(UI.btnNextLevel, 'Enter / N');
         addButtonHint(UI.btnMenu, 'Esc / M');
         addButtonHint(UI.btnShowRef, 'H');
+        addButtonHint(UI.btnShowStory, 'S');
+        // 首頁次要按鈕
+        addButtonHint(UI.btnTutorial, 'T');
+        addButtonHint(UI.btnOpenCodex, 'C');
+        // 劇情 / 新手導覽 翻頁按鈕
+        addButtonHint(UI.btnStoryNext, 'Enter / →');
+        addButtonHint(UI.btnStorySkip, 'Esc（長按空白鍵=全部跳過）');
+        addButtonHint(UI.btnTutorialNext, 'Enter / →');
+        addButtonHint(UI.btnTutorialPrev, '←');
+        addButtonHint(UI.btnTutorialSkip, 'Esc');
+        if (UI.btnCodexBack) addButtonHint(UI.btnCodexBack, '←');
 
         if (UI.btnCloseRef && !UI.btnCloseRef.querySelector('.button-hotkey')) {
             UI.btnCloseRef.innerHTML = `<span class="button-hotkey button-hotkey-left">[X]</span><span aria-hidden="true">×</span>`;
+        }
+        if (UI.btnCloseCodex && !UI.btnCloseCodex.querySelector('.button-hotkey')) {
+            UI.btnCloseCodex.innerHTML = `<span class="button-hotkey button-hotkey-left">[X]</span><span aria-hidden="true">×</span>`;
         }
     }
 
@@ -1060,16 +1084,20 @@ const Game = (function() {
 
     function _storyRenderLine(idx) {
         const line = _storyLines[idx];
-        const info = SPEAKER_INFO[line.who];
-        const name = line.who === 'wiz'
-            ? `${wizardPersonas.p1.emoji} ${wizardPersonas.p1.name}`
-            : `${info.emoji} 分類帽`;
+        const isWiz = line.who === 'wiz';
 
-        UI.storySpeakerEmoji.textContent = line.who === 'wiz' ? wizardPersonas.p1.emoji : info.emoji;
-        UI.storySpeakerName.textContent   = line.who === 'wiz' ? wizardPersonas.p1.name : '分類帽';
-        UI.storyText.textContent          = _storyReplaceName(line.text);
+        // 講者頭像：分類帽 → 用有眼睛的分類帽角色；魔法師 → 用 persona emoji
+        const hatEl = document.getElementById('story-speaker-hat');
+        if (hatEl) {
+            buildHatChar(hatEl);
+            hatEl.classList.toggle('hidden', isWiz);
+        }
+        UI.storySpeakerEmoji.classList.toggle('hidden', !isWiz);
+        if (isWiz) UI.storySpeakerEmoji.textContent = wizardPersonas.p1.emoji;
+        UI.storySpeakerName.textContent = isWiz ? wizardPersonas.p1.name : '分類帽';
+        UI.storyText.textContent = _storyReplaceName(line.text);
 
-        UI.storyModalContent.classList.toggle('speaker-wiz', line.who === 'wiz');
+        UI.storyModalContent.classList.toggle('speaker-wiz', isWiz);
 
         // 更新進度點
         UI.storyDots.querySelectorAll('.story-dot').forEach((dot, i) => {
@@ -1078,7 +1106,7 @@ const Game = (function() {
         });
 
         // 最後一句改按鈕文字
-        UI.btnStoryNext.textContent = (idx === _storyLines.length - 1) ? '完成 ✓' : '繼續 →';
+        setBtnText(UI.btnStoryNext, (idx === _storyLines.length - 1) ? '完成 ✓' : '繼續 →');
     }
 
     function _buildDots() {
@@ -1132,12 +1160,12 @@ const Game = (function() {
 
     // --- 新手導覽 ---
     const TUTORIAL_SLIDES = [
-        { icon: '🎩', title: '歡迎來到「有機分類帽」', text: '我是分類帽，會在你旁邊吐槽……我是說，給你提示。這裡是練習「快速辨認有機官能基」的地方。' },
-        { icon: '🔬', title: '怎麼玩', text: '螢幕中間會出現一個分子結構圖，你要從四個選項裡選出它屬於哪一類官能基（烷、烯、醇、醛、酮、酸、酯……）。選對，反應產率上升；選錯，試管會破、產率下降；產率歸零就實驗失敗。' },
+        { icon: 'hat', title: '歡迎來到「有機分類帽」', text: '我是分類帽，會在你旁邊吐槽……我是說，給你提示。這裡是練習「快速辨認有機官能基」的地方。' },
+        { icon: '🔬', title: '怎麼玩', text: '螢幕中間會出現一個分子結構圖，你要從四個選項裡選出它屬於哪一類官能基（烷、烯、醇、醛、酮、酸、酯……）。選對，魔法成功率上升；選錯，咒語會失控、成功率下降；歸零就魔力耗盡。' },
         { icon: '⌨️', title: '怎麼按', text: '用滑鼠直接點選項就行。也可以用鍵盤——每個選項上會標 [快捷鍵]。對決模式時，玩家一用左邊那組鍵、玩家二用右邊那組。結算頁可用 Enter（下一關）、R（再玩）、Esc（回大廳）。' },
         { icon: '⚗️', title: '三種模式', text: '⚗️ 自我修煉：慢慢練，答錯會給你提示。⏳ 競速挑戰：限時作答，答對加秒、連對加更多。⚔️ 巫師對決：兩人同一台搶答（桌面用鍵盤、手機橫放用觸控）。' },
         { icon: '📖', title: '通關與劇情', text: '每一關答對率達 60%（至少答 4 題）就算通過，會解鎖分類帽的劇情對話。通過的關卡可以在首頁「📔 圖鑑」裡回顧劇情和梗圖。' },
-        { icon: '✨', title: '開始吧', text: '方向鍵選關卡、Enter 開始。隨時可以從首頁的「🎓 新手導覽」再看一次這份說明。去吧，別讓帽子等太久。' },
+        { icon: '✨', title: '開始吧', text: '方向鍵選關卡、Enter 開始。隨時可以從首頁的「新手導覽」再看一次這份說明。去吧，別讓帽子等太久。' },
     ];
     let _tutIdx = 0;
     function showTutorial(fromButton) {
@@ -1155,7 +1183,12 @@ const Game = (function() {
     }
     function _tutRender() {
         const s = TUTORIAL_SLIDES[_tutIdx];
-        UI.tutorialIcon.textContent = s.icon;
+        if (s.icon === 'hat') {
+            UI.tutorialIcon.innerHTML = '<div class="hat-char neutral"></div>';
+            buildHatChar(UI.tutorialIcon.firstElementChild);
+        } else {
+            UI.tutorialIcon.textContent = s.icon;
+        }
         UI.tutorialTitle.textContent = s.title;
         UI.tutorialText.textContent = s.text;
         UI.tutorialDots.querySelectorAll('.story-dot').forEach((d, i) => {
@@ -1163,7 +1196,7 @@ const Game = (function() {
             d.classList.toggle('current', i === _tutIdx);
         });
         UI.btnTutorialPrev.disabled = (_tutIdx === 0);
-        UI.btnTutorialNext.textContent = (_tutIdx === TUTORIAL_SLIDES.length - 1) ? '開始遊戲 ✓' : '下一頁 →';
+        setBtnText(UI.btnTutorialNext, (_tutIdx === TUTORIAL_SLIDES.length - 1) ? '開始遊戲 ✓' : '下一頁 →');
     }
     function _tutNext() {
         if (_tutIdx >= TUTORIAL_SLIDES.length - 1) { _tutClose(); return; }
@@ -1210,22 +1243,22 @@ const Game = (function() {
         if (currentMode === 'duel') {
             if (resultType === 'win') {
                 title = (winner === 'p1' ? "P1 獲勝!" : "P2 獲勝!");
-                msg = "合成大師誕生了！";
+                msg = "魔法決鬥的王者誕生了！";
                 playSound('win');
             } else {
                 title = "平手 (動態平衡)";
-                msg = "實驗室維持了完美的平衡...";
+                msg = "兩位魔法師的魔力勢均力敵……";
                 playSound('lose');
             }
             UI.resultStats.innerHTML = `P1: ${players.p1.correctCount}/${DUEL_WIN_TARGET} 題 <br> P2: ${players.p2.correctCount}/${DUEL_WIN_TARGET} 題`;
         } else {
             if (players.p1.hp <= 0) {
-                title = "實驗失敗 (爆炸)";
+                title = "魔力耗盡";
                 msg = getRandomMsg('lose');
                 playSound('lose');
             } else {
-                title = "實驗完成";
-                msg = `最終產率: ${players.p1.score}`;
+                title = "練習完成";
+                msg = `最終魔力: ${players.p1.score}`;
                 playSound('win');
             }
             UI.resultStats.innerHTML = `得分: ${players.p1.score}`;
@@ -1242,38 +1275,37 @@ const Game = (function() {
             Save.markLevelClear(currentLevel);
         }
 
-        // 達門檻：先顯示結算，1.2 秒後自動切到劇情
+        // 達門檻：顯示「解鎖劇情」按鈕，由玩家點按才播劇情（不自動跳）
+        let freshStory = false;
         if (UI.btnShowStory) {
             if (hasScript && metThreshold) {
-                UI.btnShowStory.textContent = alreadyUnlocked ? '📖 重播劇情' : '✨ 解鎖劇情！';
+                freshStory = !alreadyUnlocked;
+                setBtnText(UI.btnShowStory, alreadyUnlocked ? '📖 重播劇情' : '✨ 解鎖劇情！（點我看）');
                 UI.btnShowStory.classList.remove('hidden');
-                _autoStoryTimer = setTimeout(() => {
-                    _autoStoryTimer = null;
-                    if (!isVisible(UI.resultModal)) return; // 玩家已離開結算頁就不要硬跳劇情
-                    UI.resultModal.classList.add('hidden');
-                    showStory(currentLevel, () => {
-                        UI.resultModal.classList.remove('hidden');
-                        _focusResultDefault();
-                    });
-                }, 1200);
             } else {
                 UI.btnShowStory.classList.add('hidden');
             }
         }
 
-        _focusResultDefault();
+        _focusResultDefault(freshStory);
     }
 
-    // 結算頁預設聚焦「到下一關」（沒有就退而求其次聚焦「再次實驗」）
-    function _focusResultDefault() {
-        const target = (UI.btnNextLevel && !UI.btnNextLevel.classList.contains('hidden'))
-            ? UI.btnNextLevel : UI.btnRestart;
+    // 結算頁預設聚焦：剛解鎖劇情 → 聚焦「解鎖劇情」；否則 →「到下一關」（沒有就「再次練習」）
+    function _focusResultDefault(preferStory) {
+        let target = null;
+        if (preferStory && UI.btnShowStory && !UI.btnShowStory.classList.contains('hidden')) {
+            target = UI.btnShowStory;
+        } else if (UI.btnNextLevel && !UI.btnNextLevel.classList.contains('hidden')) {
+            target = UI.btnNextLevel;
+        } else {
+            target = UI.btnRestart;
+        }
         if (target) try { target.focus(); } catch(e) {}
     }
 
     function getRandomMsg(type) {
-        const MSG_WIN = ["有機小天才", "路易斯結構大師", "諾貝爾化學獎預備", "合成產率 100%"];
-        const MSG_LOSE = ["試管炸裂!", "請重新滴定...", "小心側反應發生", "把碳看成氮了嗎?", "結構崩塌..."];
+        const MSG_WIN = ["有機小天才", "路易斯結構大師", "諾貝爾化學獎預備", "魔力滿溢"];
+        const MSG_LOSE = ["魔力潰散!", "重新詠唱一次……", "小心咒語反噬", "把碳看成氮了嗎?", "咒文崩解……"];
         return (type==='win') ? MSG_WIN[Math.floor(Math.random()*MSG_WIN.length)] : MSG_LOSE[Math.floor(Math.random()*MSG_LOSE.length)];
     }
 
@@ -1657,6 +1689,7 @@ const Game = (function() {
             }
             if (e.code === 'KeyR') { e.preventDefault(); UI.btnRestart.click(); return true; }
             if (e.code === 'KeyN' && nextAvail) { e.preventDefault(); UI.btnNextLevel.click(); return true; }
+            if (e.code === 'KeyS' && UI.btnShowStory && !UI.btnShowStory.classList.contains('hidden')) { e.preventDefault(); UI.btnShowStory.click(); return true; }
             if (e.code === 'KeyM' || e.code === 'Escape') { e.preventDefault(); showMenu(); return true; }
             return false;
         }
@@ -1683,6 +1716,8 @@ const Game = (function() {
                 showReference();
                 return true;
             }
+            if (e.code === 'KeyT' && UI.btnTutorial) { e.preventDefault(); showTutorial(true); return true; }
+            if (e.code === 'KeyC' && UI.btnOpenCodex) { e.preventDefault(); openCodex(); return true; }
             return false;
         }
 
@@ -1899,7 +1934,7 @@ const Game = (function() {
         }
 
         const warnEl = (player === 'p1') ? UI.warnP1 : UI.warnP2;
-        warnEl.textContent = "試管破了!";
+        warnEl.textContent = "魔力潰散!";
         warnEl.classList.remove('hidden');
 
         const lockDuration = (currentMode === 'duel') ? DUEL_LOCK_MS : 1600;
@@ -1908,7 +1943,7 @@ const Game = (function() {
             players[player].isLocked = false;
             container.classList.remove('locked-area');
             warnEl.classList.add('hidden');
-            warnEl.textContent = '快炸了!';
+            warnEl.textContent = '魔力告急!';
             btn.classList.remove('wrong');
             clearCorrectReveal(player);
             lockTimers[player] = null;

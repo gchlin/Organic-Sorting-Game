@@ -319,15 +319,15 @@ body, html {
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
 }
 
-/* 帽子 + 說話泡泡的包裝 */
+/* 帽子 + 說話泡泡的包裝（泡泡在帽子左邊，箭頭指向帽子） */
 .hat-coach-wrap {
     flex-shrink: 0;
     height: 100%;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .hat-display {
@@ -965,28 +965,28 @@ body.countdown-active .hat-display {
 }
 
 .coach-bubble {
-    padding: 8px 10px;
-    border-radius: 8px;
+    padding: 10px 13px;
+    border-radius: 10px;
     border: 2px solid rgba(212, 175, 55, 0.75);
-    background: rgba(31, 24, 20, 0.94);
+    background: rgba(31, 24, 20, 0.95);
     color: var(--hp-parchment);
-    font-size: 0.82rem;
-    line-height: 1.35;
-    text-align: center;
-    box-shadow: 0 0 12px rgba(0,0,0,0.5), 0 0 8px rgba(212, 175, 55, 0.2);
-    max-width: clamp(80px, 12vw, 140px);
+    font-size: 1.02rem;
+    line-height: 1.45;
+    text-align: left;
+    box-shadow: 0 0 14px rgba(0,0,0,0.55), 0 0 8px rgba(212, 175, 55, 0.22);
+    max-width: clamp(130px, 20vw, 240px);
     position: relative;
 }
-/* 泡泡下方箭頭指向帽子 */
+/* 泡泡右側箭頭指向（右邊的）帽子 */
 .coach-bubble::after {
     content: '';
     position: absolute;
-    bottom: -9px;
-    left: 50%;
-    transform: translateX(-50%);
+    right: -9px;
+    top: 50%;
+    transform: translateY(-50%);
     border: 8px solid transparent;
-    border-top-color: rgba(212, 175, 55, 0.75);
-    border-bottom: none;
+    border-left-color: rgba(212, 175, 55, 0.75);
+    border-right: none;
 }
 
 @keyframes coachFloat {
@@ -1098,6 +1098,14 @@ body.countdown-active .hat-display {
     line-height: 1;
     filter: drop-shadow(0 0 6px rgba(212,175,55,0.6));
 }
+/* 講者是分類帽時：用有眼睛的帽子角色 */
+.story-hat {
+    width: 64px; height: 64px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,.4));
+}
+/* 新手導覽第一頁的帽子角色 */
+.tutorial-icon .hat-char { width: 72px; height: 72px; margin: 0 auto; filter: drop-shadow(0 2px 6px rgba(0,0,0,.45)); }
 
 .story-speaker-name {
     font-size: 1.1rem;
