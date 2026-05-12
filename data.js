@@ -219,6 +219,40 @@ const Level6_List = [
     ...Level5_List
 ];
 
+// 「龜殼」與它的產地：苯環陷阱關
+// 全部都是「含苯環」的化合物，但官能基各不相同。教學重點：看到苯環（六角形帶圈圈）不要急著選「酚」，
+// 要先看苯環上接的是什麼官能基、–OH 是不是「直接」接在環上。干擾選項會優先從本關其他苯環衍生物抽。
+const LevelShell_List = [
+    // 酚（–OH 直接接苯環的碳）
+    { qType: "img", qContent: "assets/images/13_confused/13_confused_phenol.svg", aKey: "phenol" },
+    { qType: "img", qContent: "assets/images/14_phenol/14_phenol_o-cresol.svg", aKey: "o-cresol" },
+    { qType: "img", qContent: "assets/images/14_phenol/14_phenol_m-cresol.svg", aKey: "m-cresol" },
+    { qType: "img", qContent: "assets/images/14_phenol/14_phenol_p-cresol.svg", aKey: "p-cresol" },
+    { qType: "img", qContent: "assets/images/14_phenol/14_phenol_catechol.svg", aKey: "catechol" },
+    { qType: "img", qContent: "assets/images/14_phenol/14_phenol_resorcinol.svg", aKey: "resorcinol" },
+    // 醇（苯甲醇：–OH 接在苯環「外面」的 CH₂ 上 → 是醇不是酚，最經典的陷阱）
+    { qType: "img", qContent: "assets/images/13_confused/13_confused_benzyl_alcohol.svg", aKey: "benzyl_alcohol" },
+    // 醛 / 羧酸（苯甲醛 ↔ 苯甲酸）
+    { qType: "img", qContent: "assets/images/13_confused/13_confused_benzaldehyde.svg", aKey: "benzaldehyde" },
+    { qType: "img", qContent: "assets/images/13_confused/13_confused_benzoic_acid.svg", aKey: "benzoic_acid" },
+    // 胺（苯胺：芳香胺，但仍屬胺類）
+    { qType: "img", qContent: "assets/images/13_confused/13_confused_aniline.svg", aKey: "aniline" },
+    // 酮
+    { qType: "img", qContent: "assets/images/06_ketone/06_ketone_acetophenone.svg", aKey: "acetophenone" },
+    // 酯
+    { qType: "img", qContent: "assets/images/08_ester/08_ester_methyl_benzoate.svg", aKey: "methyl_benzoate" },
+    // 醚（苯甲醚：苯環–O–CH₃）
+    { qType: "img", qContent: "assets/images/09_ether/09_ether_anisole.svg", aKey: "anisole" },
+    // 鹵化物
+    { qType: "img", qContent: "assets/images/12_halide/12_halide_chlorobenzene.svg", aKey: "chlorobenzene" },
+    // 純芳香烴（讓「芳香烴」也是真選項，逼玩家分辨「只有苯環/烷基」vs「苯環+其他官能基」）
+    { qType: "img", qContent: "assets/images/11_aromatic/11_aromatic_benzene.svg", aKey: "benzene" },
+    { qType: "img", qContent: "assets/images/11_aromatic/11_aromatic_toluene.svg", aKey: "toluene" },
+    { qType: "img", qContent: "assets/images/11_aromatic/11_aromatic_styrene.svg", aKey: "styrene" },
+    { qType: "img", qContent: "assets/images/11_aromatic/11_aromatic_o-xylene.svg", aKey: "o-xylene" },
+    { qType: "img", qContent: "assets/images/11_aromatic/11_aromatic_naphthalene.svg", aKey: "naphthalene" }
+];
+
 // Level 99: 資優挑戰 (看圖 -> 選英文類別)
 const Level99_List = [
     // 烷
@@ -284,6 +318,7 @@ const QuestionSets = {
     "level4": Level4_List,
     "level5": Level5_List,
     "level6": Level6_List,
+    "levelShell": LevelShell_List,
     "level99": Level99_List
 };
 
