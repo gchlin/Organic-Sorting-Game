@@ -40,6 +40,8 @@
     --eye-h: 30px;
     --pupil: 11px;
     --mouth-y: 76%;         /* 嘴巴縱向位置 */
+    --ink: #ede2c8;         /* 五官線條色（淺，因為帽子是深色的） */
+    --ink-shadow: 0 1px 2px rgba(0,0,0,.7), 0 0 1px rgba(0,0,0,.9);
     animation: hatBob 3.4s ease-in-out infinite;
     filter: drop-shadow(0 6px 10px rgba(0,0,0,.5));
   }
@@ -55,10 +57,10 @@
     top: var(--eye-y);
     width: var(--eye-w);
     height: var(--eye-h);
-    background: #f4f0e2;
-    border: 2px solid #2a1c10;
+    background: #f7f2e4;
+    border: 2px solid #6b5535;
     border-radius: 50%;
-    box-shadow: inset 0 -3px 4px rgba(0,0,0,.15);
+    box-shadow: inset 0 -3px 4px rgba(0,0,0,.15), 0 1px 4px rgba(0,0,0,.55);
     overflow: hidden;
     transition: height .15s ease, transform .2s ease, border-radius .2s ease;
   }
@@ -83,16 +85,16 @@
     background: rgba(255,255,255,.85);
     border-radius: 50%;
   }
-  /* 眉毛（一直都在；表情靠角度變化） */
+  /* 眉毛（一直都在；表情靠角度變化）。分類帽是深色的 → 五官用淺米色 + 深陰影 */
   .brow {
     position: absolute;
     top: calc(var(--eye-y) - 13px);
     width: calc(var(--eye-w) + 8px);
     height: 6px;
-    background: #2a1c10;
+    background: var(--ink);
     border-radius: 4px;
-    opacity: .92;
-    transition: opacity .2s ease, transform .2s ease, top .2s ease;
+    box-shadow: var(--ink-shadow);
+    transition: transform .2s ease, top .2s ease;
   }
   .brow.left  { left: calc(50% - var(--eye-dx) - var(--eye-w) - 4px); transform-origin: right center; transform: rotate(-4deg); }
   .brow.right { left: calc(50% + var(--eye-dx) - 4px);                transform-origin: left center;  transform: rotate(4deg);  }
@@ -105,10 +107,11 @@
     width: 36px;
     height: 16px;
     transform: translateX(-50%);
-    border: 3px solid #2a1c10;
+    border: 3px solid var(--ink);
     border-top-color: transparent;
     border-radius: 0 0 999px 999px / 0 0 26px 26px;
     background: transparent;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.7));
     transition: all .2s ease, border-radius .2s ease;
   }
 
