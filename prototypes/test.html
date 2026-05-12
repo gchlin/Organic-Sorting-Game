@@ -63,6 +63,44 @@
         fgSection.appendChild(fgGrid);
         container.appendChild(fgSection);
 
+        // ── 其他官能基分子預覽（暫未登錄 data.js）──
+        const otherMols = [
+            { dir:"15_amide", en:"acetamide", zh:"乙醯胺", fam:"醯胺" },
+            { dir:"15_amide", en:"propanamide", zh:"丙醯胺", fam:"醯胺" },
+            { dir:"15_amide", en:"n-methylacetamide", zh:"N-甲基乙醯胺", fam:"醯胺" },
+            { dir:"15_amide", en:"urea", zh:"尿素", fam:"醯胺" },
+            { dir:"15_amide", en:"benzamide", zh:"苯甲醯胺", fam:"醯胺" },
+            { dir:"16_nitro", en:"nitromethane", zh:"硝基甲烷", fam:"硝基" },
+            { dir:"16_nitro", en:"nitroethane", zh:"硝基乙烷", fam:"硝基" },
+            { dir:"16_nitro", en:"nitrobenzene", zh:"硝基苯", fam:"硝基" },
+            { dir:"17_nitrile", en:"acetonitrile", zh:"乙腈", fam:"腈" },
+            { dir:"17_nitrile", en:"propanenitrile", zh:"丙腈", fam:"腈" },
+            { dir:"17_nitrile", en:"benzonitrile", zh:"苯甲腈", fam:"腈" },
+            { dir:"18_anhydride", en:"acetic_anhydride", zh:"乙酸酐", fam:"酸酐" },
+            { dir:"18_anhydride", en:"propanoic_anhydride", zh:"丙酸酐", fam:"酸酐" },
+            { dir:"19_acyl_chloride", en:"acetyl_chloride", zh:"乙醯氯", fam:"醯氯" },
+            { dir:"19_acyl_chloride", en:"benzoyl_chloride", zh:"苯甲醯氯", fam:"醯氯" }
+        ];
+        const otherSection = document.createElement('div');
+        otherSection.className = 'level-section';
+        otherSection.innerHTML = '<h2>其他官能基分子（暫未登錄 data.js，共 15 張）</h2>';
+        const otherGrid = document.createElement('div');
+        otherGrid.className = 'grid';
+        otherMols.forEach(m => {
+            const filename = `${m.dir}_${m.en}.svg`;
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <img src="../assets/images/${m.dir}/${filename}"
+                     onerror="this.alt='❌ 找不到圖';">
+                <div class="name">${m.zh}（${m.fam}）</div>
+                <div class="key">${filename}</div>
+            `;
+            otherGrid.appendChild(card);
+        });
+        otherSection.appendChild(otherGrid);
+        container.appendChild(otherSection);
+
         if (typeof QuestionSets === 'undefined' || typeof AnswerBank === 'undefined') {
             container.innerHTML += "<h2 class='error'>錯誤：無法讀取 data.js，請確認檔案是否存在。</h2>";
         } else {
