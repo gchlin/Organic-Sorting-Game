@@ -1231,25 +1231,81 @@ body.countdown-active .hat-display {
     border-bottom: 1px solid rgba(124,30,30,0.35);
     padding-bottom: 4px;
 }
+/* 可收合的劇情段（預設收起） */
+.codex-details { margin: 12px 0 8px; }
+.codex-details > summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: #7f0909;
+    list-style: none;
+    padding: 8px 10px;
+    background: rgba(124,30,30,0.08);
+    border: 1px solid rgba(124,30,30,0.25);
+    border-radius: 8px;
+    user-select: none;
+}
+.codex-details > summary::-webkit-details-marker { display: none; }
+.codex-details > summary::before { content: '▸ '; }
+.codex-details[open] > summary::before { content: '▾ '; }
+.codex-details[open] > summary { margin-bottom: 8px; }
+
 .codex-story { display: flex; flex-direction: column; gap: 8px; }
 .codex-line {
     margin: 0;
     padding: 8px 10px;
     border-radius: 6px;
-    background: rgba(20,12,35,0.7);
-    line-height: 1.5;
+    background: rgba(0,0,0,0.05);
+    color: #2c2416;
+    line-height: 1.55;
     font-size: 0.95rem;
 }
-.codex-line-hat strong { color: var(--hp-gold); }
-.codex-line-wiz strong { color: #fff; }
+.codex-line-hat strong { color: #7f0909; }
+.codex-line-wiz strong { color: #1a5c1a; }
+
 .codex-meme-img {
     display: block;
     max-width: 100%;
     max-height: 60vh;
-    margin: 8px auto 0;
+    margin: 12px auto;
     border-radius: 8px;
     border: 1px solid rgba(212,175,55,0.4);
 }
+
+/* 化合物小知識卡片 */
+.codex-mol-grid { display: flex; flex-direction: column; gap: 8px; }
+.codex-mol-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid rgba(124,30,30,0.22);
+    background: rgba(0,0,0,0.04);
+    color: #2c2416;
+    border-radius: 8px;
+    cursor: pointer;
+    font: inherit;
+}
+.codex-mol-card:hover { background: rgba(124,30,30,0.08); }
+.codex-mol-head { display: flex; align-items: center; gap: 10px; }
+.codex-mol-img {
+    width: 44px; height: 36px; object-fit: contain;
+    flex-shrink: 0; background: #fff; border-radius: 4px;
+}
+.codex-mol-name { font-weight: bold; flex: 1; }
+.codex-mol-caret { color: #7f0909; transition: transform .2s ease; }
+.codex-mol-card.open .codex-mol-caret { transform: rotate(180deg); }
+.codex-mol-fact {
+    display: none;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(124,30,30,0.3);
+    line-height: 1.6;
+    font-size: 0.92rem;
+}
+.codex-mol-card.open .codex-mol-fact { display: block; }
+
 .codex-locked-msg {
     text-align: center;
     color: #5a4a3a;

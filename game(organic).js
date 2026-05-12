@@ -930,35 +930,57 @@ const Game = (function() {
         UI.codexDetailTitle.textContent = info.name;
         let html = '';
 
-        // 劇情
-        const script = (typeof StoryScripts !== 'undefined') ? StoryScripts[lv] : null;
         if (!cleared) {
-            html += `<p class="codex-locked-msg">🔒 通過這一關後即可在這裡回顧劇情與梗圖。</p>`;
-        } else if (script && script.length) {
-            html += `<div class="codex-section-title">📖 劇情</div>`;
-            html += `<div class="codex-story">`;
-            script.forEach(line => {
-                const who = line.who === 'wiz'
-                    ? `${wizardPersonas.p1.emoji} ${wizardPersonas.p1.name}`
-                    : '🎩 分類帽';
-                const cls = line.who === 'wiz' ? 'codex-line-wiz' : 'codex-line-hat';
-                const text = line.text.replace(/\{name\}/g, wizardPersonas.p1.name || '你');
-                html += `<p class="codex-line ${cls}"><strong>${who}：</strong>${text}</p>`;
-            });
-            html += `</div>`;
-        }
-
-        // 梗圖
-        if (cleared) {
-            html += `<div class="codex-section-title">🖼️ 梗圖</div>`;
+            html += `<p class="codex-locked-msg">🔒 通過這一關後，就能在這裡回顧劇情、梗圖與化合物小知識。</p>`;
+        } else {
+            // 劇情：可收合，預設收起
+            const script = (typeof StoryScripts !== 'undefined') ? StoryScripts[lv] : null;
+            if (script && script.length) {
+                html += `<details class="codex-details"><summary>📖 劇情對話</summary><div class="codex-story">`;
+                script.forEach(line => {
+                    const isWiz = line.who === 'wiz';
+                    const who = isWiz ? `${wizardPersonas.p1.emoji} ${wizardPersonas.p1.name}` : '🎩 分類帽';
+                    const cls = isWiz ? 'codex-line-wiz' : 'codex-line-hat';
+                    const text = line.text.replace(/\{name\}/g, wizardPersonas.p1.name || '你');
+                    html += `<p class="codex-line ${cls}"><strong>${who}：</strong>${text}</p>`;
+                });
+                html += `</div></details>`;
+            }
+            // 梗圖：只放圖，不寫字（沒有就不顯示）
             if (info.meme) {
-                html += `<img class="codex-meme-img" src="assets/images/meme/${info.meme}" alt="${info.name} 梗圖" loading="lazy">`;
-            } else {
-                html += `<p class="codex-locked-msg">😶 這一關的梗圖製作中…</p>`;
+                html += `<img class="codex-meme-img" src="assets/images/meme/${info.meme}" alt="" loading="lazy">`;
+            }
+            // 化合物卡片：點開看小知識（小維基）
+            const list = (typeof QuestionSets !== 'undefined') ? QuestionSets[lv] : null;
+            if (list && list.length) {
+                const seen = new Set();
+                html += `<div class="codex-section-title">這一關的化合物（點卡片看小知識）</div><div class="codex-mol-grid">`;
+                list.forEach(q => {
+                    if (seen.has(q.aKey)) return;
+                    seen.add(q.aKey);
+                    const ab = (typeof AnswerBank !== 'undefined') ? AnswerBank[q.aKey] : null;
+                    const name = ab ? ab.content : q.aKey;
+                    const fact = (typeof CompoundFacts !== 'undefined' && CompoundFacts[q.aKey]) ? CompoundFacts[q.aKey] : '（小知識整理中……）';
+                    html += `<button class="codex-mol-card" type="button" aria-expanded="false">` +
+                        `<span class="codex-mol-head">` +
+                        `<img class="codex-mol-img" src="${q.qContent}" alt="" loading="lazy">` +
+                        `<span class="codex-mol-name">${name}</span>` +
+                        `<span class="codex-mol-caret" aria-hidden="true">▾</span>` +
+                        `</span>` +
+                        `<span class="codex-mol-fact">${fact}</span>` +
+                        `</button>`;
+                });
+                html += `</div>`;
             }
         }
 
         UI.codexDetailBody.innerHTML = html;
+        UI.codexDetailBody.querySelectorAll('.codex-mol-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const open = card.classList.toggle('open');
+                card.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+        });
         UI.codexLevelList.classList.add('hidden');
         UI.codexDetail.classList.remove('hidden');
         if (UI.btnCodexBack) try { UI.btnCodexBack.focus(); } catch(e) {}
