@@ -55,6 +55,7 @@ const Game = (function() {
         level4:  { name: 'Level 4：雙氧複合（酸酯）',   memes: ['meme4.jpg'] },
         level5:  { name: 'Level 5：雜原子與鹵素',      memes: ['meme5.jpg'] },
         level6:  { name: 'Level 6：終極分類帽（綜合）', memes: ['meme6.jpg'] },
+        levelShell: { name: '「龜殼」與它的產地（苯環陷阱）', titleShort: '龜殼之地', memes: [] },
         level99: { name: 'Level 99：資優全英挑戰',     memes: ['meme7.jpg'] },
     };
     // 官能基類別中文名（提示文字用，讓玩家知道「這一類」到底是哪一類）
@@ -63,7 +64,7 @@ const Game = (function() {
         aldehyde: '醛', ketone: '酮', carboxylic: '羧酸', ester: '酯', amine: '胺',
         aromatic: '芳香烴', halide: '鹵化物', phenol: '酚'
     };
-    const LEVEL_ORDER = ['level1','level2','level3','level4','level5','level6','level99'];
+    const LEVEL_ORDER = ['level1','level2','level3','level4','level5','level6','levelShell','level99'];
     function _nextLevelKey(levelKey) {
         const i = LEVEL_ORDER.indexOf(levelKey);
         return (i >= 0 && i < LEVEL_ORDER.length - 1) ? LEVEL_ORDER[i + 1] : null;
@@ -94,6 +95,7 @@ const Game = (function() {
         Digit4: { mode: 'practice', level: 'level4' },
         Digit5: { mode: 'practice', level: 'level5' },
         Digit6: { mode: 'practice', level: 'level6' },
+        Digit7: { mode: 'practice', level: 'levelShell' },
         Digit9: { mode: 'practice', level: 'level99' },
         KeyQ: { mode: 'speed', level: 'level3' },
         KeyW: { mode: 'speed', level: 'level4' },
@@ -714,7 +716,7 @@ const Game = (function() {
         UI.resultModal.classList.add('hidden');
         UI.game.classList.remove('hidden');
         UI.modeTitle.textContent = getModeName(mode);
-        UI.levelTitle.textContent = level.toUpperCase();
+        UI.levelTitle.textContent = (LEVEL_INFO[level] && LEVEL_INFO[level].titleShort) ? LEVEL_INFO[level].titleShort : level.toUpperCase();
 
         setupLayout(mode);
         setupPracticeFeedback(mode);
@@ -843,12 +845,15 @@ const Game = (function() {
     function toggleMute() {
         _muted = !_muted;
         document.body.classList.toggle('muted', _muted);
-        const icon = _muted ? '🔇' : '🔊';
-        const label = _muted ? '🔇 靜音' : '🔊 音效';
         const btnMute = document.getElementById('btn-mute');
         const btnMuteGame = document.getElementById('btn-mute-game');
-        if (btnMute) btnMute.textContent = label;
-        if (btnMuteGame) btnMuteGame.textContent = icon;
+        if (btnMute) {
+            btnMute.textContent = '音效';
+            btnMute.dataset.icon = _muted ? 'sound-off' : 'sound-on';
+        }
+        if (btnMuteGame) {
+            btnMuteGame.dataset.icon = _muted ? 'sound-off' : 'sound-on';
+        }
     }
 
     // --- 進度面板 ---
@@ -1542,10 +1547,11 @@ const Game = (function() {
             const upTo = MAIN_LEVELS.indexOf(level);
             const thisLevelKeys = new Set();
             const earlierKeys = new Set();
+            (QuestionSets[level] || []).forEach(q => thisLevelKeys.add(q.aKey));
             if (upTo === -1) {
+                // 非主線關卡（如「龜殼」陷阱關）：干擾選項先從本關自己的分子抽，不夠再從全部分子補
                 Object.keys(AnswerBank).forEach(k => { if (AnswerBank[k].category !== 'cat') earlierKeys.add(k); });
             } else {
-                (QuestionSets[level] || []).forEach(q => thisLevelKeys.add(q.aKey));
                 for (let i = 0; i < upTo; i++) {
                     (QuestionSets[MAIN_LEVELS[i]] || []).forEach(q => earlierKeys.add(q.aKey));
                 }
@@ -2253,10 +2259,9 @@ const Game = (function() {
         const data = players[p];
         const hpEl = (p==='p1') ? UI.hpP1 : UI.hpP2;
         const scoreEl = (p==='p1') ? UI.scoreP1 : UI.scoreP2;
-        
+
         hpEl.style.width = `${data.hp}%`;
-        if (data.hp < 30) hpEl.style.background = 'linear-gradient(to right, #c0392b, #7f0909)';
-        else hpEl.style.background = ''; 
+        hpEl.classList.toggle('hp-low', data.hp < 30);
         scoreEl.textContent = data.score;
     }
 

@@ -4,7 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>有機分類帽 - Organic Sorting Hat</title>
+
+    <!-- ✅ v2 新增：載入 Cinzel 標題字體 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap">
+
     <link rel="stylesheet" href="style.css">
+
+    <!-- ✅ v2 新增：永遠在 style.css 之後 -->
+    <link rel="stylesheet" href="style-visual-v2.css">
 </head>
 <body>
 
@@ -24,51 +33,54 @@
         <!-- 進度面板（認識分子、累積答對、勳章） -->
         <div id="progress-panel" class="progress-panel">
             <div class="prog-row">
-                <span>📚 認識分子</span><strong id="prog-molecules">0 / 0</strong><span>種</span>
+                <span data-icon="books">認識分子</span><strong id="prog-molecules">0 / 0</strong><span>種</span>
                 <span class="prog-levels" id="prog-levels"></span>
             </div>
             <div class="prog-row">
-                <span>✅ 累積答對</span><strong id="prog-correct">0</strong><span>題</span>
+                <span data-icon="check">累積答對</span><strong id="prog-correct">0</strong><span>題</span>
             </div>
             <div class="prog-badges" id="prog-badges"></div>
         </div>
 
         <div class="menu-group">
-            <h3 class="menu-heading">⚗️ 自我修煉 (Practice)</h3>
+            <h3 class="menu-heading" data-icon="flask">自我修煉 (Practice)</h3>
             <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level1">Level 1: 碳氫骨架基礎</button>
             <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level2">Level 2: 單鍵氧家族 (醇醚)</button>
             <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level3">Level 3: 雙鍵氧家族 (醛酮)</button>
             <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level4">Level 4: 雙氧複合 (酸酯)</button>
             <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level5">Level 5: 雜原子與鹵素</button>
             <button class="btn menu-btn magic-btn boss-btn" data-mode="practice" data-level="level6">Level 6: 終極分類帽 (綜合題)</button>
+            <button class="btn menu-btn magic-btn" data-mode="practice" data-level="levelShell">「龜殼」與它的產地 (苯環陷阱)</button>
             <button class="btn menu-btn magic-btn genius-btn" data-mode="practice" data-level="level99">Level 99: 資優全英挑戰</button>
         </div>
 
         <div class="menu-group">
-            <h3 class="menu-heading">⏳ 競速挑戰 (Time Attack)</h3>
+            <h3 class="menu-heading" data-icon="hourglass">競速挑戰 (Time Attack)</h3>
             <button class="btn menu-btn magic-btn" data-mode="speed" data-level="level3">挑戰：醛酮分辨</button>
             <button class="btn menu-btn magic-btn" data-mode="speed" data-level="level4">挑戰：酸酯分辨</button>
             <button class="btn menu-btn magic-btn boss-btn" data-mode="speed" data-level="level6">挑戰：終極大亂鬥</button>
+            <button class="btn menu-btn magic-btn" data-mode="speed" data-level="levelShell">挑戰：龜殼產地（苯環陷阱）</button>
         </div>
 
         <div class="menu-group">
-            <h3 class="menu-heading">⚔️ 巫師對決 (Duel Mode)</h3>
+            <h3 class="menu-heading" data-icon="swords">巫師對決 (Duel Mode)</h3>
             <p style="color:var(--hp-parchment); font-size: 0.9rem;">(桌面鍵盤搶答；手機橫放觸控)</p>
             <button class="btn menu-btn magic-btn duel-btn" data-mode="duel" data-level="level3">對決：醛酮</button>
             <button class="btn menu-btn magic-btn duel-btn" data-mode="duel" data-level="level4">對決：酸酯</button>
             <button class="btn menu-btn magic-btn duel-btn boss-btn" data-mode="duel" data-level="level6">對決：終極分類</button>
+            <button class="btn menu-btn magic-btn duel-btn" data-mode="duel" data-level="levelShell">對決：龜殼產地</button>
         </div>
 
         <div class="save-controls">
-            <button id="btn-open-codex" class="btn magic-btn save-ctrl-btn">📔 圖鑑</button>
-            <button id="btn-mute" class="btn magic-btn save-ctrl-btn">🔊 音效</button>
-            <button id="btn-export" class="btn magic-btn save-ctrl-btn">📤 匯出存檔</button>
-            <button id="btn-import-open" class="btn magic-btn save-ctrl-btn">📥 匯入存檔</button>
-            <button id="btn-reset-save" class="btn magic-btn save-ctrl-btn reset-btn">🗑️ 重置</button>
+            <button id="btn-open-codex" class="btn magic-btn save-ctrl-btn" data-icon="codex">圖鑑</button>
+            <button id="btn-mute" class="btn magic-btn save-ctrl-btn" data-icon="sound-on">音效</button>
+            <button id="btn-export" class="btn magic-btn save-ctrl-btn" data-icon="export">匯出存檔</button>
+            <button id="btn-import-open" class="btn magic-btn save-ctrl-btn" data-icon="import">匯入存檔</button>
+            <button id="btn-reset-save" class="btn magic-btn save-ctrl-btn reset-btn" data-icon="reset">重置</button>
         </div>
 
         <div id="wizard-status-bar" class="wizard-status-bar hidden">
-            <span id="wizard-status-label">🧙 玩家一</span>
+            <span id="wizard-status-label" data-icon="wizard">玩家一</span>
             <button id="btn-change-wizard" class="btn magic-btn">更換魔法師</button>
         </div>
 
@@ -77,8 +89,8 @@
 
     <div id="game-container" class="hidden">
         <div id="info-bar">
-            <button id="btn-back" class="btn magic-btn icon-btn">↩ 撤退</button>
-            <button id="btn-mute-game" class="btn magic-btn icon-btn" title="靜音">🔊</button>
+            <button id="btn-back" class="btn magic-btn icon-btn" data-icon="back">撤退</button>
+            <button id="btn-mute-game" class="btn magic-btn icon-btn icon-only" data-icon="sound-on" title="靜音"></button>
             <div class="stat-box title-stat">
                  <span id="mode-title">修煉模式</span>
             </div>
@@ -109,7 +121,7 @@
 
             <div id="p1-area" class="player-area p1-theme">
                 <div class="player-header">
-                    <div id="wizard-p1" class="wizard-badge">🧙 玩家一</div>
+                    <div id="wizard-p1" class="wizard-badge" data-icon="wizard">玩家一</div>
                     <div class="hp-bar-container magic-border" title="魔法成功率">
                         <div class="hp-bar" id="hp-p1" style="width: 100%;"></div>
                         <span class="hp-text">魔法成功率</span>
@@ -146,7 +158,7 @@
 
             <div id="p2-area" class="player-area p2-theme hidden">
                  <div class="player-header">
-                    <div id="wizard-p2" class="wizard-badge">🧙 玩家二</div>
+                    <div id="wizard-p2" class="wizard-badge" data-icon="wizard">玩家二</div>
                     <div class="hp-bar-container magic-border" title="魔法成功率">
                         <div class="hp-bar" id="hp-p2" style="width: 100%;"></div>
                         <span class="hp-text">魔法成功率</span>
