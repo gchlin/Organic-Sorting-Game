@@ -584,11 +584,6 @@ const Game = (function() {
 
         UI.menu.classList.add('hidden');
         UI.resultModal.classList.add('hidden');
-
-        // Show countdown overlay before revealing game so question content never flashes through
-        const countdownOverlay = document.getElementById('countdown-overlay');
-        if (countdownOverlay && mode !== 'practice') countdownOverlay.classList.remove('hidden');
-
         UI.game.classList.remove('hidden');
         UI.modeTitle.textContent = getModeName(mode);
         UI.levelTitle.textContent = level.toUpperCase();
@@ -614,33 +609,6 @@ const Game = (function() {
                 nextQuestion();
             }, 800);
         }
-    }
-
-    function runCountdown(steps, onDone) {
-        const numEl = document.getElementById('countdown-number');
-        const overlay = document.getElementById('countdown-overlay');
-        // 用 body class 黑幕蓋住題目內容，overlay 只顯示數字
-        document.body.classList.add('countdown-active');
-        if (overlay) overlay.classList.remove('hidden');
-
-        let i = 0;
-        function tick() {
-            if (i >= steps.length) {
-                if (overlay) overlay.classList.add('hidden');
-                onDone();
-                return;
-            }
-            if (numEl) {
-                numEl.textContent = steps[i];
-                numEl.style.animation = 'none';
-                void numEl.offsetWidth;
-                numEl.style.animation = '';
-            }
-            playSound(i < steps.length - 1 ? 'countdown' : 'start');
-            i++;
-            setTimeout(tick, 850);
-        }
-        tick();
     }
 
     function setupLayout(mode) {
@@ -809,7 +777,7 @@ const Game = (function() {
         UI.resultModal.classList.add('hidden');
         if (UI.storyModal) UI.storyModal.classList.add('hidden');
         UI.menu.classList.remove('hidden');
-        document.body.classList.remove('duel-mode', 'duel-desktop', 'duel-mobile');
+        document.body.classList.remove('duel-mode', 'duel-desktop', 'duel-mobile', 'countdown-active');
         updateMenuProgress();
         focusFirstAvailableControl(UI.menu);
     }

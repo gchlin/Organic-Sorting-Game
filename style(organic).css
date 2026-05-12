@@ -720,19 +720,7 @@ body.duel-mobile .key-hint {
 }
 
 
-/* 倒數開始 overlay — 只顯示數字，背景透明（題目由 body.countdown-active 黑幕處理） */
-#countdown-overlay {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 200;
-    pointer-events: none;
-    background: transparent;
-}
-
-/* 倒數期間：題目區、選項文字全部黑色蓋住 */
+/* 對決開場黑幕：題目區、選項全黑遮住，0.8 秒後一起揭開 */
 body.countdown-active .question-content,
 body.countdown-active .question-content * {
     color: transparent !important;
@@ -747,22 +735,6 @@ body.countdown-active .opt-btn {
 body.countdown-active .wizard-avatar,
 body.countdown-active .hat-display {
     opacity: 0;
-}
-
-#countdown-number {
-    font-family: var(--font-serif);
-    font-size: 12rem;
-    font-weight: bold;
-    color: var(--hp-gold);
-    text-shadow: 0 0 40px var(--hp-gold-glow), 2px 2px 6px rgba(0,0,0,0.9);
-    animation: countdownPop 0.85s ease-out forwards;
-}
-
-@keyframes countdownPop {
-    0%   { transform: scale(0.3); opacity: 0; }
-    30%  { transform: scale(1.2); opacity: 1; }
-    70%  { transform: scale(1.0); opacity: 1; }
-    100% { transform: scale(0.8); opacity: 0; }
 }
 
 /* ====================
