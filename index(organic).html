@@ -238,14 +238,8 @@
         </div>
     </div>
 
-    <audio id="bgm" loop>
-        </audio>
-    <audio id="se-beep" src="assets/sounds/beep.mp3" preload="auto"></audio>
-    <audio id="se-correct" src="assets/sounds/correct.mp3" preload="auto"></audio>
-    <audio id="se-wrong" src="assets/sounds/wrong.mp3" preload="auto"></audio>
-    <audio id="se-win" src="assets/sounds/win.mp3" preload="auto"></audio>
-    <audio id="se-lose" src="assets/sounds/lose.mp3" preload="auto"></audio>
-
+    <!-- 音效由 Web Audio API 即時合成（game.js 的 fallbackSound）；如要改用音檔，
+         放回 <audio id="se-correct" src="…"> 等元素即可，playSound 會自動優先使用音檔 -->
 
     <script src="data(organic).js"></script>
     <script src="story(organic).js"></script>
