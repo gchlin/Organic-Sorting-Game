@@ -564,42 +564,63 @@ const Game = (function() {
             if (btn) btn.addEventListener('click', toggleMute);
         });
 
-        // 匯出存檔
+        // 匯出存檔 → 下載 .json 檔（無法下載時降級為剪貼簿/prompt）
         const btnExport = document.getElementById('btn-export');
         if (btnExport) btnExport.addEventListener('click', () => {
             const text = Save.exportText();
-            navigator.clipboard.writeText(text).then(() => {
-                btnExport.textContent = '✅ 已複製';
-                setTimeout(() => { btnExport.textContent = '📤 匯出'; }, 2000);
-            }).catch(() => {
-                // 降級：顯示 prompt
-                window.prompt('複製以下存檔：', text);
-            });
+            try {
+                const blob = new Blob([text], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `有機分類帽-存檔-${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                showBadgeToast(null, '📤 已下載存檔 JSON');
+            } catch(e) {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(text)
+                        .then(() => showBadgeToast(null, '📋 存檔已複製到剪貼簿'))
+                        .catch(() => window.prompt('複製以下存檔：', text));
+                } else {
+                    window.prompt('複製以下存檔：', text);
+                }
+            }
         });
 
-        // 匯入存檔
+        // 匯入存檔（選檔案 或 貼文字）
         const btnImportOpen = document.getElementById('btn-import-open');
         const importModal = document.getElementById('import-modal');
         const btnImportConfirm = document.getElementById('btn-import-confirm');
         const btnImportCancel = document.getElementById('btn-import-cancel');
         const importTextarea = document.getElementById('import-textarea');
+        const importFile = document.getElementById('import-file');
+        function _doImport(str) {
+            const ok = Save.importText((str || '').trim());
+            if (ok) {
+                importModal.classList.add('hidden');
+                updateMenuProgress();
+                showBadgeToast(null, '✅ 存檔匯入成功！');
+            } else if (importTextarea) {
+                importTextarea.style.borderColor = '#e74c3c';
+                setTimeout(() => { importTextarea.style.borderColor = ''; }, 1500);
+            }
+        }
         if (btnImportOpen && importModal) {
             btnImportOpen.addEventListener('click', () => {
                 if (importTextarea) importTextarea.value = '';
+                if (importFile) importFile.value = '';
                 importModal.classList.remove('hidden');
-                if (importTextarea) importTextarea.focus();
             });
             btnImportCancel.addEventListener('click', () => importModal.classList.add('hidden'));
-            btnImportConfirm.addEventListener('click', () => {
-                const ok = Save.importText(importTextarea.value.trim());
-                if (ok) {
-                    importModal.classList.add('hidden');
-                    updateMenuProgress();
-                    showBadgeToast(null, '✅ 存檔匯入成功！');
-                } else {
-                    importTextarea.style.borderColor = '#e74c3c';
-                    setTimeout(() => { importTextarea.style.borderColor = ''; }, 1500);
-                }
+            btnImportConfirm.addEventListener('click', () => _doImport(importTextarea ? importTextarea.value : ''));
+            if (importFile) importFile.addEventListener('change', () => {
+                const f = importFile.files && importFile.files[0];
+                if (!f) return;
+                const reader = new FileReader();
+                reader.onload = () => _doImport(String(reader.result || ''));
+                reader.onerror = () => showBadgeToast(null, '⚠️ 讀取檔案失敗');
+                reader.readAsText(f);
             });
         }
 
@@ -931,9 +952,9 @@ const Game = (function() {
         let html = '';
 
         if (!cleared) {
-            html += `<p class="codex-locked-msg">🔒 通過這一關後，就能在這裡回顧劇情、梗圖與化合物小知識。</p>`;
+            html += `<p class="codex-locked-msg">🔒 通過這一關後，就能在這裡回顧劇情、化合物小知識與梗圖。</p>`;
         } else {
-            // 劇情：可收合，預設收起
+            // 1) 劇情：可收合，預設收起
             const script = (typeof StoryScripts !== 'undefined') ? StoryScripts[lv] : null;
             if (script && script.length) {
                 html += `<details class="codex-details"><summary>📖 劇情對話</summary><div class="codex-story">`;
@@ -946,11 +967,7 @@ const Game = (function() {
                 });
                 html += `</div></details>`;
             }
-            // 梗圖：只放圖，不寫字（沒有就不顯示）
-            if (info.meme) {
-                html += `<img class="codex-meme-img" src="assets/images/meme/${info.meme}" alt="" loading="lazy">`;
-            }
-            // 化合物卡片：點開看小知識（小維基）
+            // 2) 化合物小知識卡片（2 欄格狀；點卡片展開小維基說明）
             const list = (typeof QuestionSets !== 'undefined') ? QuestionSets[lv] : null;
             if (list && list.length) {
                 const seen = new Set();
@@ -962,15 +979,16 @@ const Game = (function() {
                     const name = ab ? ab.content : q.aKey;
                     const fact = (typeof CompoundFacts !== 'undefined' && CompoundFacts[q.aKey]) ? CompoundFacts[q.aKey] : '（小知識整理中……）';
                     html += `<button class="codex-mol-card" type="button" aria-expanded="false">` +
-                        `<span class="codex-mol-head">` +
                         `<img class="codex-mol-img" src="${q.qContent}" alt="" loading="lazy">` +
                         `<span class="codex-mol-name">${name}</span>` +
-                        `<span class="codex-mol-caret" aria-hidden="true">▾</span>` +
-                        `</span>` +
                         `<span class="codex-mol-fact">${fact}</span>` +
                         `</button>`;
                 });
                 html += `</div>`;
+            }
+            // 3) 梗圖：只放圖、不寫字、擺最後（沒有就不顯示）
+            if (info.meme) {
+                html += `<img class="codex-meme-img" src="assets/images/meme/${info.meme}" alt="" loading="lazy">`;
             }
         }
 

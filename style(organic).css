@@ -125,14 +125,29 @@ body, html {
     overflow-y: auto; /* 如果手機螢幕太矮可以捲動 */
 }
 
+/* 標題列：分類帽角色 + 標題並排 */
+.title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 8px;
+}
+.title-hat {
+    width: clamp(56px, 12vw, 88px);
+    height: clamp(56px, 12vw, 88px);
+    flex-shrink: 0;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,.5));
+}
+.title-text-wrap { text-align: left; }
 .game-title {
     font-size: 3rem;
-    margin-bottom: 5px;
+    margin: 0 0 2px;
 }
 .game-subtitle {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     color: var(--hp-parchment-dark);
-    margin-bottom: 12px;
+    margin: 0 0 4px;
     font-style: italic;
 }
 
@@ -1271,39 +1286,51 @@ body.countdown-active .hat-display {
     border: 1px solid rgba(212,175,55,0.4);
 }
 
-/* 化合物小知識卡片 */
-.codex-mol-grid { display: flex; flex-direction: column; gap: 8px; }
+/* 化合物小知識卡片：2 欄（寬螢幕 3 欄），卡片較大、結構清楚、名稱在下 */
+.codex-mol-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+@media (min-width: 560px) {
+    .codex-mol-grid { grid-template-columns: repeat(3, 1fr); }
+}
 .codex-mol-card {
     display: flex;
     flex-direction: column;
-    align-items: stretch;
-    text-align: left;
-    width: 100%;
-    padding: 8px 10px;
+    align-items: center;
+    text-align: center;
+    padding: 10px 8px;
     border: 1px solid rgba(124,30,30,0.22);
     background: rgba(0,0,0,0.04);
     color: #2c2416;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     font: inherit;
 }
 .codex-mol-card:hover { background: rgba(124,30,30,0.08); }
-.codex-mol-head { display: flex; align-items: center; gap: 10px; }
 .codex-mol-img {
-    width: 44px; height: 36px; object-fit: contain;
-    flex-shrink: 0; background: #fff; border-radius: 4px;
+    width: 100%;
+    height: 96px;
+    object-fit: contain;
+    background: #fff;
+    border-radius: 6px;
+    padding: 4px;
+    box-sizing: border-box;
 }
-.codex-mol-name { font-weight: bold; flex: 1; }
-.codex-mol-caret { color: #7f0909; transition: transform .2s ease; }
-.codex-mol-card.open .codex-mol-caret { transform: rotate(180deg); }
+.codex-mol-name { font-weight: bold; margin-top: 6px; font-size: 0.95rem; }
 .codex-mol-fact {
     display: none;
     margin-top: 8px;
     padding-top: 8px;
     border-top: 1px dashed rgba(124,30,30,0.3);
-    line-height: 1.6;
+    line-height: 1.65;
     font-size: 0.92rem;
+    text-align: left;
 }
+/* 展開時佔整行、結構放更大 */
+.codex-mol-card.open { grid-column: 1 / -1; background: rgba(124,30,30,0.07); }
+.codex-mol-card.open .codex-mol-img { height: 150px; }
 .codex-mol-card.open .codex-mol-fact { display: block; }
 
 .codex-locked-msg {
@@ -1715,6 +1742,11 @@ body.duel-mobile  #duel-arena { display: none; }
 /* 匯入 Modal */
 .import-modal-content { max-width: 480px; text-align: left; }
 .import-hint { font-size: .88rem; margin: 8px 0 6px; color: #555; }
+.import-file-input {
+    display: block; width: 100%; box-sizing: border-box;
+    padding: 8px; border: 1px dashed #8a7355; border-radius: 6px;
+    background: rgba(0,0,0,0.04); color: #2c2416; font-size: .85rem;
+}
 .import-textarea { width: 100%; box-sizing: border-box; resize: vertical; font-family: monospace; font-size: .8rem; }
 .import-btn-row { display: flex; gap: 8px; margin-top: 10px; }
 .import-btn-row .btn { flex: 1; }
