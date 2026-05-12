@@ -18,6 +18,7 @@
         <h1 class="game-title magical-text">有機分類帽</h1>
         <h2 class="game-subtitle">Organic Sorting Hat</h2>
         <p class="keyboard-help">方向鍵選關卡，Enter / Space 開始；也可直接按按鈕前的 [快捷鍵]。</p>
+        <button id="btn-tutorial" class="btn magic-btn tutorial-btn">🎓 新手導覽 — 怎麼玩、怎麼按</button>
 
         <div class="menu-group">
             <h3 class="menu-heading">⚗️ 自我修煉 (Practice)</h3>
@@ -235,6 +236,26 @@
                 <button id="btn-codex-back" class="btn magic-btn">← 返回列表</button>
                 <h3 id="codex-detail-title" class="magical-text"></h3>
                 <div id="codex-detail-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新手導覽 Modal -->
+    <div id="tutorial-modal" class="modal hidden">
+        <div class="modal-content magic-scroll tutorial-modal-content">
+            <h2 class="magical-text">🎓 新手導覽</h2>
+            <div id="tutorial-slide" class="tutorial-slide">
+                <div id="tutorial-icon" class="tutorial-icon">🎩</div>
+                <h3 id="tutorial-title" class="tutorial-title"></h3>
+                <p id="tutorial-text" class="tutorial-text"></p>
+            </div>
+            <div class="tutorial-footer">
+                <div id="tutorial-dots" class="story-dots"></div>
+                <div class="tutorial-btn-row">
+                    <button id="btn-tutorial-prev" class="btn magic-btn">← 上一頁</button>
+                    <button id="btn-tutorial-skip" class="btn magic-btn">略過</button>
+                    <button id="btn-tutorial-next" class="btn magic-btn boss-btn">下一頁 →</button>
+                </div>
             </div>
         </div>
     </div>

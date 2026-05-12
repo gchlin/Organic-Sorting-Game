@@ -42,7 +42,8 @@ const Save = (function () {
             wrongQueue: {},         // 錯題：{ molKey: 還沒攻克的次數 }
             storyUnlocked: [],      // 已解鎖劇情的關卡 ["level1", …]
             levelClears: {},        // 各關是否達門檻過 { "level1": true, … }
-            bestScores: {}          // { "speed_level3": 120, "duel_level6": 80, … }
+            bestScores: {},         // { "speed_level3": 120, "duel_level6": 80, … }
+            tutorialSeen: false     // 新手導覽是否已看過（首次進站自動跳出）
         };
     }
 
@@ -177,6 +178,9 @@ const Save = (function () {
 
     function reset() { data = defaultSave(); persist(); }
 
+    function markTutorialSeen() { if (!data.tutorialSeen) { data.tutorialSeen = true; persist(); } }
+    function isTutorialSeen() { return !!data.tutorialSeen; }
+
     // 載入一次（模組初始化）
     load();
 
@@ -187,6 +191,7 @@ const Save = (function () {
         unlockStory, markLevelClear, recordBest,
         knows, isStoryUnlocked, isLevelCleared,
         unlockedBadges, allBadgeDefs, wrongList,
+        markTutorialSeen, isTutorialSeen,
         exportText, importText, reset
     };
 })();

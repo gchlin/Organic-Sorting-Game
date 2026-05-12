@@ -226,7 +226,16 @@ const Game = (function() {
         codexDetail: document.getElementById('codex-detail'),
         codexDetailTitle: document.getElementById('codex-detail-title'),
         codexDetailBody: document.getElementById('codex-detail-body'),
-        btnCodexBack: document.getElementById('btn-codex-back')
+        btnCodexBack: document.getElementById('btn-codex-back'),
+        tutorialModal: document.getElementById('tutorial-modal'),
+        btnTutorial: document.getElementById('btn-tutorial'),
+        tutorialIcon: document.getElementById('tutorial-icon'),
+        tutorialTitle: document.getElementById('tutorial-title'),
+        tutorialText: document.getElementById('tutorial-text'),
+        tutorialDots: document.getElementById('tutorial-dots'),
+        btnTutorialNext: document.getElementById('btn-tutorial-next'),
+        btnTutorialPrev: document.getElementById('btn-tutorial-prev'),
+        btnTutorialSkip: document.getElementById('btn-tutorial-skip')
     };
 
     // 音效 Context
@@ -532,6 +541,7 @@ const Game = (function() {
 
         initPickerListeners();
         initStoryListeners();
+        initTutorialListeners();
 
         if (UI.btnShowStory) {
             UI.btnShowStory.addEventListener('click', () => {
@@ -604,6 +614,11 @@ const Game = (function() {
         applyKeyboardHints();
         updateMenuProgress();
         focusFirstAvailableControl(UI.menu);
+
+        // 第一次進站 → 自動跳新手導覽
+        if (typeof Save !== 'undefined' && !Save.isTutorialSeen()) {
+            setTimeout(() => showTutorial(false), 400);
+        }
     }
 
     function preloadImages() {
@@ -1115,6 +1130,58 @@ const Game = (function() {
         UI.btnStorySkip.addEventListener('click', () => _storyClose(false));
     }
 
+    // --- 新手導覽 ---
+    const TUTORIAL_SLIDES = [
+        { icon: '🎩', title: '歡迎來到「有機分類帽」', text: '我是分類帽，會在你旁邊吐槽……我是說，給你提示。這裡是練習「快速辨認有機官能基」的地方。' },
+        { icon: '🔬', title: '怎麼玩', text: '螢幕中間會出現一個分子結構圖，你要從四個選項裡選出它屬於哪一類官能基（烷、烯、醇、醛、酮、酸、酯……）。選對，反應產率上升；選錯，試管會破、產率下降；產率歸零就實驗失敗。' },
+        { icon: '⌨️', title: '怎麼按', text: '用滑鼠直接點選項就行。也可以用鍵盤——每個選項上會標 [快捷鍵]。對決模式時，玩家一用左邊那組鍵、玩家二用右邊那組。結算頁可用 Enter（下一關）、R（再玩）、Esc（回大廳）。' },
+        { icon: '⚗️', title: '三種模式', text: '⚗️ 自我修煉：慢慢練，答錯會給你提示。⏳ 競速挑戰：限時作答，答對加秒、連對加更多。⚔️ 巫師對決：兩人同一台搶答（桌面用鍵盤、手機橫放用觸控）。' },
+        { icon: '📖', title: '通關與劇情', text: '每一關答對率達 60%（至少答 4 題）就算通過，會解鎖分類帽的劇情對話。通過的關卡可以在首頁「📔 圖鑑」裡回顧劇情和梗圖。' },
+        { icon: '✨', title: '開始吧', text: '方向鍵選關卡、Enter 開始。隨時可以從首頁的「🎓 新手導覽」再看一次這份說明。去吧，別讓帽子等太久。' },
+    ];
+    let _tutIdx = 0;
+    function showTutorial(fromButton) {
+        if (!UI.tutorialModal) return;
+        if (!fromButton && !isVisible(UI.menu)) return;  // 自動跳出時，若玩家已離開大廳就不打擾
+        _tutIdx = 0;
+        if (!UI.tutorialDots) return;
+        UI.tutorialDots.innerHTML = '';
+        TUTORIAL_SLIDES.forEach(() => {
+            const d = document.createElement('span'); d.className = 'story-dot'; UI.tutorialDots.appendChild(d);
+        });
+        _tutRender();
+        UI.tutorialModal.classList.remove('hidden');
+        if (UI.btnTutorialNext) try { UI.btnTutorialNext.focus(); } catch(e) {}
+    }
+    function _tutRender() {
+        const s = TUTORIAL_SLIDES[_tutIdx];
+        UI.tutorialIcon.textContent = s.icon;
+        UI.tutorialTitle.textContent = s.title;
+        UI.tutorialText.textContent = s.text;
+        UI.tutorialDots.querySelectorAll('.story-dot').forEach((d, i) => {
+            d.classList.toggle('done', i < _tutIdx);
+            d.classList.toggle('current', i === _tutIdx);
+        });
+        UI.btnTutorialPrev.disabled = (_tutIdx === 0);
+        UI.btnTutorialNext.textContent = (_tutIdx === TUTORIAL_SLIDES.length - 1) ? '開始遊戲 ✓' : '下一頁 →';
+    }
+    function _tutNext() {
+        if (_tutIdx >= TUTORIAL_SLIDES.length - 1) { _tutClose(); return; }
+        _tutIdx++; _tutRender();
+    }
+    function _tutPrev() { if (_tutIdx > 0) { _tutIdx--; _tutRender(); } }
+    function _tutClose() {
+        UI.tutorialModal.classList.add('hidden');
+        if (typeof Save !== 'undefined') Save.markTutorialSeen();
+        focusFirstAvailableControl(UI.menu);
+    }
+    function initTutorialListeners() {
+        if (UI.btnTutorial)     UI.btnTutorial.addEventListener('click', () => showTutorial(true));
+        if (UI.btnTutorialNext) UI.btnTutorialNext.addEventListener('click', _tutNext);
+        if (UI.btnTutorialPrev) UI.btnTutorialPrev.addEventListener('click', _tutPrev);
+        if (UI.btnTutorialSkip) UI.btnTutorialSkip.addEventListener('click', _tutClose);
+    }
+
     function _checkStoryThreshold() {
         // 回傳是否本次達門檻
         if (currentMode === 'duel') {
@@ -1471,6 +1538,14 @@ const Game = (function() {
 
         if (e.repeat) return;
 
+        // 新手導覽鍵盤
+        if (isVisible(UI.tutorialModal)) {
+            if (e.code === 'Enter' || e.code === 'Space' || e.code === 'ArrowRight') { e.preventDefault(); UI.btnTutorialNext.click(); }
+            else if (e.code === 'ArrowLeft') { e.preventDefault(); UI.btnTutorialPrev.click(); }
+            else if (e.code === 'Escape') { e.preventDefault(); UI.btnTutorialSkip.click(); }
+            return;
+        }
+
         // 魔法師選擇框優先接管鍵盤
         if (isVisible(UI.wizardPicker)) {
             const inInput = e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
@@ -1628,6 +1703,7 @@ const Game = (function() {
     }
 
     function getActivePanel() {
+        if (isVisible(UI.tutorialModal)) return UI.tutorialModal;
         if (isVisible(UI.codexModal)) return UI.codexModal;
         if (isVisible(UI.refModal)) return UI.refModal;
         if (isVisible(UI.resultModal)) return UI.resultModal;
