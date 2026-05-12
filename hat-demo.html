@@ -158,7 +158,7 @@
   .hat-assistant.sad .brow.right { transform: rotate(-20deg) translateY(3px); }
   .hat-assistant.sad .mouth {
     width: 30px; height: 14px;
-    border-top: 3px solid #2a1c10;
+    border-top: 3px solid var(--ink);
     border-bottom-color: transparent;
     border-radius: 26px 26px 0 0 / 26px 26px 0 0;
     top: calc(var(--mouth-y) + 6px);
@@ -172,9 +172,9 @@
   .hat-assistant.surprised .brow.right { transform: rotate(2deg);  }
   .hat-assistant.surprised .mouth {
     width: 20px; height: 22px;
-    border: 3px solid #2a1c10;
+    border: 3px solid var(--ink);
     border-radius: 50%;
-    background: rgba(40,26,12,.7);
+    background: rgba(0,0,0,.35);
   }
 
   /* --- 思考（提示）：瞳孔往上看、單邊挑眉、嘴巴歪一邊（小斜線） --- */
@@ -183,7 +183,7 @@
   .hat-assistant.thinking .brow.right { top: calc(var(--eye-y) - 19px); transform: rotate(-14deg); }
   .hat-assistant.thinking .mouth {
     width: 18px; height: 0;
-    border: none; border-bottom: 3px solid #2a1c10; border-radius: 0;
+    border: none; border-bottom: 3px solid var(--ink); border-radius: 0;
     transform: translateX(-50%) translateX(7px) rotate(-8deg);
   }
 
@@ -215,7 +215,7 @@
   .hat-assistant.annoyed .brow.right { transform: rotate(16deg);  }
   .hat-assistant.annoyed .mouth {
     width: 28px; height: 0;
-    border: none; border-bottom: 4px solid #2a1c10; border-radius: 0;
+    border: none; border-bottom: 4px solid var(--ink); border-radius: 0;
   }
 
   /* --- 想睡：眼睛瞇成一條（夠粗看得清）+ 慢慢上下、嘴巴小 o 打呵欠 --- */
@@ -229,9 +229,9 @@
   .hat-assistant.sleepy .brow { top: calc(var(--eye-y) - 10px); }
   .hat-assistant.sleepy .mouth {
     width: 16px; height: 14px;
-    border: 3px solid #2a1c10;
+    border: 3px solid var(--ink);
     border-radius: 50%;
-    background: rgba(40,26,12,.6);
+    background: rgba(0,0,0,.3);
   }
 
   /* ================= 互動：滑鼠移動時瞳孔追蹤（JS） ================= */
