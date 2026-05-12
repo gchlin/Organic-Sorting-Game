@@ -39,6 +39,7 @@
     --eye-w: 26px;
     --eye-h: 30px;
     --pupil: 11px;
+    --mouth-y: 76%;         /* 嘴巴縱向位置 */
     animation: hatBob 3.4s ease-in-out infinite;
     filter: drop-shadow(0 6px 10px rgba(0,0,0,.5));
   }
@@ -82,19 +83,34 @@
     background: rgba(255,255,255,.85);
     border-radius: 50%;
   }
-  /* 眉毛（只在某些表情出現） */
+  /* 眉毛（一直都在；表情靠角度變化） */
   .brow {
     position: absolute;
-    top: calc(var(--eye-y) - 12px);
-    width: calc(var(--eye-w) + 6px);
-    height: 5px;
+    top: calc(var(--eye-y) - 13px);
+    width: calc(var(--eye-w) + 8px);
+    height: 6px;
     background: #2a1c10;
-    border-radius: 3px;
-    opacity: 0;
-    transition: opacity .2s ease, transform .2s ease;
+    border-radius: 4px;
+    opacity: .92;
+    transition: opacity .2s ease, transform .2s ease, top .2s ease;
   }
-  .brow.left  { left: calc(50% - var(--eye-dx) - var(--eye-w) - 3px); transform-origin: right center; }
-  .brow.right { left: calc(50% + var(--eye-dx) - 3px); transform-origin: left center; }
+  .brow.left  { left: calc(50% - var(--eye-dx) - var(--eye-w) - 4px); transform-origin: right center; transform: rotate(-4deg); }
+  .brow.right { left: calc(50% + var(--eye-dx) - 4px);                transform-origin: left center;  transform: rotate(4deg);  }
+
+  /* 嘴巴（一直都在；表情靠形狀/邊框變化）。預設：小小的微笑弧 */
+  .mouth {
+    position: absolute;
+    left: 50%;
+    top: var(--mouth-y);
+    width: 36px;
+    height: 16px;
+    transform: translateX(-50%);
+    border: 3px solid #2a1c10;
+    border-top-color: transparent;
+    border-radius: 0 0 999px 999px / 0 0 26px 26px;
+    background: transparent;
+    transition: all .2s ease, border-radius .2s ease;
+  }
 
   /* ---- 眨眼（自動，所有表情共用，除了 surprised/sleepy 例外處理）---- */
   @keyframes blink {
@@ -112,52 +128,108 @@
   }
 
   /* ================= 各種表情 ================= */
-  /* 開心：眼睛變成 ^ ^（下半圓彎月） */
+  /* --- 平靜（待機）：默認狀態，小微笑（已在 .mouth 預設） + 眉毛微微外八 --- */
+  .hat-assistant.neutral .brow.left  { transform: rotate(-3deg); }
+  .hat-assistant.neutral .brow.right { transform: rotate(3deg);  }
+
+  /* --- 開心（答對）：彎月眼 ^ ^ + 大笑嘴 + 眉毛上揚 --- */
   .hat-assistant.happy .eye {
-    height: calc(var(--eye-h) * 0.5);
+    height: calc(var(--eye-h) * 0.55);
     border-radius: 0 0 999px 999px / 0 0 60px 60px;
     border-top-color: transparent;
     background: #f4f0e2;
   }
   .hat-assistant.happy .pupil { display: none; }
+  .hat-assistant.happy .brow { top: calc(var(--eye-y) - 17px); }
+  .hat-assistant.happy .brow.left  { transform: rotate(-10deg); }
+  .hat-assistant.happy .brow.right { transform: rotate(10deg);  }
+  .hat-assistant.happy .mouth {
+    width: 44px; height: 24px;
+    border-width: 4px;
+    border-radius: 0 0 999px 999px / 0 0 40px 40px;
+  }
 
-  /* 難過：眼睛往下垂、瞳孔朝下，眉毛內八 */
-  .hat-assistant.sad .pupil { transform: translate(-50%, 10%); }
-  .hat-assistant.sad .brow { opacity: 1; }
-  .hat-assistant.sad .brow.left  { transform: rotate(18deg)  translateY(2px); }
-  .hat-assistant.sad .brow.right { transform: rotate(-18deg) translateY(2px); }
+  /* --- 失望（答錯）：瞳孔朝下、眉毛內八（八字眉）、嘴角下垂（倒 U） --- */
+  .hat-assistant.sad .pupil { transform: translate(-50%, 18%); }
+  .hat-assistant.sad .brow.left  { transform: rotate(20deg)  translateY(3px); }
+  .hat-assistant.sad .brow.right { transform: rotate(-20deg) translateY(3px); }
+  .hat-assistant.sad .mouth {
+    width: 30px; height: 14px;
+    border-top: 3px solid #2a1c10;
+    border-bottom-color: transparent;
+    border-radius: 26px 26px 0 0 / 26px 26px 0 0;
+    top: calc(var(--mouth-y) + 6px);
+  }
 
-  /* 驚訝：眼睛睜大、瞳孔縮小 */
-  .hat-assistant.surprised .eye { height: calc(var(--eye-h) * 1.25); transform: translateY(-2px); }
+  /* --- 驚訝：眼睛睜大、瞳孔縮小、眉毛高高揚起、嘴巴張成 O --- */
+  .hat-assistant.surprised .eye { height: calc(var(--eye-h) * 1.3); transform: translateY(-3px); }
   .hat-assistant.surprised .pupil { width: 7px; height: 7px; }
+  .hat-assistant.surprised .brow { top: calc(var(--eye-y) - 20px); }
+  .hat-assistant.surprised .brow.left  { transform: rotate(-2deg); }
+  .hat-assistant.surprised .brow.right { transform: rotate(2deg);  }
+  .hat-assistant.surprised .mouth {
+    width: 20px; height: 22px;
+    border: 3px solid #2a1c10;
+    border-radius: 50%;
+    background: rgba(40,26,12,.7);
+  }
 
-  /* 思考：眼睛往上看（瞳孔上移），單邊挑眉 */
-  .hat-assistant.thinking .pupil { transform: translate(-30%, -90%); }
-  .hat-assistant.thinking .brow.right { opacity: 1; transform: rotate(-12deg) translateY(-3px); }
+  /* --- 思考（提示）：瞳孔往上看、單邊挑眉、嘴巴歪一邊（小斜線） --- */
+  .hat-assistant.thinking .pupil { transform: translate(-25%, -85%); }
+  .hat-assistant.thinking .brow.left  { transform: rotate(-2deg); }
+  .hat-assistant.thinking .brow.right { top: calc(var(--eye-y) - 19px); transform: rotate(-14deg); }
+  .hat-assistant.thinking .mouth {
+    width: 18px; height: 0;
+    border: none; border-bottom: 3px solid #2a1c10; border-radius: 0;
+    transform: translateX(-50%) translateX(7px) rotate(-8deg);
+  }
 
-  /* 眨單眼（wink）：右眼閉、左眼正常笑 */
-  .hat-assistant.wink .eye.right { height: 4px; }
-  .hat-assistant.wink .eye.left  { height: calc(var(--eye-h) * 0.6); border-radius: 0 0 999px 999px; border-top-color: transparent; }
+  /* --- 眨單眼（鼓勵）：右眼閉成彎線、左眼笑、嘴巴小斜笑 --- */
+  .hat-assistant.wink .eye.right {
+    height: 9px;
+    border-radius: 0 0 999px 999px / 0 0 14px 14px;
+    border-top-color: transparent;
+    animation: none;
+  }
+  .hat-assistant.wink .eye.right .pupil { display: none; }
+  .hat-assistant.wink .eye.left  { height: calc(var(--eye-h) * 0.62); border-radius: 0 0 999px 999px; border-top-color: transparent; }
   .hat-assistant.wink .eye.left .pupil { display: none; }
-  .hat-assistant.wink .eye.right { animation: none; }
+  .hat-assistant.wink .brow.right { transform: rotate(8deg) translateY(2px); }
+  .hat-assistant.wink .mouth { width: 38px; height: 18px; transform: translateX(-50%) rotate(-5deg); }
 
-  /* 不爽 / 翻白眼（annoyed）：眼皮半垂（從上方蓋一半），眉壓低 */
+  /* --- 不爽：眼皮半垂、眉壓低（內壓）、嘴巴抿成一條平線 --- */
   .hat-assistant.annoyed .eye::before {
     content: '';
     position: absolute;
     left: -2px; right: -2px; top: -2px;
-    height: 55%;
+    height: 48%;
     background: #2a1c10;
     border-radius: 50% 50% 0 0 / 100% 100% 0 0;
   }
-  .hat-assistant.annoyed .pupil { transform: translate(-50%, -10%); }
-  .hat-assistant.annoyed .brow { opacity: 1; }
-  .hat-assistant.annoyed .brow.left  { transform: rotate(-14deg); }
-  .hat-assistant.annoyed .brow.right { transform: rotate(14deg);  }
+  .hat-assistant.annoyed .pupil { transform: translate(-50%, -6%); }
+  .hat-assistant.annoyed .brow { top: calc(var(--eye-y) - 9px); }
+  .hat-assistant.annoyed .brow.left  { transform: rotate(-16deg); }
+  .hat-assistant.annoyed .brow.right { transform: rotate(16deg);  }
+  .hat-assistant.annoyed .mouth {
+    width: 28px; height: 0;
+    border: none; border-bottom: 4px solid #2a1c10; border-radius: 0;
+  }
 
-  /* 想睡（sleepy）：眼睛剩一條線、慢慢上下 */
-  .hat-assistant.sleepy .eye { height: 5px; animation: sleepyLine 2.6s ease-in-out infinite; }
-  @keyframes sleepyLine { 0%,100%{ height:5px; } 50%{ height:9px; } }
+  /* --- 想睡：眼睛瞇成一條（夠粗看得清）+ 慢慢上下、嘴巴小 o 打呵欠 --- */
+  .hat-assistant.sleepy .eye {
+    height: 10px;
+    border-radius: 999px;
+    animation: sleepyLine 2.6s ease-in-out infinite;
+  }
+  .hat-assistant.sleepy .eye .pupil { display: none; }
+  @keyframes sleepyLine { 0%,100%{ height:9px; } 50%{ height:14px; } }
+  .hat-assistant.sleepy .brow { top: calc(var(--eye-y) - 10px); }
+  .hat-assistant.sleepy .mouth {
+    width: 16px; height: 14px;
+    border: 3px solid #2a1c10;
+    border-radius: 50%;
+    background: rgba(40,26,12,.6);
+  }
 
   /* ================= 互動：滑鼠移動時瞳孔追蹤（JS） ================= */
 
@@ -214,7 +286,7 @@
 
   .mini-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; max-width: 720px; }
   .mini-cell { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-  .mini-cell .hat-assistant { width: 110px; height: 124px; --eye-y: 52%; --eye-dx: 14px; --eye-w: 17px; --eye-h: 20px; --pupil: 7px; animation-duration: 4s; }
+  .mini-cell .hat-assistant { width: 120px; height: 134px; --eye-y: 52%; --eye-dx: 15px; --eye-w: 18px; --eye-h: 22px; --pupil: 8px; --mouth-y: 76%; animation-duration: 4s; }
   .mini-cell .label { font-size: .78rem; opacity: .75; }
 </style>
 </head>
@@ -222,9 +294,9 @@
 
 <h1>🎩 分類帽助理 — Clippy 風格（CSS 眼睛 + 表情）</h1>
 <p class="hint">
-  身體用現成的 <code>Sorting_Hat.webp</code>，眼睛、眉毛、表情全部用 CSS 疊上去做（不需要有眼睛的素材）。<br>
+  身體用現成的 <code>Sorting_Hat.webp</code>，眼睛、眉毛、嘴巴、表情全部用 CSS 疊上去做（不需要有臉的素材）。<br>
   滑鼠移到帽子上瞳孔會追著你看；點一下會驚訝一下。下面按鈕可切換表情。<br>
-  眼睛位置如果跟素材對不準，調 <code>--eye-y / --eye-dx / --eye-w / --eye-h</code> 就好。
+  五官位置如果跟素材對不準，調 <code>--eye-y / --eye-dx / --eye-w / --eye-h / --mouth-y</code> 就好。
 </p>
 
 <div class="stage">
@@ -236,6 +308,7 @@
       <div class="brow right"></div>
       <div class="eye left"><div class="pupil"></div></div>
       <div class="eye right"><div class="pupil"></div></div>
+      <div class="mouth"></div>
     </div>
   </div>
 
@@ -297,6 +370,7 @@ EXPRESSIONS.forEach(e => {
       <div class="brow left"></div><div class="brow right"></div>
       <div class="eye left"><div class="pupil"></div></div>
       <div class="eye right"><div class="pupil"></div></div>
+      <div class="mouth"></div>
     </div>
     <span class="label">${e.label}</span>`;
   miniGrid.appendChild(cell);
