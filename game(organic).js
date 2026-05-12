@@ -450,7 +450,44 @@ const Game = (function() {
     }
 
     // --- 初始化 ---
+    // --- 分類帽角色（CSS 五官 + 表情）---
+    const HAT_EXPRS = ['neutral', 'happy', 'sad', 'surprised', 'thinking', 'wink'];
+    let _hatExprTimer = null;
+    function initHatChars() {
+        document.querySelectorAll('.hat-char').forEach(h => {
+            if (h.querySelector('.hat-img')) return; // 已建好
+            h.innerHTML =
+                '<div class="hat-img"></div>' +
+                '<div class="brow left"></div><div class="brow right"></div>' +
+                '<div class="eye left"><div class="pupil"></div></div>' +
+                '<div class="eye right"><div class="pupil"></div></div>' +
+                '<div class="mouth"></div>';
+        });
+        // 瞳孔追滑鼠（只在遊戲畫面，淡淡地看你）
+        document.addEventListener('mousemove', (ev) => {
+            if (!isVisible(UI.game)) return;
+            document.querySelectorAll('.hat-char:not(.surprised):not(.sleepy) .eye').forEach(eye => {
+                const p = eye.querySelector('.pupil');
+                if (!p) return;
+                const r = eye.getBoundingClientRect();
+                const ang = Math.atan2(ev.clientY - (r.top + r.height/2), ev.clientX - (r.left + r.width/2));
+                const m = Math.max(2, r.width * 0.16);
+                p.style.transform = `translate(calc(-50% + ${Math.cos(ang)*m}px), calc(-50% + ${Math.sin(ang)*m}px))`;
+            });
+        });
+    }
+    // 設定所有分類帽表情；ms > 0 時自動回到 neutral
+    function setHatExpr(expr, ms) {
+        if (_hatExprTimer) { clearTimeout(_hatExprTimer); _hatExprTimer = null; }
+        document.querySelectorAll('.hat-char').forEach(h => {
+            h.classList.remove(...HAT_EXPRS);
+            h.classList.add(HAT_EXPRS.includes(expr) ? expr : 'neutral');
+        });
+        if (ms && ms > 0) _hatExprTimer = setTimeout(() => setHatExpr('neutral'), ms);
+    }
+
     function init() {
+        initHatChars();
         document.querySelectorAll('.menu-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 showWizardPicker(btn.dataset.mode, btn.dataset.level);
@@ -632,6 +669,7 @@ const Game = (function() {
 
         setupLayout(mode);
         setupPracticeFeedback(mode);
+        setHatExpr('neutral');
 
         gameActive = false;
         if (timerInterval) clearInterval(timerInterval);
@@ -1183,6 +1221,7 @@ const Game = (function() {
 
     function nextQuestion() {
         if (!gameActive) return;
+        setHatExpr('neutral');
         if (currentMode === 'duel') {
             nextDuelQuestion('p1');
             nextDuelQuestion('p2');
@@ -1696,6 +1735,7 @@ const Game = (function() {
     function handleCorrect(player, btn) {
         playSound('correct');
         btn.classList.add('correct');
+        if (currentMode !== 'duel') setHatExpr(currentMode === 'speed' ? 'wink' : 'happy', 1300);
         players[player].totalAsked++;
         players[player].correctCount++;
 
@@ -1762,6 +1802,7 @@ const Game = (function() {
     function handleWrong(player, btn) {
         playSound('wrong');
         btn.classList.add('wrong');
+        if (currentMode !== 'duel') setHatExpr('sad', 1600);
         players[player].totalAsked++;
         revealCorrectAnswer(player);
         showPracticeWrongHint();
@@ -1827,13 +1868,15 @@ const Game = (function() {
         if (!hint) return;
 
         ensurePracticeFeedbackUI();
-        practiceWhyEl.textContent = `為什麼：${hint}`;
+        practiceWhyEl.textContent = `這個結構${hint}，所以歸在這一類。`;
         practiceWhyEl.classList.remove('hidden');
 
         const coachText = practiceWrongStreak >= 3
-            ? `${hint} ${COACH_LINES.streak}`
-            : hint;
+            ? `再看一次，這個結構${hint}。${COACH_LINES.streak}`
+            : `沒看出來嗎？這個結構${hint}，所以歸在這一類。`;
         setPracticeCoachText(coachText);
+        // 答錯的「失望」過後，帽子轉成「思考」陪你看提示
+        setTimeout(() => { if (isVisible(UI.game) && currentMode === 'practice') setHatExpr('thinking'); }, 1500);
     }
 
     function getWhyHintForAnswer(answerKey) {
