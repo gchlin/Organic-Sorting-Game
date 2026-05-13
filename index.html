@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="style-visual-v2.css">
     <!-- ✅ landscape 新增：永遠在 style.css 之後 -->
     <link rel="stylesheet" href="layout.css">
+    <link rel="stylesheet" href="menu.css">
 </head>
 <body>
 
@@ -30,72 +31,99 @@
 
     <div id="preload-container"></div>
 
-    <div id="menu-container">
-        <div class="title-row">
+    <div id="menu-container" class="landscape">
+
+        <!-- 頂部標題列 -->
+        <header class="menu-landscape-top">
             <div id="title-hat" class="title-hat hat-char neutral" aria-hidden="true"></div>
             <div class="title-text-wrap">
                 <h1 class="game-title magical-text">有機分類帽</h1>
                 <h2 class="game-subtitle">Organic Sorting Hat</h2>
             </div>
-        </div>
-        <p class="keyboard-help">方向鍵選關卡，Enter / Space 開始；也可直接按按鈕前的 [快捷鍵]。</p>
-        <button id="btn-tutorial" class="btn magic-btn tutorial-btn">新手導覽 — 怎麼玩、怎麼按</button>
-
-        <!-- 進度面板（認識分子、累積答對、勳章） -->
-        <div id="progress-panel" class="progress-panel">
-            <div class="prog-row">
-                <span data-icon="books">認識分子</span><strong id="prog-molecules">0 / 0</strong><span>種</span>
-                <span class="prog-levels" id="prog-levels"></span>
+            <div class="top-progress">
+                <div class="stat" data-icon="books">
+                    分子 <strong id="prog-molecules">0 / 0</strong>
+                    <span class="prog-levels" id="prog-levels"></span>
+                </div>
+                <div class="stat" data-icon="check">
+                    答對 <strong id="prog-correct">0</strong>
+                </div>
+                <div id="prog-badges" class="prog-badges"></div>
+                <button id="btn-open-codex" class="codex-entry btn" data-icon="codex">圖鑑</button>
             </div>
-            <div class="prog-row">
-                <span data-icon="check">累積答對</span><strong id="prog-correct">0</strong><span>題</span>
+            <div class="wizard-pill">
+                <div id="wizard-status-bar" class="wizard-status-bar hidden">
+                    <span id="wizard-status-label" data-icon="wizard">玩家一</span>
+                    <button id="btn-change-wizard" class="btn magic-btn swap">更換</button>
+                </div>
             </div>
-            <div class="prog-badges" id="prog-badges"></div>
-        </div>
+        </header>
 
-        <div class="menu-group">
-            <h3 class="menu-heading" data-icon="flask">自我修煉 (Practice)</h3>
-            <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level1">Level 1: 碳氫骨架基礎</button>
-            <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level2">Level 2: 單鍵氧家族 (醇醚)</button>
-            <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level3">Level 3: 雙鍵氧家族 (醛酮)</button>
-            <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level4">Level 4: 雙氧複合 (酸酯)</button>
-            <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level5">Level 5: 雜原子與鹵素</button>
-            <button class="btn menu-btn magic-btn boss-btn" data-mode="practice" data-level="level6">Level 6: 終極分類帽 (綜合題)</button>
-            <button class="btn menu-btn magic-btn" data-mode="practice" data-level="levelShell">「龜殼」與它的產地 (苯環陷阱)</button>
-            <button class="btn menu-btn magic-btn genius-btn" data-mode="practice" data-level="level99">Level 99: 資優全英挑戰</button>
-        </div>
+        <!-- 三欄主內容 -->
+        <main class="menu-landscape-main">
 
-        <div class="menu-group">
-            <h3 class="menu-heading" data-icon="hourglass">競速挑戰 (Time Attack)</h3>
-            <button class="btn menu-btn magic-btn" data-mode="speed" data-level="level3">挑戰：醛酮分辨</button>
-            <button class="btn menu-btn magic-btn" data-mode="speed" data-level="level4">挑戰：酸酯分辨</button>
-            <button class="btn menu-btn magic-btn boss-btn" data-mode="speed" data-level="level6">挑戰：終極大亂鬥</button>
-            <button class="btn menu-btn magic-btn" data-mode="speed" data-level="levelShell">挑戰：龜殼產地（苯環陷阱）</button>
-        </div>
+            <!-- 自我修煉 -->
+            <section class="menu-col">
+                <div class="col-head">
+                    <h3 class="col-title menu-heading" data-icon="flask">自我修煉</h3>
+                    <span class="col-sub">Practice</span>
+                </div>
+                <div class="btn-list">
+                    <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level1"><span class="lv-tag">L1</span><span class="lv-name">碳氫骨架基礎</span></button>
+                    <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level2"><span class="lv-tag">L2</span><span class="lv-name">單鍵氧家族（醇醚）</span></button>
+                    <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level3"><span class="lv-tag">L3</span><span class="lv-name">雙鍵氧家族（醛酮）</span></button>
+                    <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level4"><span class="lv-tag">L4</span><span class="lv-name">雙氧複合（酸酯）</span></button>
+                    <button class="btn menu-btn magic-btn" data-mode="practice" data-level="level5"><span class="lv-tag">L5</span><span class="lv-name">雜原子與鹵素</span></button>
+                    <button class="btn menu-btn magic-btn boss-btn" data-mode="practice" data-level="level6"><span class="lv-tag">L6</span><span class="lv-name">終極分類帽（綜合題）</span></button>
+                    <button class="btn menu-btn magic-btn" data-mode="practice" data-level="levelShell"><span class="lv-tag">🐢</span><span class="lv-name">龜殼與它的產地（苯環陷阱）</span></button>
+                    <button class="btn menu-btn magic-btn genius-btn" data-mode="practice" data-level="level99"><span class="lv-tag">L99</span><span class="lv-name">資優全英挑戰</span></button>
+                </div>
+            </section>
 
-        <div class="menu-group">
-            <h3 class="menu-heading" data-icon="swords">巫師對決 (Duel Mode)</h3>
-            <p style="color:var(--hp-parchment); font-size: 0.9rem;">(桌面鍵盤搶答；手機橫放觸控)</p>
-            <button class="btn menu-btn magic-btn duel-btn" data-mode="duel" data-level="level3">對決：醛酮</button>
-            <button class="btn menu-btn magic-btn duel-btn" data-mode="duel" data-level="level4">對決：酸酯</button>
-            <button class="btn menu-btn magic-btn duel-btn boss-btn" data-mode="duel" data-level="level6">對決：終極分類</button>
-            <button class="btn menu-btn magic-btn duel-btn" data-mode="duel" data-level="levelShell">對決：龜殼產地</button>
-        </div>
+            <!-- 競速挑戰 -->
+            <section class="menu-col">
+                <div class="col-head">
+                    <h3 class="col-title menu-heading" data-icon="hourglass">競速挑戰</h3>
+                    <span class="col-sub">Time Attack</span>
+                </div>
+                <div class="btn-list">
+                    <button class="btn menu-btn magic-btn" data-mode="speed" data-level="level3"><span class="lv-tag">L3</span><span class="lv-name">醛酮分辨</span></button>
+                    <button class="btn menu-btn magic-btn" data-mode="speed" data-level="level4"><span class="lv-tag">L4</span><span class="lv-name">酸酯分辨</span></button>
+                    <button class="btn menu-btn magic-btn boss-btn" data-mode="speed" data-level="level6"><span class="lv-tag">L6</span><span class="lv-name">終極大亂鬥</span></button>
+                    <button class="btn menu-btn magic-btn" data-mode="speed" data-level="levelShell"><span class="lv-tag">🐢</span><span class="lv-name">龜殼產地（苯環陷阱）</span></button>
+                    <button id="btn-tutorial" class="btn menu-btn magic-btn tutorial-btn"><span class="lv-tag">?</span><span class="lv-name">新手導覽 — 怎麼玩、怎麼按</span></button>
+                </div>
+            </section>
 
-        <div class="save-controls">
-            <button id="btn-open-codex" class="btn magic-btn save-ctrl-btn" data-icon="codex">圖鑑</button>
-            <button id="btn-mute" class="btn magic-btn save-ctrl-btn" data-icon="sound-on">音效</button>
-            <button id="btn-export" class="btn magic-btn save-ctrl-btn" data-icon="export">匯出存檔</button>
-            <button id="btn-import-open" class="btn magic-btn save-ctrl-btn" data-icon="import">匯入存檔</button>
-            <button id="btn-reset-save" class="btn magic-btn save-ctrl-btn reset-btn" data-icon="reset">重置</button>
-        </div>
+            <!-- 巫師對決 -->
+            <section class="menu-col">
+                <div class="col-head">
+                    <h3 class="col-title menu-heading" data-icon="swords">巫師對決</h3>
+                    <span class="col-sub">Duel Mode</span>
+                </div>
+                <div class="btn-list">
+                    <button class="btn menu-btn magic-btn duel-btn" data-mode="duel" data-level="level3"><span class="lv-tag">L3</span><span class="lv-name">對決：醛酮</span></button>
+                    <button class="btn menu-btn magic-btn duel-btn" data-mode="duel" data-level="level4"><span class="lv-tag">L4</span><span class="lv-name">對決：酸酯</span></button>
+                    <button class="btn menu-btn magic-btn duel-btn boss-btn" data-mode="duel" data-level="level6"><span class="lv-tag">L6</span><span class="lv-name">對決：終極分類</span></button>
+                    <button class="btn menu-btn magic-btn duel-btn" data-mode="duel" data-level="levelShell"><span class="lv-tag">🐢</span><span class="lv-name">對決：龜殼產地</span></button>
+                    <p style="color:var(--hp-parchment-dark); font-size:clamp(.65rem,1.4vh,.78rem); font-style:italic; margin:8px 4px 0; line-height:1.5; opacity:.75;">桌面用鍵盤搶答（左 QWER／右 UIOP）；手機橫放雙人觸控</p>
+                </div>
+            </section>
 
-        <div id="wizard-status-bar" class="wizard-status-bar hidden">
-            <span id="wizard-status-label" data-icon="wizard">玩家一</span>
-            <button id="btn-change-wizard" class="btn magic-btn">更換魔法師</button>
-        </div>
+        </main>
 
-        <button id="btn-show-ref" class="btn hidden">查看分類總表</button>
+        <!-- 底部工具列 -->
+        <footer class="menu-landscape-bottom">
+            <p class="keyboard-help">方向鍵選關卡，Enter / Space 開始；也可直接按按鈕前的 [快捷鍵]。</p>
+            <div class="save-controls">
+                <button id="btn-mute" class="btn magic-btn save-ctrl-btn" data-icon="sound-on">音效</button>
+                <button id="btn-export" class="btn magic-btn save-ctrl-btn" data-icon="export">匯出存檔</button>
+                <button id="btn-import-open" class="btn magic-btn save-ctrl-btn" data-icon="import">匯入存檔</button>
+                <button id="btn-reset-save" class="btn magic-btn save-ctrl-btn reset-btn" data-icon="reset">重置</button>
+                <button id="btn-show-ref" class="btn hidden">查看分類總表</button>
+            </div>
+        </footer>
+
     </div>
 
     <div id="game-container" class="hidden">
