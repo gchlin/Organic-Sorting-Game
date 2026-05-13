@@ -14,8 +14,19 @@
 
     <!-- ✅ v2 新增：永遠在 style.css 之後 -->
     <link rel="stylesheet" href="style-visual-v2.css">
+    <!-- ✅ landscape 新增：永遠在 style.css 之後 -->
+    <link rel="stylesheet" href="layout.css">
 </head>
 <body>
+
+    <!-- ✅ landscape 新增：直向時顯示「請橫放」 -->
+    <div id="rotate-overlay">
+        <div>
+            <div class="phone-icon"></div>
+            <h2>請將手機橫放</h2>
+            <p>有機分類帽建議橫向遊玩</p>
+        </div>
+    </div>
 
     <div id="preload-container"></div>
 
@@ -88,6 +99,8 @@
     </div>
 
     <div id="game-container" class="hidden">
+
+        <!-- ① 單人模式：info-bar 含 HP + 分數 -->
         <div id="info-bar">
             <button id="btn-back" class="btn magic-btn icon-btn" data-icon="back">撤退</button>
             <button id="btn-mute-game" class="btn magic-btn icon-btn icon-only" data-icon="sound-on" title="靜音"></button>
@@ -97,94 +110,95 @@
             <div class="stat-box title-stat">
                 <span id="level-title">Level 1</span>
             </div>
+            <!-- ✅ 單人 HP/分數 -->
+            <div class="spacer"></div>
+            <div class="hp-bar-container magic-border" id="solo-hp-wrap"
+                 style="height:clamp(14px,3vh,22px); width:clamp(120px,22vw,260px);">
+                <div class="hp-bar" id="hp-p1-info" style="width:100%;"></div>
+                <span class="hp-text">魔法</span>
+            </div>
+            <div class="score-box">魔力 <strong id="score-p1-info">0</strong></div>
         </div>
 
+        <!-- ② Duel 模式競技場 bar（預設 hidden，duel 時 JS 顯示並把 info-bar 隱藏） -->
+        <div id="arena-bar" class="hidden">
+            <div class="arena-player p1-side">
+                <div class="arena-avatar idle" id="avatar-p1" aria-hidden="true">🧙</div>
+                <span class="pname" id="wizard-p1">玩家一</span>
+                <div class="hp-bar-container">
+                    <div class="hp-bar" id="hp-p1" style="width:100%;"></div>
+                </div>
+                <span class="pscore"><span class="mp-label">魔力</span><strong id="score-p1">0</strong></span>
+            </div>
+            <div class="arena-center">
+                <div class="arena-hat hat-char neutral" aria-hidden="true">
+                    <div class="hat-img"></div>
+                    <div class="brow left"></div><div class="brow right"></div>
+                    <div class="eye left"><div class="pupil"></div></div>
+                    <div class="eye right"><div class="pupil"></div></div>
+                    <div class="mouth"></div>
+                </div>
+                <span class="arena-level" id="arena-level-label">Level 1</span>
+            </div>
+            <div class="arena-player p2-side">
+                <span class="pname" id="wizard-p2">玩家二</span>
+                <div class="hp-bar-container">
+                    <div class="hp-bar" id="hp-p2" style="width:100%;"></div>
+                </div>
+                <span class="pscore"><span class="mp-label">魔力</span><strong id="score-p2">0</strong></span>
+                <div class="arena-avatar idle" id="avatar-p2" aria-hidden="true">🧙</div>
+            </div>
+        </div>
+
+        <!-- ③ Game area -->
         <div id="game-area">
 
-            <!-- 對決競技場（桌面 Duel 專用，答對施法/答錯失敗動畫） -->
-            <div id="duel-arena" class="hidden">
-                <span class="arena-floaty">🧪</span>
-                <span class="arena-floaty">⚗️</span>
-                <span class="arena-floaty">✨</span>
-                <span class="arena-floaty">🔮</span>
-                <div id="arena-p1" class="arena-wizard">
-                    <span class="arena-wiz-emoji">🧙</span>
-                    <span class="arena-wiz-label"></span>
-                </div>
-                <!-- 中央裁判帽 -->
-                <div class="arena-center-hat hat-char neutral" aria-hidden="true"></div>
-                <div id="arena-p2" class="arena-wizard arena-wiz-p2">
-                    <span class="arena-wiz-emoji">🧙</span>
-                    <span class="arena-wiz-label"></span>
-                </div>
+            <!-- 單人模式：warn/combo 浮層 -->
+            <div class="status-overlay">
+                <div id="warn-p1" class="warn-text hidden">魔力告急!</div>
+                <div id="combo-p1" class="combo-text hidden">魔力 COMBO x2!</div>
             </div>
 
-            <div id="p1-area" class="player-area p1-theme">
-                <div class="player-header">
-                    <div id="wizard-p1" class="wizard-badge" data-icon="wizard">玩家一</div>
-                    <div class="hp-bar-container magic-border" title="魔法成功率">
-                        <div class="hp-bar" id="hp-p1" style="width: 100%;"></div>
-                        <span class="hp-text">魔法成功率</span>
-                    </div>
-                    <div class="score-box magic-text">魔力: <span id="score-p1">0</span></div>
-                </div>
-                
-                <div class="status-overlay">
-                    <div id="warn-p1" class="warn-text hidden">魔力告急!</div>
-                    <div id="combo-p1" class="combo-text hidden">魔力 COMBO x2!</div>
-                </div>
-
-                <div id="q-container-p1" class="question-container parchment-bg">
-                    <div id="wizard-avatar-p1" class="wizard-avatar" aria-hidden="true"></div>
-                    <div id="q-p1" class="question-content"></div>
-                    <div class="hat-coach-wrap">
-                        <div id="practice-coach-bubble" class="coach-bubble hidden" role="status" aria-live="polite"></div>
-                        <div class="hat-display hat-char neutral" aria-hidden="true"></div>
-                    </div>
-                </div>
-                
-                <div id="opts-p1" class="options-container single-col">
-                    <button class="btn opt-btn magic-stone-btn" data-idx="0">選項 A</button>
-                    <button class="btn opt-btn magic-stone-btn" data-idx="1">選項 B</button>
-                    <button class="btn opt-btn magic-stone-btn" data-idx="2">選項 C</button>
-                    <button class="btn opt-btn magic-stone-btn" data-idx="3">選項 D</button>
-                </div>
-            </div>
-
-            <div id="shared-question-area" class="hidden parchment-bg magic-border">
-                 <div id="q-shared" class="question-content">
-                     </div>
-            </div>
-
-            <div id="p2-area" class="player-area p2-theme hidden">
-                 <div class="player-header">
-                    <div id="wizard-p2" class="wizard-badge" data-icon="wizard">玩家二</div>
-                    <div class="hp-bar-container magic-border" title="魔法成功率">
-                        <div class="hp-bar" id="hp-p2" style="width: 100%;"></div>
-                        <span class="hp-text">魔法成功率</span>
-                    </div>
-                    <div class="score-box magic-text">魔力: <span id="score-p2">0</span></div>
-                </div>
-
-                <div class="status-overlay">
-                    <div id="warn-p2" class="warn-text hidden">魔力告急!</div>
-                    <div id="combo-p2" class="combo-text hidden">魔力 COMBO x2!</div>
-                </div>
-
-                <div id="q-container-p2" class="question-container parchment-bg hidden">
+            <!-- 單人模式題目區（q-frame class 給 layout.css 用） -->
+            <div id="q-container-p1" class="q-frame question-container parchment-bg">
+                <div id="wizard-avatar-p1" class="wizard-avatar" aria-hidden="true"></div>
+                <div id="q-p1" class="question-content"></div>
+                <div class="hat-coach-wrap">
+                    <div id="practice-coach-bubble" class="coach-bubble hidden" role="status" aria-live="polite"></div>
                     <div class="hat-display hat-char neutral" aria-hidden="true"></div>
-                    <div id="q-p2" class="question-content"></div>
-                </div>
-
-                <div id="opts-p2" class="options-container single-col">
-                    <button class="btn opt-btn magic-stone-btn" data-idx="0">選項 A</button>
-                    <button class="btn opt-btn magic-stone-btn" data-idx="1">選項 B</button>
-                    <button class="btn opt-btn magic-stone-btn" data-idx="2">選項 C</button>
-                    <button class="btn opt-btn magic-stone-btn" data-idx="3">選項 D</button>
                 </div>
             </div>
 
-        </div> <div id="time-bar-container" class="magic-border bottom-bar">
+            <!-- 單人模式選項區（opts class 給 layout.css 用） -->
+            <div id="opts-p1" class="opts options-container single-col">
+                <button class="btn opt-btn magic-stone-btn" data-idx="0">選項 A</button>
+                <button class="btn opt-btn magic-stone-btn" data-idx="1">選項 B</button>
+                <button class="btn opt-btn magic-stone-btn" data-idx="2">選項 C</button>
+                <button class="btn opt-btn magic-stone-btn" data-idx="3">選項 D</button>
+            </div>
+
+            <!-- Duel 共用題目區（移到中間，q-frame class） -->
+            <div id="shared-question-area" class="q-frame hidden parchment-bg magic-border">
+                <div id="q-shared" class="question-content"></div>
+            </div>
+
+            <!-- P2 選項區（opts p2 class） -->
+            <div id="opts-p2" class="opts p2 options-container single-col hidden">
+                <button class="btn opt-btn magic-stone-btn" data-idx="0">選項 A</button>
+                <button class="btn opt-btn magic-stone-btn" data-idx="1">選項 B</button>
+                <button class="btn opt-btn magic-stone-btn" data-idx="2">選項 C</button>
+                <button class="btn opt-btn magic-stone-btn" data-idx="3">選項 D</button>
+            </div>
+
+            <!-- P2 warn/combo 浮層 -->
+            <div class="status-overlay p2-overlay">
+                <div id="warn-p2" class="warn-text hidden">魔力告急!</div>
+                <div id="combo-p2" class="combo-text hidden">魔力 COMBO x2!</div>
+            </div>
+
+        </div>
+
+        <div id="time-bar-container" class="magic-border bottom-bar">
             <div id="time-bar"></div>
         </div>
 

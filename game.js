@@ -178,17 +178,15 @@ const Game = (function() {
         menu: document.getElementById('menu-container'),
         game: document.getElementById('game-container'),
         infoBar: document.getElementById('info-bar'),
+        arenaBar: document.getElementById('arena-bar'),
         modeTitle: document.getElementById('mode-title'),
         levelTitle: document.getElementById('level-title'),
         timeBar: document.getElementById('time-bar'),
         
-        p1Area: document.getElementById('p1-area'),
-        p2Area: document.getElementById('p2-area'),
         sharedArea: document.getElementById('shared-question-area'),
-        
+
         qContainerP1: document.getElementById('q-container-p1'),
         qContentP1: document.getElementById('q-p1'),
-        qContainerP2: document.getElementById('q-container-p2'),
         qContentP2: document.getElementById('q-p2'),
         qContentShared: document.getElementById('q-shared'),
 
@@ -197,9 +195,11 @@ const Game = (function() {
 
         hpP1: document.getElementById('hp-p1'),
         scoreP1: document.getElementById('score-p1'),
+        hpP1Info: document.getElementById('hp-p1-info'),
+        scoreP1Info: document.getElementById('score-p1-info'),
         warnP1: document.getElementById('warn-p1'),
         // 注意：這裡改用動態生成的元素來做 Combo 攻擊，不再只是靜態顯示
-        
+
         hpP2: document.getElementById('hp-p2'),
         scoreP2: document.getElementById('score-p2'),
         warnP2: document.getElementById('warn-p2'),
@@ -769,28 +769,23 @@ const Game = (function() {
     }
 
     function setupLayout(mode) {
-        document.body.classList.remove('duel-mode', 'duel-desktop', 'duel-mobile');
+        document.body.classList.remove('duel', 'duel-mode', 'duel-desktop', 'duel-mobile');
         isDuelDesktop = false;
         UI.sharedArea.classList.add('hidden');
-        UI.p2Area.classList.add('hidden');
-        UI.optsP2.classList.remove('hidden');
+        UI.optsP2.classList.add('hidden');
         UI.qContainerP1.classList.remove('hidden');
-        UI.infoBar.style.display = 'flex';
-        if (arenaEl) arenaEl.classList.add('hidden');
+        UI.infoBar.classList.remove('hidden');
+        if (UI.arenaBar) UI.arenaBar.classList.add('hidden');
 
         if (mode === 'duel') {
-            document.body.classList.add('duel-mode');
+            document.body.classList.add('duel', 'duel-mode');
             isDuelDesktop = window.matchMedia(DESKTOP_DUEL_QUERY).matches;
             document.body.classList.add(isDuelDesktop ? 'duel-desktop' : 'duel-mobile');
-            UI.infoBar.style.display = 'none';
-            UI.p2Area.classList.remove('hidden');
-            UI.qContainerP1.classList.remove('hidden');
-            UI.qContainerP2.classList.remove('hidden');
+            UI.infoBar.classList.add('hidden');
+            if (UI.arenaBar) UI.arenaBar.classList.remove('hidden');
+            UI.sharedArea.classList.remove('hidden');
             UI.optsP2.classList.remove('hidden');
-            if (arenaEl && isDuelDesktop) {
-                arenaEl.classList.remove('hidden');
-                _arenaUpdateWizards();
-            }
+            _arenaUpdateWizards();
         }
     }
 
@@ -995,7 +990,9 @@ const Game = (function() {
         if (UI.storyModal) UI.storyModal.classList.add('hidden');
         if (UI.codexModal) UI.codexModal.classList.add('hidden');
         UI.menu.classList.remove('hidden');
-        document.body.classList.remove('duel-mode', 'duel-desktop', 'duel-mobile', 'countdown-active');
+        document.body.classList.remove('duel', 'duel-mode', 'duel-desktop', 'duel-mobile', 'countdown-active');
+        if (UI.arenaBar) UI.arenaBar.classList.add('hidden');
+        UI.infoBar.classList.remove('hidden');
         updateMenuProgress();
         focusFirstAvailableControl(UI.menu);
     }
@@ -1627,13 +1624,10 @@ const Game = (function() {
 
     function updateDuelProgress(player) {
         const hpEl = (player === 'p1') ? UI.hpP1 : UI.hpP2;
-        const areaEl = (player === 'p1') ? UI.p1Area : UI.p2Area;
         const count = players[player].correctCount;
         const pct = Math.min((count / DUEL_WIN_TARGET) * 100, 100);
         hpEl.style.width = `${pct}%`;
         hpEl.style.background = '';
-        const hpTextEl = areaEl.querySelector('.hp-text');
-        if (hpTextEl) hpTextEl.textContent = `進度 ${count}/${DUEL_WIN_TARGET}`;
     }
 
     function generateOptions(correctKey, level) {
@@ -2234,9 +2228,9 @@ const Game = (function() {
     }
 
     // --- 對決競技場動畫 ---
-    const arenaEl   = document.getElementById('duel-arena');
-    const arenaP1El = document.getElementById('arena-p1');
-    const arenaP2El = document.getElementById('arena-p2');
+    const arenaEl   = document.getElementById('arena-bar');
+    const arenaP1El = document.getElementById('avatar-p1');
+    const arenaP2El = document.getElementById('avatar-p2');
 
     function _arenaOnce(el, cls, dur) {
         el.classList.remove(cls);
@@ -2338,10 +2332,14 @@ const Game = (function() {
 
     function _arenaUpdateWizards() {
         if (!arenaP1El || !arenaP2El) return;
-        arenaP1El.querySelector('.arena-wiz-emoji').textContent = wizardPersonas.p1.emoji;
-        arenaP1El.querySelector('.arena-wiz-label').textContent = wizardPersonas.p1.name;
-        arenaP2El.querySelector('.arena-wiz-emoji').textContent = wizardPersonas.p2.emoji;
-        arenaP2El.querySelector('.arena-wiz-label').textContent = wizardPersonas.p2.name;
+        // avatar-p1/p2 是直接放 emoji 文字的 div（新版 arena-bar 結構）
+        arenaP1El.textContent = wizardPersonas.p1.emoji;
+        arenaP2El.textContent = wizardPersonas.p2.emoji;
+        // pname span 與 avatar 同層，在 .p1-side / .p2-side 裡
+        const p1Side = arenaP1El.closest('.p1-side');
+        if (p1Side) { const n = p1Side.querySelector('.pname'); if (n) n.textContent = wizardPersonas.p1.name; }
+        const p2Side = arenaP2El.closest('.p2-side');
+        if (p2Side) { const n = p2Side.querySelector('.pname'); if (n) n.textContent = wizardPersonas.p2.name; }
     }
 
     // --- Combo 攻擊動畫 (對戰時射向對方) ---
@@ -2372,6 +2370,12 @@ const Game = (function() {
         hpEl.style.width = `${data.hp}%`;
         hpEl.classList.toggle('hp-low', data.hp < 30);
         scoreEl.textContent = data.score;
+
+        // 單人模式：同步 info-bar 的 HP/分數
+        if (p === 'p1' && !document.body.classList.contains('duel')) {
+            if (UI.hpP1Info) { UI.hpP1Info.style.width = `${data.hp}%`; UI.hpP1Info.classList.toggle('hp-low', data.hp < 30); }
+            if (UI.scoreP1Info) UI.scoreP1Info.textContent = data.score;
+        }
     }
 
     // --- 音效系統 (增強版) ---
