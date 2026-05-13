@@ -9,14 +9,16 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 from rdkit import Chem
 from rdkit.Chem import Draw, AllChem
-import os, json, re
+import os, json, re, math
 from datetime import datetime
+import xml.etree.ElementTree as ET
 
 # ========== 樣式配置 ==========
 SHOW_ALL_CARBONS     = True    # 顯示所有碳原子標籤
 SHOW_ALL_HYDROGENS   = False   # 官能基圖不展開H，保持整潔
 USE_ELEMENT_COLORS   = True    # 元素顏色 (O紅、N藍、Cl綠...)
 TRANSPARENT_BG       = False   # 透明背景
+KEKULIZE_STRUCTURE   = False   # False=圓圈形式苯環, True=Kekule形式(帶雙鍵六邊形)
 
 IMAGE_WIDTH  = 400
 IMAGE_HEIGHT = 300
@@ -57,6 +59,28 @@ functional_groups = [
     {"id": "14", "en": "aromatic_amine", "zh": "芳香胺","smiles": "Nc1ccccc1"},
 ]
 
+def add_aromatic_circle(svg):
+    """在苯環中心添加圓圈以表示芳香性"""
+    try:
+        # 提取所有坐標來找到中心
+        coordinates = re.findall(r'M\s+([\d.]+),([\d.]+)\s+L', svg)
+        if len(coordinates) >= 6:
+            # 計算六邊形中心
+            x_vals = [float(c[0]) for c in coordinates[:6]]
+            y_vals = [float(c[1]) for c in coordinates[:6]]
+            center_x = sum(x_vals) / len(x_vals)
+            center_y = sum(y_vals) / len(y_vals)
+
+            # 計算半徑
+            radius = math.sqrt((x_vals[0] - center_x)**2 + (y_vals[0] - center_y)**2) * 0.5
+
+            # 在 SVG 中插入圓圈（在 </svg> 前）
+            circle = f'<circle cx="{center_x:.1f}" cy="{center_y:.1f}" r="{radius:.1f}" style="fill:none;stroke:#000000;stroke-width:2.0px" />'
+            svg = svg.replace('</svg>', f'{circle}</svg>')
+    except:
+        pass
+    return svg
+
 def apply_black_color(svg):
     svg = re.sub(r'stroke:#[0-9A-Fa-f]{6}', 'stroke:#000000', svg)
     svg = re.sub(r'fill:#[0-9A-Fa-f]{6}(?!;)',  'fill:#000000',  svg)
@@ -69,10 +93,28 @@ def make_transparent(svg):
     )
     return svg
 
-def draw_fg(smiles, filepath):
+def draw_fg(smiles, filepath, kekule=None):
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         return False
+
+    # Kekule vs 圓圈形式處理
+    use_kekule = KEKULIZE_STRUCTURE if kekule is None else kekule
+    is_aromatic = 'c' in smiles.lower()  # 偵測是否含芳香碳
+
+    if use_kekule:
+        # 強制 Kekule 形式 - 顯示單雙鍵
+        try:
+            Chem.Kekulize(mol, clearAromaticFlags=True)
+        except:
+            pass
+    else:
+        # 圓圈形式 - 保持芳香標記
+        try:
+            Chem.SanitizeMol(mol)
+            Chem.SetAromaticity(mol)
+        except:
+            pass
 
     AllChem.Compute2DCoords(mol)
 
@@ -97,6 +139,10 @@ def draw_fg(smiles, filepath):
     if TRANSPARENT_BG:
         svg = make_transparent(svg)
 
+    # 圓圈形式的芳香烴添加圓圈
+    if not use_kekule and is_aromatic:
+        svg = add_aromatic_circle(svg)
+
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(svg)
     return True
@@ -116,7 +162,7 @@ def main():
         filename = "fg_%s_%s.svg" % (fg["id"], fg["en"])
         filepath = os.path.join(OUTPUT_DIR, filename)
 
-        ok = draw_fg(fg["smiles"], filepath)
+        ok = draw_fg(fg["smiles"], filepath, kekule=False)
         status = "OK" if ok else "FAIL"
         print("[%s/%s] %-6s %-16s -> %s" % (fg["id"], "14", status, fg["zh"], filename))
         if ok:
@@ -128,6 +174,22 @@ def main():
                 "smiles": fg["smiles"],
                 "file": filename
             })
+
+        # 只有苯環(aromatic)生成第二個版本 - Kekule形式
+        if fg["en"] == "aromatic":
+            filename_kekule = "fg_%s_%s_kekule.svg" % (fg["id"], fg["en"])
+            filepath_kekule = os.path.join(OUTPUT_DIR, filename_kekule)
+            ok_kekule = draw_fg(fg["smiles"], filepath_kekule, kekule=True)
+            status_kekule = "OK" if ok_kekule else "FAIL"
+            print("  └─ [Kekule] %-6s %-16s -> %s" % (status_kekule, fg["zh"] + " (單雙鍵形式)", filename_kekule))
+            if ok_kekule:
+                records.append({
+                    "id": int(fg["id"]),
+                    "en_name": fg["en"] + "_kekule",
+                    "zh_name": fg["zh"] + " (單雙鍵形式)",
+                    "smiles": fg["smiles"],
+                    "file": filename_kekule
+                })
 
     # JSON 索引
     json_path = os.path.join(OUTPUT_DIR, "functional_groups_map.json")

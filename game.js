@@ -153,6 +153,8 @@ const Game = (function() {
     let practiceCoachBubbleEl = null;
     let practiceWhyEl = null;
     let practiceHintBtn = null;
+    let practiceTutBtn = null;
+    let practiceButtonRow = null;
 
     const DUEL_WIN_TARGET = 8;
     const DUEL_READING_MS = 1500;
@@ -243,6 +245,7 @@ const Game = (function() {
         tutorialModal: document.getElementById('tutorial-modal'),
         btnTutorial: document.getElementById('btn-tutorial'),
         tutorialIcon: document.getElementById('tutorial-icon'),
+        tutorialHat: document.getElementById('tutorial-hat'),
         tutorialTitle: document.getElementById('tutorial-title'),
         tutorialText: document.getElementById('tutorial-text'),
         tutorialDots: document.getElementById('tutorial-dots'),
@@ -798,6 +801,10 @@ const Game = (function() {
         _practiceHintOn = false;
         _updatePracticeHintBtn();
         if (practiceHintBtn) practiceHintBtn.classList.toggle('hidden', mode !== 'practice');
+        if (practiceTutBtn) {
+            const hasTut = (typeof LevelTutorials !== 'undefined') && !!LevelTutorials[currentLevel];
+            practiceTutBtn.classList.toggle('hidden', mode !== 'practice' || !hasTut);
+        }
         if (mode === 'practice') {
             setPracticeCoachText(COACH_LINES.intro);
             if (practiceWhyEl) { practiceWhyEl.textContent = ''; practiceWhyEl.classList.add('hidden'); }
@@ -813,20 +820,37 @@ const Game = (function() {
         if (!practiceCoachBubbleEl) {
             practiceCoachBubbleEl = document.getElementById('practice-coach-bubble');
         }
+        if (!practiceButtonRow) {
+            practiceButtonRow = document.createElement('div');
+            practiceButtonRow.className = 'practice-button-row';
+            UI.qContainerP1.insertAdjacentElement('afterend', practiceButtonRow);
+        }
         if (!practiceHintBtn) {
             practiceHintBtn = document.createElement('button');
             practiceHintBtn.id = 'practice-hint-btn';
             practiceHintBtn.className = 'btn magic-btn practice-hint-btn hidden';
             practiceHintBtn.type = 'button';
             practiceHintBtn.addEventListener('click', togglePracticeHint);
-            UI.qContainerP1.insertAdjacentElement('afterend', practiceHintBtn);
+            practiceButtonRow.appendChild(practiceHintBtn);
             addButtonHint(practiceHintBtn, 'H');
+        }
+        if (!practiceTutBtn) {
+            practiceTutBtn = document.createElement('button');
+            practiceTutBtn.id = 'practice-tut-btn';
+            practiceTutBtn.className = 'btn magic-btn practice-hint-btn hidden';
+            practiceTutBtn.type = 'button';
+            setBtnText(practiceTutBtn, '📖 再次教學');
+            practiceTutBtn.addEventListener('click', () => {
+                if (typeof LevelTutorials !== 'undefined' && LevelTutorials[currentLevel])
+                    showLevelTutorial(currentLevel, null);
+            });
+            practiceButtonRow.appendChild(practiceTutBtn);
         }
         if (!practiceWhyEl) {
             practiceWhyEl = document.createElement('div');
             practiceWhyEl.id = 'practice-why-hint';
             practiceWhyEl.className = 'practice-why-hint hidden';
-            practiceHintBtn.insertAdjacentElement('afterend', practiceWhyEl);
+            practiceButtonRow.insertAdjacentElement('afterend', practiceWhyEl);
         }
     }
 
@@ -1109,6 +1133,8 @@ const Game = (function() {
     }
 
     function addButtonHint(el, label, side = 'left') {
+        // 手機上不添加快捷鍵提示
+        if (window.matchMedia('(pointer: coarse)').matches) return;
         if (!el || !label || el.querySelector('.button-hotkey')) return;
         const hint = document.createElement('span');
         hint.className = `button-hotkey button-hotkey-${side}`;
@@ -1336,22 +1362,20 @@ const Game = (function() {
     }
     function _tutRender() {
         const s = _tutSlides[_tutIdx];
+        // 帽子（永遠顯示在左邊）
+        if (UI.tutorialHat) buildHatChar(UI.tutorialHat);
+        // 圖片或 emoji（在右邊）
         if (s.img) {
             const imgs = Array.isArray(s.img) ? s.img : [s.img];
             UI.tutorialIcon.classList.toggle('multi', imgs.length > 1);
             UI.tutorialIcon.innerHTML = imgs.map(src =>
                 `<img class="tutorial-img" src="${src}" alt="" onerror="this.style.display='none'">`).join('');
-        } else if (s.icon === 'hat') {
-            UI.tutorialIcon.classList.remove('multi');
-            UI.tutorialIcon.innerHTML = '<div class="hat-char neutral"></div>';
-            buildHatChar(UI.tutorialIcon.firstElementChild);
-        } else if (s.icon) {
+        } else if (s.icon && s.icon !== 'hat') {
             UI.tutorialIcon.classList.remove('multi');
             UI.tutorialIcon.textContent = s.icon;
         } else {
             UI.tutorialIcon.classList.remove('multi');
-            UI.tutorialIcon.innerHTML = '<div class="hat-char neutral"></div>';
-            buildHatChar(UI.tutorialIcon.firstElementChild);
+            UI.tutorialIcon.innerHTML = '';
         }
         UI.tutorialTitle.textContent = s.title || '';
         UI.tutorialText.textContent = s.text || '';
@@ -1361,6 +1385,8 @@ const Game = (function() {
         });
         UI.btnTutorialPrev.disabled = (_tutIdx === 0);
         setBtnText(UI.btnTutorialNext, (_tutIdx === _tutSlides.length - 1) ? _tutDoneLabel : '下一頁 →');
+        // 套用本頁表情
+        if (s.expr) setHatExpr(s.expr);
     }
     function _tutNext() {
         if (_tutIdx >= _tutSlides.length - 1) { _tutClose(); return; }
@@ -1680,6 +1706,9 @@ const Game = (function() {
     }
 
     function getKeyHint(index, playerPrefix) {
+        // 手機上不顯示快捷鍵提示
+        if (window.matchMedia('(pointer: coarse)').matches) return '';
+
         if (currentMode === 'duel' && isDuelDesktop && playerPrefix === 'p1') {
             return {
                 left: formatKeyHint(ANSWER_KEY_BINDINGS.duelDesktop.p1[index]),

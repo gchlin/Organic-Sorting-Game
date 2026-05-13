@@ -227,7 +227,7 @@ body, html {
 }
 .icon-btn {
     padding: 8px 15px;
-    font-size: 1rem;
+    font-size: 1.2rem;
 }
 .title-stat {
     color: var(--hp-gold);
@@ -966,10 +966,15 @@ body.countdown-active .hat-display {
     50% { transform: translateY(-2px); box-shadow: 0 0 20px rgba(88, 214, 141, 0.85), inset 0 0 14px rgba(155, 231, 177, 0.24); }
 }
 
-/* 自我修煉的「提示模式」開關按鈕 */
-.practice-hint-btn {
-    display: block;
+/* 自我修煉的「提示模式」開關按鈕與「再次教學」按鈕容器 */
+.practice-button-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
     margin: 6px auto;
+}
+.practice-hint-btn {
     font-size: 0.9rem;
     padding: 6px 14px;
 }
@@ -1086,6 +1091,12 @@ body.countdown-active .hat-display {
         font-size: 0.9rem;
         padding: 7px 10px;
     }
+}
+
+/* 手機上隱藏所有快捷鍵提示 */
+@media (pointer: coarse) {
+    .key-hint { display: none !important; }
+    .keyboard-help { display: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1358,6 +1369,8 @@ body.countdown-active .hat-display {
     max-width: 580px;
     width: 92vw;
     text-align: center;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .picker-subtitle {
@@ -1788,6 +1801,25 @@ body.duel-mobile  #duel-arena { display: none; }
     padding: 4px; filter: none;
 }
 .tutorial-icon.multi .tutorial-img { max-height: 130px; max-width: 46%; }
+/* tutorial 帽子 + 圖片並排 */
+.tutorial-slide-media {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+}
+/* 手機：帽子小 */
+#tutorial-hat {
+    width: 72px;
+    height: 80px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,.45));
+}
+/* 大螢幕：帽子較大 */
+@media (min-width: 560px) {
+    #tutorial-hat { width: 110px; height: 122px; }
+}
 .tutorial-title { margin: 0; color: #7f0909; font-size: 1.25rem; }
 .tutorial-text {
     margin: 0; color: #2c2416; font-size: 1.02rem; line-height: 1.7;

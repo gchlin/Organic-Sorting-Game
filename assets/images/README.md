@@ -66,6 +66,163 @@ TRANSPARENT_BACKGROUND = False
 ```
 效果：適合列印成講義
 
+## 🎨 原子著色與高亮效果 (Atom Highlighting)
+
+### 概述
+
+使用 RDKit 的 `MolDraw2D` 和 `highlightAtoms` 功能，可以對分子中的特定原子進行著色高亮，用於：
+- ✓ 區分不同類型的原子（如吡咯型N vs 吡啶型N）
+- ✓ 標示官能基
+- ✓ 強調反應活性部位
+- ✓ 教學用途
+
+### 基本用法
+
+```python
+from rdkit import Chem
+from rdkit.Chem.Draw import rdMolDraw2D
+
+# 1. 建立分子
+mol = Chem.MolFromSmiles('c1c[nH]nc1')  # 吡唑
+mol_with_h = Chem.AddHs(mol)
+
+# 2. 建立繪圖器
+drawer = rdMolDraw2D.MolDraw2DCairo(400, 300)
+opts = drawer.drawOptions()
+opts.fillHighlights = True      # 實心填充高亮區域
+opts.minFontSize = 20           # 字體大小
+
+# 3. 定義著色方案 (RGB, 0-1 範圍)
+atom_colors = {
+    2: (0.6, 0.8, 0.9),  # 原子索引2 → 淺藍色
+    3: (0.9, 0.6, 0.6)   # 原子索引3 → 粉紅色
+}
+
+# 4. 繪圖並著色
+drawer.DrawMolecule(
+    mol_with_h,
+    highlightAtoms=list(atom_colors.keys()),
+    highlightAtomColors=atom_colors,
+    highlightBonds=[]  # 空列表表示不高亮鍵
+)
+drawer.FinishDrawing()
+
+# 5. 儲存圖片
+with open('colored_molecule.png', 'wb') as f:
+    f.write(drawer.GetDrawingText())
+```
+
+### 實用例子：區分氮原子類型
+
+```python
+def highlight_nitrogen_types(smiles):
+    """
+    吡咯型N [nH] → 淺藍色
+    吡啶型N n    → 粉紅色
+    """
+    mol = Chem.MolFromSmiles(smiles)
+    mol_with_h = Chem.AddHs(mol)
+    
+    atom_colors = {}
+    
+    # 識別不同類型的氮原子
+    for idx, atom in enumerate(mol.GetAtoms()):
+        if atom.GetSymbol() == 'N':
+            if atom.GetTotalNumHs() > 0:
+                # 吡咯型 [nH]
+                atom_colors[idx] = (0.6, 0.8, 0.9)  # 淺藍色
+            else:
+                # 吡啶型 n
+                atom_colors[idx] = (0.9, 0.6, 0.6)  # 粉紅色
+    
+    # 繪圖
+    drawer = rdMolDraw2D.MolDraw2DCairo(400, 300)
+    opts = drawer.drawOptions()
+    opts.fillHighlights = True
+    
+    drawer.DrawMolecule(
+        mol_with_h,
+        highlightAtoms=list(atom_colors.keys()),
+        highlightAtomColors=atom_colors
+    )
+    drawer.FinishDrawing()
+    
+    return drawer.GetDrawingText()
+```
+
+### 常用顏色方案
+
+| 用途 | 顏色 | RGB值 | 說明 |
+|------|------|-------|------|
+| 吡咯型N | 淺藍 | (0.6, 0.8, 0.9) | 帶H的氮 |
+| 吡啶型N | 粉紅 | (0.9, 0.6, 0.6) | sp² 氮 |
+| 反應位點 | 黃色 | (1.0, 1.0, 0.0) | 活性部位 |
+| 官能基 | 綠色 | (0.0, 1.0, 0.0) | 整個官能基 |
+| 取代基 | 橙色 | (1.0, 0.7, 0.0) | 側鏈 |
+
+### 高亮鍵的方法
+
+如果要同時高亮特定的鍵：
+
+```python
+# 高亮原子和鍵
+bond_indices = [0, 1, 2]  # 要高亮的鍵索引
+bond_colors = {
+    0: (0.0, 0.0, 0.0),  # 鍵0 → 黑色
+    1: (1.0, 0.0, 0.0),  # 鍵1 → 紅色
+}
+
+drawer.DrawMolecule(
+    mol,
+    highlightAtoms=list(atom_colors.keys()),
+    highlightAtomColors=atom_colors,
+    highlightBonds=bond_indices,
+    highlightBondColors=bond_colors
+)
+```
+
+### 如何找出原子索引？
+
+```python
+# 方法1: 列印所有原子
+for idx, atom in enumerate(mol.GetAtoms()):
+    print(f"索引 {idx}: {atom.GetSymbol()} (原子序數: {atom.GetAtomicNum()})")
+
+# 方法2: 根據特定條件找索引
+oxygen_indices = [idx for idx, atom in enumerate(mol.GetAtoms()) 
+                  if atom.GetSymbol() == 'O']
+nitrogen_indices = [idx for idx, atom in enumerate(mol.GetAtoms()) 
+                    if atom.GetSymbol() == 'N']
+```
+
+### 繪圖選項 (DrawingOptions)
+
+```python
+opts = drawer.drawOptions()
+
+opts.fillHighlights = True           # 實心填充 (推薦)
+opts.minFontSize = 20               # 最小字體大小
+opts.maxFontSize = 40               # 最大字體大小
+opts.bondLineWidth = 2.0            # 鍵寬度
+opts.highlightBondWidthMultiplier = 8  # 高亮鍵的寬度倍數
+opts.atomHighlightedCellSize = 0.4  # 高亮區域大小
+```
+
+### 完整腳本位置
+
+詳細實現請參考：
+```
+draw_colored_molecules.py
+```
+
+包含以下功能：
+- ✓ 吡唑 (Pyrazole) 著色示例
+- ✓ 咪唑 (Imidazole) 著色示例  
+- ✓ 苯並咪唑 (Benzimidazole) 著色示例
+- ✓ 自動識別和著色邏輯
+
+---
+
 ## 🔧 進階自訂
 
 ### 1. 調整圖片尺寸
@@ -224,17 +381,112 @@ python3 generate_added_rdkit_svgs.py
 
 ## 🆘 常見問題
 
-### Q: 為什麼有些碳沒顯示？
+### 基本設定相關
+
+#### Q: 為什麼有些碳沒顯示？
 A: 設定 `SHOW_ALL_CARBONS = True`
 
-### Q: 如何去除氧的紅色？
+#### Q: 如何去除氧的紅色？
 A: 設定 `USE_ELEMENT_COLORS = False`
 
-### Q: 如何改變背景？
+#### Q: 如何改變背景？
 A: 設定 `TRANSPARENT_BACKGROUND = True` 或修改後處理邏輯
 
-### Q: 圖片太小怎麼辦？
+#### Q: 圖片太小怎麼辦？
 A: 增加 `IMAGE_WIDTH` 和 `IMAGE_HEIGHT`，建議保持4:3比例
+
+### 著色與高亮相關
+
+#### Q: 怎樣知道某個原子的索引？
+A: 執行此代碼：
+```python
+mol = Chem.MolFromSmiles('你的SMILES')
+for idx, atom in enumerate(mol.GetAtoms()):
+    print(f"索引 {idx}: {atom.GetSymbol()}")
+```
+
+#### Q: 如何改變高亮顏色？
+A: 修改 RGB 元組，範圍 0-1：
+```python
+atom_colors = {
+    0: (1.0, 0.0, 0.0),  # 紅色
+    1: (0.0, 1.0, 0.0),  # 綠色
+    2: (0.0, 0.0, 1.0),  # 藍色
+}
+```
+
+#### Q: 為什麼高亮區域沒有填充？
+A: 確保設定了：
+```python
+opts.fillHighlights = True
+```
+
+#### Q: 可以同時高亮原子和鍵嗎？
+A: 可以，提供 `highlightBonds` 和 `highlightBondColors` 參數：
+```python
+drawer.DrawMolecule(
+    mol,
+    highlightAtoms=[...],
+    highlightAtomColors={...},
+    highlightBonds=[0, 1, 2],
+    highlightBondColors={0: (1,0,0), 1: (0,1,0)}
+)
+```
+
+#### Q: 如何只高亮特定官能基？
+A: 先識別官能基中的原子，再將它們的索引加入 `highlightAtoms`：
+```python
+# 識別羧基的氧原子和碳原子
+carboxylic_acid_atoms = [idx for idx, atom in enumerate(mol.GetAtoms())
+                         if atom.GetSymbol() in ['C', 'O'] and 
+                         idx in [specific_indices]]
+atom_colors = {idx: (1.0, 0.0, 0.0) for idx in carboxylic_acid_atoms}
+```
+
+#### Q: 高亮顏色看起來太淡？
+A: 增加飽和度，降低 RGB 值中的某些分量：
+```python
+# 更深的淺藍色
+atom_colors[idx] = (0.2, 0.6, 0.9)  # 而不是 (0.6, 0.8, 0.9)
+```
+
+#### Q: 如何生成多個著色方案（預設+自訂）？
+A: 建立兩個不同配置的繪圖器：
+```python
+# 預設繪圖
+drawer1 = rdMolDraw2D.MolDraw2DCairo(400, 300)
+drawer1.DrawMolecule(mol)
+
+# 著色繪圖
+drawer2 = rdMolDraw2D.MolDraw2DCairo(400, 300)
+drawer2.DrawMolecule(mol, highlightAtoms=[...], ...)
+```
+
+### 實際應用範例
+
+#### 應用1: 教學 - 區分官能基類型
+
+```python
+# 對吡唑進行著色：區分吡咯型 vs 吡啶型
+smiles = 'c1c[nH]nc1'
+highlight_nitrogen_types(smiles)
+# 結果：吡咯型N(淺藍) + 吡啶型N(粉紅)
+```
+
+#### 應用2: 遊戲 - 標示反應部位
+
+```python
+# 標示最容易被攻擊的部位（高亮）
+highlight_atoms = [reactive_atom_indices]
+atom_colors = {idx: (1.0, 1.0, 0.0) for idx in highlight_atoms}  # 黃色
+```
+
+#### 應用3: 學習 - 對比構體異構體
+
+```python
+# 生成同分異構體的著色對比圖
+# 用不同顏色標示相同的官能基位置
+```
 
 ---
 
