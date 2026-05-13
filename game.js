@@ -783,6 +783,7 @@ const Game = (function() {
             document.body.classList.add(isDuelDesktop ? 'duel-desktop' : 'duel-mobile');
             UI.infoBar.classList.add('hidden');
             if (UI.arenaBar) UI.arenaBar.classList.remove('hidden');
+            UI.qContainerP1.classList.add('hidden');   // Duel：單人題框隱藏，改用 #shared-question-area
             UI.sharedArea.classList.remove('hidden');
             UI.optsP2.classList.remove('hidden');
             _arenaUpdateWizards();
@@ -1580,12 +1581,15 @@ const Game = (function() {
     }
 
     function renderDuelQuestion(player, qData, options) {
-        const qContentEl = (player === 'p1') ? UI.qContentP1 : UI.qContentP2;
+        // 新版 landscape：兩位玩家共用中央 #q-shared 題目框
+        const qContentEl = UI.qContentShared || ((player === 'p1') ? UI.qContentP1 : null);
         const optsEl = (player === 'p1') ? UI.optsP1 : UI.optsP2;
 
-        const imgTag = `<img src="${qData.qContent}" alt="Structure" draggable="false">`;
-        qContentEl.innerHTML = imgTag;
-        qContentEl.querySelector('img').onerror = () => { qContentEl.innerHTML = "<span class='q-text'>圖片遺失</span>"; };
+        if (qContentEl) {
+            const imgTag = `<img src="${qData.qContent}" alt="Structure" draggable="false">`;
+            qContentEl.innerHTML = imgTag;
+            qContentEl.querySelector('img').onerror = () => { qContentEl.innerHTML = "<span class='q-text'>圖片遺失</span>"; };
+        }
 
         optsEl.innerHTML = '';
         optsEl.classList.remove('locked-area');
