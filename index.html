@@ -178,50 +178,55 @@
             </div>
         </div>
 
-        <!-- ③ Game area -->
+        <!-- warn/combo 浮層：絕對定位在 game-container 上，不佔 grid 格 -->
+        <div class="status-overlay status-overlay-p1" aria-live="polite">
+            <div id="warn-p1" class="warn-text hidden">魔力告急!</div>
+            <div id="combo-p1" class="combo-text hidden">魔力 COMBO x2!</div>
+        </div>
+        <div class="status-overlay status-overlay-p2" aria-live="polite">
+            <div id="warn-p2" class="warn-text hidden">魔力告急!</div>
+            <div id="combo-p2" class="combo-text hidden">魔力 COMBO x2!</div>
+        </div>
+
+        <!-- ③ Game area
+             DOM 順序：opts-p1 → q-container-p1 → shared → opts-p2
+             單人模式：CSS order:-1 把 q-container-p1 拉到視覺最左
+             Duel 模式：q-container-p1 hidden (display:none)，自然順序 opts-p1→shared→opts-p2 -->
         <div id="game-area">
 
-            <!-- 單人模式：warn/combo 浮層 -->
-            <div class="status-overlay">
-                <div id="warn-p1" class="warn-text hidden">魔力告急!</div>
-                <div id="combo-p1" class="combo-text hidden">魔力 COMBO x2!</div>
-            </div>
-
-            <!-- 單人模式題目區（q-frame class 給 layout.css 用） -->
-            <div id="q-container-p1" class="q-frame question-container parchment-bg">
-                <div id="wizard-avatar-p1" class="wizard-avatar" aria-hidden="true"></div>
-                <div id="q-p1" class="question-content"></div>
-                <div class="hat-coach-wrap">
-                    <div id="practice-coach-bubble" class="coach-bubble hidden" role="status" aria-live="polite"></div>
-                    <div class="hat-display hat-char neutral" aria-hidden="true"></div>
-                </div>
-            </div>
-
-            <!-- 單人模式選項區（opts class 給 layout.css 用） -->
-            <div id="opts-p1" class="opts options-container single-col">
+            <!-- P1 選項（Duel 左欄 / 單人靠 CSS order 排到右側） -->
+            <div id="opts-p1" class="opts p1 options-container">
                 <button class="btn opt-btn magic-stone-btn" data-idx="0">選項 A</button>
                 <button class="btn opt-btn magic-stone-btn" data-idx="1">選項 B</button>
                 <button class="btn opt-btn magic-stone-btn" data-idx="2">選項 C</button>
                 <button class="btn opt-btn magic-stone-btn" data-idx="3">選項 D</button>
             </div>
 
-            <!-- Duel 共用題目區（移到中間，q-frame class） -->
+            <!-- 單人模式題目框（Duel 時 hidden，不佔 grid；單人 CSS order:-1 拉到最左） -->
+            <div id="q-container-p1" class="q-frame question-container parchment-bg">
+                <div id="wizard-avatar-p1" class="wizard-avatar" aria-hidden="true"></div>
+                <div id="q-p1" class="question-content"></div>
+                <div id="practice-coach-bubble" class="coach-bubble hidden" role="status" aria-live="polite"></div>
+                <div class="hat-display hat-char neutral" aria-hidden="true">
+                    <div class="hat-img"></div>
+                    <div class="brow left"></div><div class="brow right"></div>
+                    <div class="eye left"><div class="pupil"></div></div>
+                    <div class="eye right"><div class="pupil"></div></div>
+                    <div class="mouth"></div>
+                </div>
+            </div>
+
+            <!-- Duel 共用題目（中間欄，單人 hidden） -->
             <div id="shared-question-area" class="q-frame hidden parchment-bg magic-border">
                 <div id="q-shared" class="question-content"></div>
             </div>
 
-            <!-- P2 選項區（opts p2 class） -->
-            <div id="opts-p2" class="opts p2 options-container single-col hidden">
+            <!-- P2 選項（Duel 右欄，單人 hidden） -->
+            <div id="opts-p2" class="opts p2 options-container hidden">
                 <button class="btn opt-btn magic-stone-btn" data-idx="0">選項 A</button>
                 <button class="btn opt-btn magic-stone-btn" data-idx="1">選項 B</button>
                 <button class="btn opt-btn magic-stone-btn" data-idx="2">選項 C</button>
                 <button class="btn opt-btn magic-stone-btn" data-idx="3">選項 D</button>
-            </div>
-
-            <!-- P2 warn/combo 浮層 -->
-            <div class="status-overlay p2-overlay">
-                <div id="warn-p2" class="warn-text hidden">魔力告急!</div>
-                <div id="combo-p2" class="combo-text hidden">魔力 COMBO x2!</div>
             </div>
 
         </div>

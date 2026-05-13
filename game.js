@@ -2241,17 +2241,15 @@ const Game = (function() {
 
     function _arenaShake() {
         if (!arenaEl) return;
-        _arenaOnce(arenaEl, 'arena-shake', 320);
+        _arenaOnce(arenaEl, 'shake', 320);
     }
 
     function _arenaSpawnBolt(caster, comboCount) {
         if (!arenaEl) return;
         const b = document.createElement('div');
-        b.className = 'arena-bolt';
-        b.textContent = comboCount >= 3 ? '🌩️' : '⚡';
         const toP2 = (caster === 'p1');
-        b.style.animation = (toP2 ? 'arenaBoltLR' : 'arenaBoltRL') + ' .32s linear forwards';
-        if (toP2) b.style.left = '15%'; else b.style.right = '15%';
+        b.className = 'arena-bolt ' + (toP2 ? 'bolt-lr' : 'bolt-rl');
+        b.textContent = comboCount >= 3 ? '🌩️' : '⚡';
         arenaEl.appendChild(b);
         setTimeout(() => {
             b.remove();
@@ -2291,8 +2289,10 @@ const Game = (function() {
             setTimeout(() => s.remove(), 540);
         }
 
-        // 被擊中
-        _arenaOnce(targetEl, 'arena-hit', 580);
+        // 被擊中：hit 動畫後恢復 idle
+        targetEl.classList.remove('idle');
+        _arenaOnce(targetEl, 'hit', 580);
+        setTimeout(() => { targetEl.classList.add('idle'); }, 600);
         _arenaShake();
 
         // Combo 文字（combo ≥ 2）
@@ -2311,14 +2311,18 @@ const Game = (function() {
         if (!arenaEl || arenaEl.classList.contains('hidden') || !isDuelDesktop) return;
         const casterEl = player === 'p1' ? arenaP1El : arenaP2El;
         const comboCount = players[player].combo; // already incremented by this point
-        _arenaOnce(casterEl, 'arena-charging', 290);
+        casterEl.classList.remove('idle');
+        _arenaOnce(casterEl, 'charging', 290);
+        setTimeout(() => { casterEl.classList.add('idle'); }, 310);
         setTimeout(() => _arenaSpawnBolt(player, comboCount), 200);
     }
 
     function duelArenaFizzle(player) {
         if (!arenaEl || arenaEl.classList.contains('hidden') || !isDuelDesktop) return;
         const casterEl = player === 'p1' ? arenaP1El : arenaP2El;
+        casterEl.classList.remove('idle');
         _arenaOnce(casterEl, 'arena-fizzle', 520);
+        setTimeout(() => { casterEl.classList.add('idle'); }, 540);
 
         // 冒煙
         const smoke = document.createElement('div');

@@ -69,6 +69,10 @@ html, body {
 /* ============================================================
    Practice / 單人：題目 60% | 選項 40%
    ============================================================ */
+#game-container {
+    position: relative; /* 讓 status-overlay absolute 定位 */
+}
+
 #game-area {
     display: grid;
     grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
@@ -76,6 +80,35 @@ html, body {
     padding: clamp(8px, 1.5vh, 18px) clamp(10px, 2vw, 22px);
     overflow: hidden;
     min-height: 0;
+}
+
+/* 單人模式：DOM 順序是 opts-p1 → q-container-p1，
+   但視覺上 q-frame（題目）要在左（大欄），opts 在右 */
+#q-container-p1 { order: -1; }
+
+/* Warn / Combo 浮層：不佔 grid 格，絕對定位浮在遊戲上方 */
+.status-overlay {
+    position: absolute;
+    pointer-events: none;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+.status-overlay-p1 {
+    top: clamp(44px,10vh,80px);
+    left: clamp(10px,4vw,40px);
+}
+.status-overlay-p2 {
+    top: clamp(44px,10vh,80px);
+    right: clamp(10px,4vw,40px);
+}
+
+/* 手機（觸控裝置）隱藏鍵盤提示 */
+@media (pointer: coarse) {
+    .key-hint { display: none !important; }
+    .keyboard-help { display: none; }
 }
 
 /* 題目區（單人 + Duel 共用） */
