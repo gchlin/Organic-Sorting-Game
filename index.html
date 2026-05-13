@@ -48,15 +48,18 @@
                 <div class="stat" data-icon="check">
                     答對 <strong id="prog-correct">0</strong>
                 </div>
-                <div id="prog-badges" class="prog-badges"></div>
-                <button id="btn-open-codex" class="codex-entry btn" data-icon="codex">圖鑑</button>
+                <button id="btn-open-codex" class="codex-entry btn" data-icon="codex">
+                    分類帽圖鑑
+                    <span class="new-dot" title="有新內容"></span>
+                </button>
             </div>
-            <div class="wizard-pill">
-                <div id="wizard-status-bar" class="wizard-status-bar hidden">
-                    <span id="wizard-status-label" data-icon="wizard">玩家一</span>
-                    <button id="btn-change-wizard" class="btn magic-btn swap">更換</button>
-                </div>
+            <!-- wizard-pill：wizard-status-bar 就是 pill 本身，JS 控制顯示/隱藏 -->
+            <div id="wizard-status-bar" class="wizard-pill wizard-status-bar hidden" data-icon="wizard">
+                <span id="wizard-status-label">玩家一</span>
+                <button id="btn-change-wizard" class="btn swap">更換</button>
             </div>
+            <!-- prog-badges 放在 header 外（不顯示在 top-progress），仍在 DOM 供 JS 更新 -->
+            <div id="prog-badges" class="prog-badges" style="display:none"></div>
         </header>
 
         <!-- 三欄主內容 -->
@@ -65,7 +68,7 @@
             <!-- 自我修煉 -->
             <section class="menu-col">
                 <div class="col-head">
-                    <h3 class="col-title menu-heading" data-icon="flask">自我修煉</h3>
+                    <h3 class="col-title" data-icon="flask">自我修煉</h3>
                     <span class="col-sub">Practice</span>
                 </div>
                 <div class="btn-list">
@@ -83,7 +86,7 @@
             <!-- 競速挑戰 -->
             <section class="menu-col">
                 <div class="col-head">
-                    <h3 class="col-title menu-heading" data-icon="hourglass">競速挑戰</h3>
+                    <h3 class="col-title" data-icon="hourglass">競速挑戰</h3>
                     <span class="col-sub">Time Attack</span>
                 </div>
                 <div class="btn-list">
@@ -91,14 +94,14 @@
                     <button class="btn menu-btn magic-btn" data-mode="speed" data-level="level4"><span class="lv-tag">L4</span><span class="lv-name">酸酯分辨</span></button>
                     <button class="btn menu-btn magic-btn boss-btn" data-mode="speed" data-level="level6"><span class="lv-tag">L6</span><span class="lv-name">終極大亂鬥</span></button>
                     <button class="btn menu-btn magic-btn" data-mode="speed" data-level="levelShell"><span class="lv-tag">🐢</span><span class="lv-name">龜殼產地（苯環陷阱）</span></button>
-                    <button id="btn-tutorial" class="btn menu-btn magic-btn tutorial-btn"><span class="lv-tag">?</span><span class="lv-name">新手導覽 — 怎麼玩、怎麼按</span></button>
+                    <button id="btn-tutorial" class="btn menu-btn magic-btn tutorial-btn" style="margin-top: auto;"><span class="lv-tag">?</span><span class="lv-name">新手導覽 — 怎麼玩、怎麼按</span></button>
                 </div>
             </section>
 
             <!-- 巫師對決 -->
             <section class="menu-col">
                 <div class="col-head">
-                    <h3 class="col-title menu-heading" data-icon="swords">巫師對決</h3>
+                    <h3 class="col-title" data-icon="swords">巫師對決</h3>
                     <span class="col-sub">Duel Mode</span>
                 </div>
                 <div class="btn-list">
