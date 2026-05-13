@@ -16,6 +16,14 @@
 // 註：這批文案是開發團隊先寫的版本；之後若有更貼近課本的版本（NotebookLM / 老師），直接換掉引號裡的字即可。
 
 const _FG = "assets/images/00_functional_groups/";
+const _HL = {
+  alkane:   "assets/images/01_alkane/",
+  alkene:   "assets/images/02_alkene/",
+  alkyne:   "assets/images/03_alkyne/",
+  alcohol:  "assets/images/04_alcohol/",
+  ether:    "assets/images/09_ether/",
+  aromatic: "assets/images/11_aromatic/"
+};
 
 const LevelTutorials = {
 
@@ -29,15 +37,51 @@ const LevelTutorials = {
     },
     {
       expr: 'neutral',
-      img: [_FG + "fg_02_alkene.svg", _FG + "fg_03_alkyne.svg"],
+      img: _HL.alkane + "01_alkane_propane.svg",
+      title: "你找得到官能基嗎？",
+      text: "這是丙烷（propane）。分類帽把它丟給魔法師了——你能看出「烷的特徵」藏在哪裡嗎？先想想看，再翻下一頁。"
+    },
+    {
+      expr: 'happy',
+      img: _HL.alkane + "01_alkane_propane_highlight.svg",
+      title: "答案：塗色的地方就是官能基",
+      text: "有塗色（標色）的就是「烷」的官能基——碳與碳之間的**單鍵（C–C）骨架**。每一段都是一橫，沒有雙鍵、沒有其他原子，這就是烷的記號。"
+    },
+    {
+      expr: 'neutral',
+      img: _FG + "fg_02_alkene.svg",
       title: "兩橫是烯、三橫是炔",
       text: "碳碳之間如果出現「兩橫」（雙鍵），那是「烯」；出現「三橫」（參鍵），那是「炔」。它們比烷活潑很多。看到雙鍵想烯、看到參鍵想炔——別把線的數量數錯就好。"
+    },
+    {
+      expr: 'neutral',
+      img: [_HL.alkene + "02_alkene_ethene.svg", _HL.alkyne + "03_alkyne_ethyne.svg"],
+      title: "你找得到嗎？（烯 / 炔）",
+      text: "左邊是乙烯（ethene）、右邊是乙炔（ethyne）。你能分別指出「官能基在哪裡」嗎？碳碳之間的連線數量是關鍵。想好了再翻下一頁。"
+    },
+    {
+      expr: 'happy',
+      img: [_HL.alkene + "02_alkene_ethene_highlight.svg", _HL.alkyne + "03_alkyne_ethyne_highlight.svg"],
+      title: "答案：塗色的地方就是官能基",
+      text: "有塗色的就是官能基。左邊乙烯的**C=C 雙鍵**是烯的記號；右邊乙炔的**C≡C 參鍵**是炔的記號。看線的數量就能分辨。"
     },
     {
       expr: 'surprised',
       img: _FG + "fg_11_aromatic.svg",
       title: "六角形裡有個圈圈：苯環",
       text: "如果看到一個畫成「六角形、裡面還有一個圈圈」的東西，那是「苯環」，屬於「芳香烴」。它是這款遊戲後面到處會冒出來的角色，先把這個徽章記起來：六角形 ＋ 圈圈 ＝ 苯環。"
+    },
+    {
+      expr: 'surprised',
+      img: _HL.aromatic + "11_aromatic_benzene.svg",
+      title: "你找得到嗎？（芳香）",
+      text: "這是苯（benzene）。整個分子就是一個苯環——但你知道「官能基」的邊界在哪嗎？想好了再翻下一頁。"
+    },
+    {
+      expr: 'happy',
+      img: _HL.aromatic + "11_aromatic_benzene_highlight.svg",
+      title: "答案：塗色的地方就是官能基",
+      text: "有塗色的就是**苯環**本身。芳香烴的官能基就是那個六角形帶圈圈的結構。只要分子裡有這個，就歸「芳香烴」。"
     }
   ],
 
@@ -50,10 +94,34 @@ const LevelTutorials = {
       text: "這一關開始有「氧（O）」登場。第一種接法：氧的一邊接碳、另一邊接一個氫（寫成 –O–H，叫「羥基」）。只要這個 –OH 接在普通的碳鏈上，就是「醇」。你們喝的酒、消毒用的酒精，主角都是乙醇。"
     },
     {
+      expr: 'thinking',
+      img: _HL.alcohol + "04_alcohol_ethanol.svg",
+      title: "你找得到官能基嗎？",
+      text: "這是乙醇（ethanol）——就是酒裡面的那個酒精。分類帽把它丟給魔法師了，你能找出「醇的官能基」在哪裡嗎？先想想看，再翻下一頁。"
+    },
+    {
+      expr: 'happy',
+      img: _HL.alcohol + "04_alcohol_ethanol_highlight.svg",
+      title: "答案：塗色的地方就是官能基",
+      text: "有塗色的就是「醇」的官能基——**–OH（羥基）**。氧的一頭接碳、另一頭抓著一個氫，這個組合只要出現在碳鏈上就是醇。"
+    },
+    {
       expr: 'wink',
       img: _FG + "fg_09_ether.svg",
       title: "氧被兩個碳夾在中間：醚",
       text: "第二種接法：氧的兩邊「都」接碳（C–O–C），中間沒有那個 H。這叫「醚」。醚跟醇看起來只差一個 H，性質卻差很多——所以辨識重點就是：氧上面「有沒有掛 H」。有 H 是醇、夾在兩碳中間沒 H 是醚。"
+    },
+    {
+      expr: 'wink',
+      img: _HL.ether + "09_ether_dimethyl_ether.svg",
+      title: "你找得到官能基嗎？",
+      text: "這是二甲醚（dimethyl ether）。分類帽把它丟給魔法師了——你能找出氧在哪、它兩邊接的是什麼嗎？是醚還是醇？先判斷看看，再翻下一頁。"
+    },
+    {
+      expr: 'happy',
+      img: _HL.ether + "09_ether_dimethyl_ether_highlight.svg",
+      title: "答案：塗色的地方就是官能基",
+      text: "有塗色的就是「醚」的官能基——**C–O–C（醚鍵）**。氧被兩個碳夾在中間、上面沒有 H，這就是醚的記號。跟乙醇比一比，差那個 H，類別就整個換了。"
     }
   ],
 
