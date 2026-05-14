@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>練習模式 (橫向)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="../original/style.css">
+<link rel="stylesheet" href="../style-visual-v2.css">
+<link rel="stylesheet" href="layout.css">
+</head>
+<body>
+
+<div id="rotate-overlay">
+  <div>
+    <div class="phone-icon"></div>
+    <h2>請將手機橫放</h2>
+    <p>有機分類帽建議橫向遊玩</p>
+  </div>
+</div>
+
+<div id="game-container">
+  <div id="info-bar">
+    <button class="btn magic-btn icon-only" data-icon="back" title="撤退"></button>
+    <button class="btn magic-btn icon-only" data-icon="sound-on" title="靜音"></button>
+    <div class="stat-box">修煉模式</div>
+    <div class="stat-box">Level 4</div>
+    <div class="spacer"></div>
+    <div class="hp-bar-container magic-border" style="height:clamp(14px,3vh,22px); width:clamp(120px,22vw,260px);">
+      <div class="hp-bar" style="width: 78%;"></div>
+      <span class="hp-text" style="font-size:.72rem">魔法 78%</span>
+    </div>
+    <div class="score-box">魔力 <strong style="color:#fff5c0">240</strong></div>
+  </div>
+
+  <div id="game-area">
+    <div class="q-frame parchment-bg">
+      <div class="question-content">
+        <!-- 用 SVG 模擬分子結構 -->
+        <svg viewBox="0 0 380 120" xmlns="http://www.w3.org/2000/svg" style="max-height: 60%;">
+          <g stroke="#1a1a1d" stroke-width="3" fill="none" stroke-linecap="round">
+            <text x="20" y="68" font-family="Georgia" font-size="32" fill="#1a1a1d">CH₃</text>
+            <line x1="78" y1="60" x2="118" y2="60"/>
+            <text x="125" y="68" font-family="Georgia" font-size="32" fill="#1a1a1d">CH₂</text>
+            <line x1="183" y1="60" x2="223" y2="60"/>
+            <text x="230" y="68" font-family="Georgia" font-size="32" fill="#1a1a1d">C</text>
+            <line x1="252" y1="60" x2="280" y2="60"/>
+            <text x="285" y="68" font-family="Georgia" font-size="32" fill="#1a1a1d">H</text>
+            <line x1="244" y1="48" x2="244" y2="20"/>
+            <line x1="248" y1="48" x2="248" y2="20"/>
+            <text x="232" y="14" font-family="Georgia" font-size="28" fill="#7f0909">O</text>
+          </g>
+        </svg>
+        <div style="text-align:center; font-size: clamp(.9rem, 2.4vh, 1.3rem); color:#5a4a3a; margin-top: 1vh;">下列何者為此分子的官能基？</div>
+      </div>
+
+      <div class="coach-bubble">看 C=O 末端有 H 嗎？有就是醛！</div>
+
+      <div class="hat-display hat-char neutral" aria-hidden="true">
+        <div class="hat-img"></div>
+        <div class="brow left"></div><div class="brow right"></div>
+        <div class="eye left"><div class="pupil"></div></div>
+        <div class="eye right"><div class="pupil"></div></div>
+        <div class="mouth"></div>
+      </div>
+    </div>
+
+    <div class="opts">
+      <button class="btn opt-btn magic-stone-btn">
+        <span class="key-hint">A</span>
+        <span class="opt-zh">醇</span>
+        <span class="opt-en">Alcohol</span>
+      </button>
+      <button class="btn opt-btn magic-stone-btn">
+        <span class="key-hint">S</span>
+        <span class="opt-zh">醛</span>
+        <span class="opt-en">Aldehyde</span>
+      </button>
+      <button class="btn opt-btn magic-stone-btn">
+        <span class="key-hint">D</span>
+        <span class="opt-zh">酮</span>
+        <span class="opt-en">Ketone</span>
+      </button>
+      <button class="btn opt-btn magic-stone-btn">
+        <span class="key-hint">F</span>
+        <span class="opt-zh">羧酸</span>
+        <span class="opt-en">Carboxylic Acid</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="time-bar-container" class="bottom-bar">
+    <div id="time-bar" style="width:62%;"></div>
+  </div>
+</div>
+</body>
+</html>

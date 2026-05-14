@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>視覺升級預覽 — 有機分類帽</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="original/style.css">
+<link rel="stylesheet" href="style-visual-v2.css">
+<style>
+/* ---- 預覽頁專用佈局（不影響原遊戲） ---- */
+body, html {
+    overflow: auto !important;
+    display: block !important;
+    height: auto !important;
+    min-height: 100vh;
+}
+.preview-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    color: var(--hp-parchment);
+}
+.preview-hero {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+}
+.preview-hero h1 {
+    font-family: "Cinzel", serif;
+    color: var(--hp-gold);
+    font-size: 2.4rem;
+    margin: 0 0 6px;
+    text-shadow: 0 0 12px var(--hp-gold-glow);
+    letter-spacing: 0.06em;
+}
+.preview-hero p {
+    color: var(--hp-parchment-dark);
+    font-style: italic;
+    margin: 0;
+}
+.section {
+    margin-bottom: 56px;
+}
+.section h2 {
+    font-family: "Cinzel", serif;
+    color: var(--hp-gold);
+    font-size: 1.4rem;
+    margin: 0 0 6px;
+    letter-spacing: 0.04em;
+    border-left: 3px solid var(--hp-gold);
+    padding-left: 12px;
+}
+.section .desc {
+    color: var(--hp-parchment-dark);
+    font-size: 0.95rem;
+    margin: 0 0 18px;
+    padding-left: 15px;
+}
+.compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+.compare-col {
+    background: rgba(20, 20, 25, 0.55);
+    border: 1px solid rgba(212, 175, 55, 0.18);
+    border-radius: 12px;
+    padding: 22px;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.compare-col .label {
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    font-family: "Cinzel", serif;
+}
+.compare-col.before .label { color: #888; }
+.compare-col.after .label { color: var(--hp-gold); }
+.compare-col.after {
+    border-color: rgba(212, 175, 55, 0.4);
+    box-shadow: 0 0 16px rgba(212, 175, 55, 0.12);
+}
+
+/* 復刻原始計時條（為了 before 對比） */
+.legacy-time-bar-container {
+    height: 16px;
+    background: #222;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+    border: 3px solid var(--hp-wood-dark);
+    border-image: linear-gradient(to right, var(--hp-gold), var(--hp-wood-light), var(--hp-gold)) 1;
+}
+.legacy-time-bar {
+    height: 100%;
+    background: linear-gradient(to right, #3498db, #2980b9);
+    width: 65%;
+    box-shadow: 0 0 10px #3498db;
+}
+
+/* 復刻原始 HP 條 */
+.legacy-hp {
+    width: 100%;
+    height: 24px;
+    background: #333;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+    border: 3px solid var(--hp-wood-dark);
+    border-image: linear-gradient(to right, var(--hp-gold), var(--hp-wood-light), var(--hp-gold)) 1;
+}
+.legacy-hp .legacy-fill {
+    height: 100%;
+    background: linear-gradient(to right, #27ae60, #0f4d0f);
+    width: 78%;
+    box-shadow: 0 0 10px #27ae60;
+}
+
+/* 工具欄按鈕示範 */
+.btn-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.btn-row .btn { font-size: 0.85rem; padding: 6px 14px; }
+
+/* icon 全表 */
+.icon-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+}
+@media (max-width: 720px) { .icon-grid { grid-template-columns: repeat(4, 1fr); } }
+.icon-cell {
+    background: rgba(20, 20, 25, 0.6);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 10px;
+    padding: 14px 6px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: var(--hp-gold);
+    transition: all 0.18s;
+}
+.icon-cell:hover {
+    border-color: var(--hp-gold);
+    box-shadow: 0 0 12px var(--hp-gold-glow);
+    color: #fff5c0;
+    transform: translateY(-2px);
+}
+.icon-cell .ic {
+    width: 28px;
+    height: 28px;
+    background: currentColor;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+}
+.icon-cell .nm {
+    font-size: 0.72rem;
+    font-family: Consolas, monospace;
+    color: var(--hp-parchment-dark);
+    letter-spacing: 0;
+}
+
+/* close btn 示範 — 拿原始版用 inline-style 比對 */
+.legacy-close {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    display: inline-block !important;
+    font-size: 2.5rem;
+    color: var(--hp-red-dark);
+    cursor: pointer;
+    line-height: 1;
+}
+
+/* 選單 heading 示範框 */
+.heading-demo {
+    background: rgba(20, 20, 25, 0.7);
+    padding: 12px 18px;
+    border-radius: 8px;
+    border-top: 2px solid var(--hp-wood-dark);
+}
+.heading-demo h3 {
+    margin: 0;
+    color: var(--hp-gold);
+    font-size: 1.2rem;
+    text-shadow: 1px 1px 2px black;
+    display: flex;
+    align-items: center;
+}
+
+/* 進度面板 chip 範例 */
+.chip-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* 控制按鈕 (重設計時條) */
+.controls {
+    text-align: center;
+    margin-top: 14px;
+}
+.controls button {
+    background: rgba(212, 175, 55, 0.15);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    color: var(--hp-gold);
+    font-family: inherit;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 0 4px;
+    font-size: 0.85rem;
+}
+.controls button:hover {
+    background: rgba(212, 175, 55, 0.25);
+    color: #fff5c0;
+}
+
+/* 標記 ✅ ⚠️ */
+.tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-left: 6px;
+    letter-spacing: 0.04em;
+    font-family: Consolas, monospace;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+.tag.new { background: rgba(127, 9, 9, 0.35); color: #ffaaaa; border: 1px solid rgba(255, 100, 100, 0.4); }
+.tag.fix { background: rgba(212, 175, 55, 0.25); color: var(--hp-gold); border: 1px solid rgba(212, 175, 55, 0.4); }
+
+/* footer 引導 */
+.footer-cta {
+    margin-top: 60px;
+    padding: 24px;
+    background: rgba(127, 9, 9, 0.12);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 12px;
+    text-align: center;
+}
+.footer-cta h3 {
+    font-family: "Cinzel", serif;
+    color: var(--hp-gold);
+    margin: 0 0 10px;
+}
+.footer-cta a {
+    color: var(--hp-gold);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--hp-gold);
+    margin: 0 8px;
+}
+</style>
+</head>
+<body>
+
+<div class="preview-wrap">
+
+<div class="preview-hero">
+    <h1>視覺升級預覽</h1>
+    <p>Visual Polish Layer v2 — 左舊右新</p>
+</div>
+
+<!-- ============ 1. 計時條 ============ -->
+<section class="section">
+    <h2>1. 計時條 <span class="tag fix">REDESIGN</span></h2>
+    <p class="desc">玻璃管裡的金色魔藥液 + 上升氣泡 + 液面波光。剩 ≤20% 時轉血紅 + 脈動。</p>
+    <div class="compare">
+        <div class="compare-col before">
+            <div class="label">Before — 藍色 Bootstrap 條</div>
+            <div class="legacy-time-bar-container">
+                <div class="legacy-time-bar"></div>
+            </div>
+        </div>
+        <div class="compare-col after">
+            <div class="label">After — 玻璃管 + 金色魔藥</div>
+            <div id="time-bar-container" class="bottom-bar magic-border">
+                <div id="time-bar" style="width: 65%;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="controls">
+        <button onclick="document.getElementById('time-bar').style.width='65%';document.getElementById('time-bar').classList.remove('time-running-out')">正常 (65%)</button>
+        <button onclick="document.getElementById('time-bar').style.width='18%';document.getElementById('time-bar').classList.add('time-running-out')">危急 (18%)</button>
+        <button onclick="animateTimer()">動畫倒數</button>
+    </div>
+</section>
+
+<!-- ============ 2. HP 條 ============ -->
+<section class="section">
+    <h2>2. HP 條（魔法成功率） <span class="tag fix">REDESIGN</span></h2>
+    <p class="desc">綠色「外星輻射」改成金色魔力流，自帶橫向波光。低血量時轉紅。</p>
+    <div class="compare">
+        <div class="compare-col before">
+            <div class="label">Before — 綠色光暈</div>
+            <div class="legacy-hp"><div class="legacy-fill"></div></div>
+        </div>
+        <div class="compare-col after">
+            <div class="label">After — 金色魔力流</div>
+            <div class="hp-bar-container magic-border" style="width:100%; height:24px;">
+                <div class="hp-bar" id="hp-demo" style="width: 78%;"></div>
+                <span class="hp-text">魔法成功率</span>
+            </div>
+        </div>
+    </div>
+    <div class="controls">
+        <button onclick="setHp(78)">健康 (78%)</button>
+        <button onclick="setHp(45)">警戒 (45%)</button>
+        <button onclick="setHp(20)">危險 (20% → 自動轉紅)</button>
+    </div>
+</section>
+
+<!-- ============ 3. Icon 系統 ============ -->
+<section class="section">
+    <h2>3. data-icon 系統 <span class="tag new">NEW</span></h2>
+    <p class="desc">所有 emoji 換成 SVG icon。HTML 文字保留語義（Claude Code 看得懂「圖鑑」），視覺由 CSS mask 接管。icon 顏色 = 文字顏色，hover 自動跟著變金。</p>
+
+    <h3 style="color: var(--hp-parchment-dark); font-size: 0.85rem; letter-spacing: 0.18em; margin: 18px 0 8px;">完整 icon 集</h3>
+    <div class="icon-grid">
+        <div class="icon-cell"><div class="ic" style="-webkit-mask-image:url('assets/icons/codex.svg');mask-image:url('assets/icons/codex.svg')"></div><span class="nm">codex</span></div>
+        <div class="icon-cell"><div class="ic" style="-webkit-mask-image:url('assets/icons/sound-on.svg');mask-image:url('assets/icons/sound-on.svg')"></div><span class="nm">sound-on</span></div>
+        <div class="icon-cell"><div class="ic" style="-webkit-mask-image:url('assets/icons/sound-off.svg');mask-image:url('assets/icons/sound-off.svg')"></div><span class="nm">sound-off</span></div>
+        <div class="icon-cell"><div class="ic" style="-webkit-mask-image:url('assets/icons/export.svg');mask-image:url('assets/icons/export.svg')"></div><span class="nm">export</span></div>
+        <div class="icon-cell"><div class="ic" style="-webkit-mask-image:url('assets/icons/import.svg');mask-image:url('assets/icons/import.svg')"></div><span class="nm">import</span></div>
+        <div class="icon-cell"><div class="ic" style="-webkit-mask-image:url('assets/icons/reset.svg');mask-image:url('assets/icons/reset.svg')"></div><span class="nm">reset</span></div>
+        <div class="icon-cell"><div class="ic" style="-webkit-mask-image:url('assets/icons/wizard.svg');mask-image:url('assets/icons/wizard.svg')"></div><span class="nm">wizard</span></div>
+        <div class="icon-cell"><div class="ic" style="-webkit-mask-image:url('assets/icons/swords.svg');mask-image:url('assets/icons/swords.svg')"></div><span class="nm">swords</span></div>
+        <div class="icon-cell"><div class="ic" style="-webkit-mask-image:url('assets/icons/flask.svg');mask-image:url('assets/icons/flask.svg')"></div><span class="nm">flask</span></div>
+        <div class="icon-cell"><div class="ic" style="-webkit-mask-image:url('assets/icons/hourglass.svg');mask-image:url('assets/icons/hourglass.svg')"></div><span class="nm">hourglass</span></div>
+        <div class="icon-cell"><div class="ic" style="-webkit-mask-image:url('assets/icons/quill.svg');mask-image:url('assets/icons/quill.svg')"></div><span class="nm">quill</span></div>
+        <div class="icon-cell"><div class="ic" style="-webkit-mask-image:url('assets/icons/close.svg');mask-image:url('assets/icons/close.svg')"></div><span class="nm">close</span></div>
+        <div class="icon-cell"><div class="ic" style="-webkit-mask-image:url('assets/icons/check.svg');mask-image:url('assets/icons/check.svg')"></div><span class="nm">check</span></div>
+        <div class="icon-cell"><div class="ic" style="-webkit-mask-image:url('assets/icons/back.svg');mask-image:url('assets/icons/back.svg')"></div><span class="nm">back</span></div>
+        <div class="icon-cell"><div class="ic" style="-webkit-mask-image:url('assets/icons/books.svg');mask-image:url('assets/icons/books.svg')"></div><span class="nm">books</span></div>
+        <div class="icon-cell"><div class="ic" style="-webkit-mask-image:url('assets/icons/medal.svg');mask-image:url('assets/icons/medal.svg')"></div><span class="nm">medal</span></div>
+    </div>
+
+    <h3 style="color: var(--hp-parchment-dark); font-size: 0.85rem; letter-spacing: 0.18em; margin: 28px 0 8px;">用在按鈕上</h3>
+    <div class="compare">
+        <div class="compare-col before">
+            <div class="label">Before — emoji 字元</div>
+            <div class="btn-row">
+                <button class="btn magic-btn">📔 圖鑑</button>
+                <button class="btn magic-btn">🔊 音效</button>
+                <button class="btn magic-btn">📤 匯出存檔</button>
+                <button class="btn magic-btn">📥 匯入存檔</button>
+                <button class="btn magic-btn">🗑️ 重置</button>
+            </div>
+        </div>
+        <div class="compare-col after">
+            <div class="label">After — SVG icon</div>
+            <div class="btn-row">
+                <button class="btn magic-btn" data-icon="codex">圖鑑</button>
+                <button class="btn magic-btn" data-icon="sound-on">音效</button>
+                <button class="btn magic-btn" data-icon="export">匯出存檔</button>
+                <button class="btn magic-btn" data-icon="import">匯入存檔</button>
+                <button class="btn magic-btn reset-btn" data-icon="reset">重置</button>
+            </div>
+        </div>
+    </div>
+
+    <h3 style="color: var(--hp-parchment-dark); font-size: 0.85rem; letter-spacing: 0.18em; margin: 28px 0 8px;">用在選單標題上</h3>
+    <div class="compare">
+        <div class="compare-col before">
+            <div class="label">Before</div>
+            <div class="heading-demo"><h3>⚗️ 自我修煉 (Practice)</h3></div>
+            <div class="heading-demo" style="margin-top:8px;"><h3>⏳ 競速挑戰 (Time Attack)</h3></div>
+            <div class="heading-demo" style="margin-top:8px;"><h3>⚔️ 巫師對決 (Duel Mode)</h3></div>
+        </div>
+        <div class="compare-col after">
+            <div class="label">After</div>
+            <div class="heading-demo"><h3 data-icon="flask">自我修煉 (Practice)</h3></div>
+            <div class="heading-demo" style="margin-top:8px;"><h3 data-icon="hourglass">競速挑戰 (Time Attack)</h3></div>
+            <div class="heading-demo" style="margin-top:8px;"><h3 data-icon="swords">巫師對決 (Duel Mode)</h3></div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ 4. Close btn ============ -->
+<section class="section">
+    <h2>4. Modal 關閉按鈕 <span class="tag fix">REDESIGN</span></h2>
+    <p class="desc">Times New Roman 的 × 改成圓形描邊按鈕，hover 旋轉 90°。試著用滑鼠 hover 右邊那個 →</p>
+    <div class="compare">
+        <div class="compare-col before">
+            <div class="label">Before — 字符 ×</div>
+            <div style="text-align:center;"><span class="legacy-close">×</span></div>
+        </div>
+        <div class="compare-col after">
+            <div class="label">After — 圓形按鈕</div>
+            <div style="text-align:center; position:relative; height:44px;">
+                <span class="close-btn" style="position:relative; top:0 !important; right:0 !important; margin: 0 auto;"></span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ 5. 進度 chip ============ -->
+<section class="section">
+    <h2>5. 進度 chip → 蠟封印 <span class="tag fix">REDESIGN</span></h2>
+    <p class="desc">膠囊型「現代 web」chip 改成圓形蠟封印（紅蠟 + 嵌印數字），符合羊皮紙古卷主題。</p>
+    <div class="compare">
+        <div class="compare-col before">
+            <div class="label">Before — 膠囊 chip</div>
+            <div class="chip-row" style="padding-top:5px;">
+                <span style="font-size:.75rem;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,0.08);border:1px solid rgba(212,175,55,0.25);">L1</span>
+                <span style="font-size:.75rem;padding:1px 6px;border-radius:4px;background:rgba(88,214,141,0.2);border:1px solid #58d68d;color:#58d68d;">L2</span>
+                <span style="font-size:.75rem;padding:1px 6px;border-radius:4px;background:rgba(88,214,141,0.2);border:1px solid #58d68d;color:#58d68d;">L3</span>
+                <span style="font-size:.75rem;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,0.08);border:1px solid rgba(212,175,55,0.25);">L4</span>
+            </div>
+        </div>
+        <div class="compare-col after">
+            <div class="label">After — 蠟封印</div>
+            <div class="chip-row">
+                <span class="prog-level-chip">L1</span>
+                <span class="prog-level-chip cleared">L2</span>
+                <span class="prog-level-chip cleared">L3</span>
+                <span class="prog-level-chip">L4</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ 6. Boss / Genius / Combo ============ -->
+<section class="section">
+    <h2>6. 特殊按鈕色調收斂 <span class="tag fix">REFINE</span></h2>
+    <p class="desc">Boss btn 的紅加上內部火焰光暈；Genius btn 從 iOS 青藍改成雷文克勞深藍 + 銀邊。</p>
+    <div class="compare">
+        <div class="compare-col before">
+            <div class="label">Before</div>
+            <div style="display:flex; gap:8px; flex-direction:column;">
+                <button class="btn magic-btn" style="background:linear-gradient(to bottom,#7f0909,#4a0505);border-color:#c0392b;">Level 6 終極分類帽</button>
+                <button class="btn magic-btn" style="background:linear-gradient(to right,#2c3e50,#4ca1af);border-color:#80dfff;">Level 99 資優全英挑戰</button>
+            </div>
+        </div>
+        <div class="compare-col after">
+            <div class="label">After</div>
+            <div style="display:flex; gap:8px; flex-direction:column;">
+                <button class="btn magic-btn boss-btn">Level 6 終極分類帽</button>
+                <button class="btn magic-btn genius-btn">Level 99 資優全英挑戰</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ 7. 字體 ============ -->
+<section class="section">
+    <h2>7. 標題字體 → Cinzel <span class="tag fix">UPGRADE</span></h2>
+    <p class="desc">Georgia 改成 Cinzel（Google Fonts 免費）。古羅馬碑刻風，更貼近哈利波特插畫版書名字體。</p>
+    <div class="compare">
+        <div class="compare-col before">
+            <div class="label">Before — Georgia</div>
+            <h1 style="font-family:Georgia,serif; font-weight:bold; color:var(--hp-gold); margin:0; font-size:2.4rem; letter-spacing:1px;">有機分類帽</h1>
+            <h2 style="font-family:Georgia,serif; font-style:italic; color:var(--hp-parchment-dark); margin:6px 0 0; font-size:1.2rem;">Organic Sorting Hat</h2>
+        </div>
+        <div class="compare-col after">
+            <div class="label">After — Cinzel</div>
+            <h1 class="magical-text" style="margin:0; font-size:2.4rem;">有機分類帽</h1>
+            <h2 style="font-family:'Cinzel',serif; font-style:italic; color:var(--hp-parchment-dark); margin:6px 0 0; font-size:1.2rem; letter-spacing:0.04em;">Organic Sorting Hat</h2>
+        </div>
+    </div>
+</section>
+
+<!-- ============ Footer ============ -->
+<div class="footer-cta">
+    <h3>📦 下一步</h3>
+    <p style="color:var(--hp-parchment); margin:8px 0;">把以下檔案複製到你的遊戲專案根目錄：</p>
+    <p style="font-family:Consolas,monospace; font-size:0.9rem; color:var(--hp-gold);">
+        style-visual-v2.css &nbsp;·&nbsp; assets/icons/* &nbsp;·&nbsp; PROMPT_GUIDE.md &nbsp;·&nbsp; INTEGRATION.md
+    </p>
+    <p style="color:var(--hp-parchment-dark); margin:14px 0 0; font-size:0.9rem;">
+        詳細步驟請看 <a href="INTEGRATION.md">INTEGRATION.md</a>
+        &nbsp;|&nbsp; AI 出圖規格看 <a href="PROMPT_GUIDE.md">PROMPT_GUIDE.md</a>
+    </p>
+</div>
+
+</div>
+
+<script>
+function setHp(percent) {
+    const bar = document.getElementById('hp-demo');
+    bar.style.width = percent + '%';
+    bar.classList.toggle('hp-low', percent < 30);
+}
+
+let timerInterval = null;
+function animateTimer() {
+    const bar = document.getElementById('time-bar');
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    let pct = 100;
+    bar.style.width = pct + '%';
+    bar.classList.remove('time-running-out');
+    bar.style.transition = 'width 1s linear';
+    timerInterval = setInterval(() => {
+        pct -= 4;
+        if (pct <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            bar.style.width = '0%';
+            return;
+        }
+        bar.style.width = pct + '%';
+        if (pct <= 25) bar.classList.add('time-running-out');
+    }, 600);
+}
+</script>
+
+</body>
+</html>

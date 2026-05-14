@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>橫向版面實機演示 · 有機分類帽</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap">
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 36px 24px 80px;
+  background: radial-gradient(circle at top, #1a1a1d, #0a0a0d);
+  color: #f0e6d2;
+  font-family: -apple-system, "Segoe UI", "PingFang TC", sans-serif;
+  min-height: 100vh;
+}
+h1 {
+  font-family: "Cinzel", serif;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: #d4af37;
+  text-shadow: 0 0 12px rgba(212,175,55,.5);
+  margin: 0 0 8px;
+  font-size: 1.7rem;
+}
+.lede {
+  color: #c9bfa6; max-width: 880px; line-height: 1.7;
+  margin: 0 0 28px; font-size: .95rem;
+}
+.lede code {
+  background: rgba(255,255,255,.08); padding: 1px 7px;
+  border-radius: 4px; font-size: .85em; color: #f5d76e;
+}
+
+.principles {
+  background: linear-gradient(135deg, rgba(127,9,9,.32), rgba(15,77,15,.28));
+  border: 1px solid rgba(212,175,55,.45);
+  border-radius: 14px;
+  padding: 22px 26px;
+  margin-bottom: 40px;
+  max-width: 920px;
+}
+.principles h2 {
+  font-family: "Cinzel", serif;
+  margin: 0 0 14px;
+  color: #f5d76e;
+  font-size: 1.15rem;
+}
+.p-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.p-item {
+  background: rgba(0,0,0,.32);
+  border-left: 3px solid #d4af37;
+  padding: 12px 14px;
+  border-radius: 6px;
+  font-size: .92rem;
+  line-height: 1.55;
+}
+.p-item strong { color: #f5d76e; display: block; margin-bottom: 4px; font-size: .98rem; }
+
+section.demo {
+  margin-bottom: 56px;
+}
+section.demo h2 {
+  font-family: "Cinzel", serif;
+  color: #d4af37;
+  font-size: 1.3rem;
+  margin: 0 0 6px;
+  letter-spacing: .04em;
+}
+section.demo h2 .tag {
+  font-family: "Georgia", serif;
+  font-size: .8rem;
+  background: rgba(212,175,55,.18);
+  border: 1px solid rgba(212,175,55,.5);
+  color: #f5d76e;
+  padding: 2px 10px;
+  border-radius: 999px;
+  margin-left: 12px;
+  vertical-align: middle;
+  letter-spacing: 0;
+}
+section.demo .caption {
+  color: #a89876;
+  margin: 0 0 20px;
+  font-size: .9rem;
+}
+
+.frames {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.label {
+  font-size: .78rem;
+  color: #a89876;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  font-family: "Consolas", monospace;
+}
+.label strong { color: #f5d76e; font-weight: 600; }
+.device {
+  border: 10px solid #2a2520;
+  border-radius: 22px;
+  box-shadow:
+    0 20px 50px rgba(0,0,0,.7),
+    inset 0 0 0 1px rgba(212,175,55,.2);
+  overflow: hidden;
+  background: #000;
+}
+.device.desktop {
+  border-radius: 10px;
+  border-width: 6px;
+  border-color: #1a1a1d;
+  box-shadow:
+    0 20px 50px rgba(0,0,0,.7),
+    inset 0 0 0 1px rgba(212,175,55,.15);
+}
+.device iframe {
+  border: 0;
+  display: block;
+  background: #1a1a1d;
+}
+
+.callouts {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.callout {
+  background: rgba(20,20,25,.78);
+  border: 1px solid rgba(212,175,55,.32);
+  border-radius: 9px;
+  padding: 12px 15px;
+  font-size: .88rem;
+  line-height: 1.55;
+}
+.callout strong { color: #f5d76e; }
+.callout .num {
+  display: inline-block;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #d4af37;
+  color: #1a1a1d;
+  font-weight: 700;
+  text-align: center;
+  line-height: 22px;
+  font-size: .78rem;
+  margin-right: 8px;
+}
+
+.css-snippet {
+  background: rgba(0,0,0,.55);
+  border: 1px solid rgba(212,175,55,.32);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 8px 0 16px;
+  font-family: "Consolas", "Menlo", monospace;
+  font-size: .8rem;
+  color: #c9bfa6;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+.css-snippet .k { color: #f5d76e; }
+.css-snippet .v { color: #aaffaa; }
+.css-snippet .c { color: #6e92c4; font-style: italic; }
+</style>
+</head>
+<body>
+
+<h1>橫向專屬版面 · 同一份 CSS、四種螢幕</h1>
+<p class="lede">
+鎖手機橫放後，所有目標尺寸（手機 667×375 ~ 桌面 1920×1080）長寬比都在 <strong>1.6 ~ 2.1 之間</strong>，這時候可以用<strong>同一套 Grid + <code>vh</code> + <code>clamp()</code></strong>，不用斷點切換。
+下面四個畫面是<strong>同一個 HTML 檔案</strong>在不同 iframe 尺寸下的實際渲染。
+</p>
+
+<div class="principles">
+  <h2>核心設計原則</h2>
+  <div class="p-grid">
+    <div class="p-item">
+      <strong>① 高度為基準</strong>
+      所有 padding / font / 元件高度都用 <code style="color:#f5d76e">vh</code> 為主、<code style="color:#f5d76e">vw</code> 為輔，因為橫向時高度是瓶頸。
+    </div>
+    <div class="p-item">
+      <strong>② Grid 三列鎖死</strong>
+      <code style="color:#f5d76e">grid-template-rows: auto 1fr auto</code>，info-bar / 遊戲區 / 計時條，永遠對齊，不會擠壓。
+    </div>
+    <div class="p-item">
+      <strong>③ clamp() 控字體</strong>
+      <code style="color:#f5d76e">font-size: clamp(.85rem, 2.2vh, 1.35rem)</code> — 手機橫放 ~14px、桌面 ~22px，自動縮放。
+    </div>
+    <div class="p-item">
+      <strong>④ 帽子退居角落</strong>
+      帽子 absolute 定位在題目區右下角，不再搶橫向空間；教練泡泡浮在題目下緣全寬居中。
+    </div>
+    <div class="p-item">
+      <strong>⑤ Duel 用 3 欄共題</strong>
+      P1 選項 ｜ 共用題目 ｜ P2 選項，題目只渲染一次，HP+分數移到 info-bar。
+    </div>
+    <div class="p-item">
+      <strong>⑥ 直向跳遮罩</strong>
+      <code style="color:#f5d76e">@media (orientation: portrait)</code> 顯示「請橫放」動畫，不勉強縮塞。
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MENU
+     ============================================================ -->
+<section class="demo">
+  <h2>主選單（Menu）<span class="tag">同一份 HTML</span></h2>
+  <p class="caption">頂部標題 + 進度 + 身份｜中間 3 欄關卡（Practice ／ Time Attack ／ Duel）｜底部說明 + 存檔工具。同一份 CSS，從 667×375 縮到 1920×1080 都對齊。</p>
+
+  <div class="frames">
+    <div class="frame">
+      <div class="label">iPhone SE 橫放 · <strong>667 × 375</strong></div>
+      <div class="device">
+        <iframe src="menu.html" width="667" height="375"></iframe>
+      </div>
+    </div>
+    <div class="frame">
+      <div class="label">iPhone 14 橫放 · <strong>844 × 390</strong></div>
+      <div class="device">
+        <iframe src="menu.html" width="844" height="390"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="frames" style="margin-top:32px">
+    <div class="frame">
+      <div class="label">平板橫放 · <strong>1180 × 700</strong></div>
+      <div class="device desktop">
+        <iframe src="menu.html" width="1180" height="700"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="frames" style="margin-top:32px">
+    <div class="frame">
+      <div class="label">桌面 · <strong>1440 × 810</strong></div>
+      <div class="device desktop">
+        <iframe src="menu.html" width="1440" height="810"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="callouts">
+    <div class="callout"><span class="num">M1</span><strong>三欄並排</strong>取代原本的長條捲動 — 一眼看完所有模式，不用滑。</div>
+    <div class="callout"><span class="num">M2</span><strong>頂部進度極簡化</strong> — 只留「分子 12/40 ／ 答對 87」兩個數字，紅球 chip 和勳章全搬進圖鑑。</div>
+    <div class="callout"><span class="num">M3</span><strong>圖鑑入口升級</strong>為金紅漸層 pill 按鈕 + 紅點 new-dot 提示，視覺權重提到頂部。</div>
+    <div class="callout"><span class="num">M4</span><strong>關卡按鈕字體保底 14px</strong>，過關自動加金色印章 + ✓，列表內部捲動不縮字。</div>
+    <div class="callout"><span class="num">M5</span>身份徽章右上角 pill 樣式，點「更換」叫出 wizard-picker。</div>
+    <div class="callout"><span class="num">M6</span>BOSS 紅、Genius 藍的 lv-tag 色塊，掃描速度大幅提升。</div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CODEX
+     ============================================================ -->
+<section class="demo">
+  <h2>分類帽圖鑑（Codex）<span class="tag">全螢幕替頁</span></h2>
+  <p class="caption">主選單清出來的東西全部整合在這裡。4 個 tab：闖關進度 ／ 勳章 ／ 分子 ／ 劇情。從選單右上的「圖鑑」 pill 進入，<code>history.back()</code> 返回。</p>
+
+  <div class="frames">
+    <div class="frame">
+      <div class="label">iPhone SE 橫放 · <strong>667 × 375</strong> · 闖關</div>
+      <div class="device">
+        <iframe src="codex.html" width="667" height="375"></iframe>
+      </div>
+    </div>
+    <div class="frame">
+      <div class="label">iPhone 14 橫放 · <strong>844 × 390</strong> · 勳章</div>
+      <div class="device">
+        <iframe src="codex.html#badges" width="844" height="390" onload="this.contentWindow.document.querySelector('[data-tab=badges]').click()"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="frames" style="margin-top:32px">
+    <div class="frame">
+      <div class="label">桌面 · <strong>1440 × 810</strong> · 分子圖鑑</div>
+      <div class="device desktop">
+        <iframe src="codex.html#molecules" width="1440" height="810" onload="this.contentWindow.document.querySelector('[data-tab=molecules]').click()"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="callouts">
+    <div class="callout"><span class="num">C1</span><strong>闖關進度卡</strong>：等級色塊 + 星等 + 最高分 + 通關日期。未通關「嘗試 3 次」、鎖定「通關 L4 後解鎖」。</div>
+    <div class="callout"><span class="num">C2</span><strong>勳章卡</strong>：已解鎖金光圓邊 + 紅金背景，鎖定灰階 + 進度條（化學之子 50%、迅雷不及 60%）讓玩家知道差多遠。</div>
+    <div class="callout"><span class="num">C3</span><strong>分子卡</strong>分關卡分組，每組標 12/40 進度。已收集顯示鍵線結構 + 中英名，鎖定顯示「?」剪影。</div>
+    <div class="callout"><span class="num">C4</span><strong>劇情卡</strong>：章節編號 pill + 首句引言「歡迎來到霍格華茲...」勾起好奇，未解鎖直接告知門檻。</div>
+    <div class="callout"><span class="num">C5</span>整個 codex 用同一套 <code style="background:rgba(0,0,0,.4);padding:1px 5px;border-radius:3px">grid-template-columns: repeat(auto-fill, minmax(N, 1fr))</code>，欄數隨螢幕自動增減 — 手機 2-3 欄、桌面 6-8 欄。</div>
+    <div class="callout"><span class="num">C6</span>Tab bar 紅點 new-dot 提示「有新內容」，從主選單 codex-entry pill 延續同一語彙。</div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PRACTICE
+     ============================================================ -->
+<section class="demo">
+  <h2>練習模式（Practice）<span class="tag">同一份 HTML</span></h2>
+  <p class="caption">左：題目（佔 ~58%） ｜ 右：2×2 選項 ｜ 帽子右下、泡泡題目下緣。中英文分行讓長選項也能塞進去。</p>
+
+  <div class="frames">
+    <div class="frame">
+      <div class="label">iPhone SE 橫放 · <strong>667 × 375</strong></div>
+      <div class="device">
+        <iframe src="practice.html" width="667" height="375"></iframe>
+      </div>
+    </div>
+    <div class="frame">
+      <div class="label">iPhone 14 橫放 · <strong>844 × 390</strong></div>
+      <div class="device">
+        <iframe src="practice.html" width="844" height="390"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="frames" style="margin-top:32px">
+    <div class="frame">
+      <div class="label">平板橫放 · <strong>1180 × 700</strong></div>
+      <div class="device desktop">
+        <iframe src="practice.html" width="1180" height="700"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="frames" style="margin-top:32px">
+    <div class="frame">
+      <div class="label">桌面 · <strong>1440 × 810</strong></div>
+      <div class="device desktop">
+        <iframe src="practice.html" width="1440" height="810"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="callouts">
+    <div class="callout"><span class="num">1</span><strong>分子圖</strong>是題目區唯一主角，<code style="background:rgba(0,0,0,.4);padding:1px 5px;border-radius:3px">max-height: 92%</code> 確保不被裁切。</div>
+    <div class="callout"><span class="num">2</span><strong>帽子</strong>固定 clamp(40px,9vh,76px)，永遠在右下角不打擾結構閱讀。</div>
+    <div class="callout"><span class="num">3</span><strong>教練泡泡</strong>底部浮層、最多 60% 寬，箭頭朝下指帽子。手機桌面都讀得到完整句子。</div>
+    <div class="callout"><span class="num">4</span><strong>選項</strong>中文大 + 英文小（0.72em），長字「Carboxylic Acid」也能優雅顯示。快捷鍵移到左上角。</div>
+  </div>
+</section>
+
+<!-- ============================================================
+     DUEL
+     ============================================================ -->
+<section class="demo">
+  <h2>對決模式（Duel）<span class="tag">同一份 HTML</span></h2>
+  <p class="caption">中間共用題目（不再各畫一次），P1 / P2 各自的選項在左右兩側 1×4 直排，HP+分數在 info-bar。</p>
+
+  <div class="frames">
+    <div class="frame">
+      <div class="label">iPhone SE 橫放 · <strong>667 × 375</strong></div>
+      <div class="device">
+        <iframe src="duel.html" width="667" height="375"></iframe>
+      </div>
+    </div>
+    <div class="frame">
+      <div class="label">iPhone 14 橫放 · <strong>844 × 390</strong></div>
+      <div class="device">
+        <iframe src="duel.html" width="844" height="390"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="frames" style="margin-top:32px">
+    <div class="frame">
+      <div class="label">桌面 · <strong>1440 × 810</strong></div>
+      <div class="device desktop">
+        <iframe src="duel.html" width="1440" height="810"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="callouts">
+    <div class="callout"><span class="num">5</span><strong>競技場 Bar</strong>取代 info-bar — 兩位巫師站在頂端對峙，中間是裁判帽。手機 ~48px、桌面 ~110px，自動縮放。</div>
+    <div class="callout"><span class="num">6</span><strong>施法軌跡橫向飛越</strong>—  bolt 從一邊飛到另一邊，符合左右對戰直覺。z-index:50 不會被題目擋。</div>
+    <div class="callout"><span class="num">7</span>HP / 分數<strong>緊貼角色腳下</strong>，視覺上 HP 屬於這個巫師，不是抽象條。中央題目區只渲染一次。</div>
+    <div class="callout"><span class="num">8</span><strong>角色三段動畫</strong>：idle 微浮 → charging 蓄力放大 → hit 被擊飛震動。P2 用 <code style="background:rgba(0,0,0,.4);padding:1px 5px;border-radius:3px">scaleX(-1)</code> 鏡像朝左。</div>
+  </div>
+
+  <p class="caption" style="margin-top: 26px;">▼ 點 demo 頁右下角 <strong style="color:#f5d76e">「P1 施法」</strong> 按鈕可手動觸發；iframe 也每 3.5 秒自動演示一次。</p>
+</section>
+
+<!-- ============================================================
+     KEY CSS
+     ============================================================ -->
+<section class="demo">
+  <h2>關鍵 CSS（單檔，無斷點切換）</h2>
+  <p class="caption">完整版在 <code>landscape/layout.css</code>，這裡是核心三段。</p>
+<div class="css-snippet"><span class="c">/* 1. 永遠 3 列 grid，高度自適應 */</span>
+<span class="k">#game-container</span> {
+  display: grid;
+  grid-template-rows: <span class="v">minmax(44px, 7vh)  1fr  minmax(14px, 3.2vh)</span>;
+  height: <span class="v">100dvh</span>;
+  max-width: <span class="v">1800px</span>;  <span class="c">/* 4K 不要無限拉開 */</span>
+}
+
+<span class="c">/* 2. 練習：題目+選項 兩欄 */</span>
+<span class="k">#game-area</span> {
+  display: grid;
+  grid-template-columns: <span class="v">minmax(0, 1.45fr) minmax(0, 1fr)</span>;
+  gap: <span class="v">clamp(8px, 1.5vw, 22px)</span>;
+}
+
+<span class="c">/* 3. Duel：3 欄共題 */</span>
+<span class="k">body.duel #game-area</span> {
+  grid-template-columns: <span class="v">minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1fr)</span>;
+}
+
+<span class="c">/* 4. 所有字體 / 元件用 clamp 自動縮放 */</span>
+<span class="k">.opt-btn</span>     { font-size: <span class="v">clamp(.85rem, 2.2vh, 1.35rem)</span>; }
+<span class="k">.q-text</span>      { font-size: <span class="v">clamp(1.1rem, 4.2vh, 2.6rem)</span>; }
+<span class="k">.hat-display</span> { width:    <span class="v">clamp(40px, 9vh, 76px)</span>; }
+
+<span class="c">/* 5. 直向跳橫放遮罩 */</span>
+<span class="k">@media</span> (orientation: portrait) and (max-width: 900px) {
+  <span class="k">#rotate-overlay</span> { display: grid; }
+  <span class="k">#game-container</span> { display: none; }
+}</div>
+</section>
+
+</body>
+</html>

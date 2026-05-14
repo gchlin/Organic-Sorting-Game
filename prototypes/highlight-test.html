@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分子著色圖測試 - Highlight SVG Verification</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: "Microsoft JhengHei", sans-serif;
+            background: #f5f5f5;
+            padding: 40px 20px;
+            margin: 0;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .category {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .category h2 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin: 0 0 20px 0;
+            font-size: 1.3rem;
+        }
+        .molecule-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .molecule-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+            background: #fafafa;
+            transition: all 0.3s ease;
+        }
+        .molecule-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        .molecule-card img {
+            max-width: 100%;
+            height: 200px;
+            object-fit: contain;
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .molecule-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+        }
+        .molecule-file {
+            color: #7f8c8d;
+            font-size: 0.8rem;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .color-info {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+        .color-gold { background: #d4af37; color: #333; }
+        .color-crimson { background: #c0392b; color: white; }
+        .color-emerald { background: #27ae60; color: white; }
+    </style>
+</head>
+<body>
+    <h1>🧪 分子著色圖測試 (Highlight SVG Verification)</h1>
+    <p style="text-align: center; color: #7f8c8d; margin-bottom: 40px;">
+        檢查所有分子圖是否正確顯示，著色的化學鍵是否符合預期
+    </p>
+
+    <div id="container"></div>
+
+    <script>
+        const molecules = [
+            // 01 alkane - single bonds (gold)
+            {
+                category: '01 烷烴 (Alkane)',
+                color: 'gold',
+                items: [
+                    { name: '乙烷 (Ethane)', file: '01_alkane_ethane_highlight.svg', bonds: '1 條 C-C 單鍵' },
+                    { name: '丙烷 (Propane)', file: '01_alkane_propane_highlight.svg', bonds: '2 條 C-C 單鍵' },
+                ]
+            },
+            // 02 alkene - double bonds (gold)
+            {
+                category: '02 烯烴 (Alkene)',
+                color: 'gold',
+                items: [
+                    { name: '乙烯 (Ethene)', file: '02_alkene_ethene_highlight.svg', bonds: '1 條 C=C 雙鍵' },
+                ]
+            },
+            // 03 alkyne - triple bonds (gold)
+            {
+                category: '03 炔烴 (Alkyne)',
+                color: 'gold',
+                items: [
+                    { name: '乙炔 (Ethyne)', file: '03_alkyne_ethyne_highlight.svg', bonds: '1 條 C≡C 三鍵' },
+                ]
+            },
+            // 04 alcohol - C-O-H bonds (crimson)
+            {
+                category: '04 醇 (Alcohol)',
+                color: 'crimson',
+                items: [
+                    { name: '乙醇 (Ethanol)', file: '04_alcohol_ethanol_highlight.svg', bonds: '2 條 (C-O + O-H)' },
+                    { name: '丙醇 (Propanol)', file: '04_alcohol_propanol_highlight.svg', bonds: '2 條 (C-O + O-H)' },
+                    { name: '異丙醇 (Isopropanol)', file: '04_alcohol_isopropanol_highlight.svg', bonds: '2 條 (C-O + O-H)' },
+                    { name: '乙二醇 (Ethylene Glycol)', file: '04_alcohol_ethylene_glycol_highlight.svg', bonds: '4 條 (2× C-O + 2× O-H)' },
+                ]
+            },
+            // 09 ether - C-O-C bonds (gold)
+            {
+                category: '09 醚 (Ether)',
+                color: 'gold',
+                items: [
+                    { name: '二甲醚 (Dimethyl Ether)', file: '09_ether_dimethyl_ether_highlight.svg', bonds: '2 條 (2× C-O)' },
+                    { name: '甲基乙基醚 (Ethyl Methyl Ether)', file: '09_ether_ethyl_methyl_ether_highlight.svg', bonds: '2 條 (2× C-O)' },
+                    { name: '環氧乙烷 (Ethylene Oxide)', file: '09_ether_ethylene_oxide_highlight.svg', bonds: '2 條 (2× C-O)' },
+                ]
+            },
+            // 11 aromatic - benzene ring bonds (emerald)
+            {
+                category: '11 芳香烴 (Aromatic)',
+                color: 'emerald',
+                items: [
+                    { name: '苯環 (Benzene)', file: '11_aromatic_benzene_highlight.svg', bonds: '6 條 (整個苯環)' },
+                    { name: '甲苯 (Toluene)', file: '11_aromatic_toluene_highlight.svg', bonds: '6 條 (苯環部分)' },
+                ]
+            },
+        ];
+
+        const container = document.getElementById('container');
+
+        molecules.forEach(category => {
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'category';
+
+            const titleDiv = document.createElement('h2');
+            titleDiv.textContent = category.category;
+            categoryDiv.appendChild(titleDiv);
+
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'molecule-grid';
+
+            category.items.forEach(item => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'molecule-card';
+
+                const imgPath = `../assets/images/${item.file.split('_')[0]}_${item.file.split('_')[1]}/${item.file}`;
+
+                cardDiv.innerHTML = `
+                    <img src="${imgPath}" alt="${item.name}"
+                         onerror="this.alt='❌ 圖片載入失敗'; this.parentElement.classList.add('error');">
+                    <div class="molecule-name">${item.name}</div>
+                    <div class="molecule-file">${item.file}</div>
+                    <div style="font-size: 0.85rem; color: #555; margin-top: 8px;">著色: ${item.bonds}</div>
+                    <div class="color-info color-${category.color.toLowerCase()}">
+                        ${category.color === 'gold' ? '🟡 金色' : category.color === 'crimson' ? '🔴 紅色' : '🟢 翠綠色'}
+                    </div>
+                `;
+
+                gridDiv.appendChild(cardDiv);
+            });
+
+            categoryDiv.appendChild(gridDiv);
+            container.appendChild(categoryDiv);
+        });
+    </script>
+</body>
+</html>

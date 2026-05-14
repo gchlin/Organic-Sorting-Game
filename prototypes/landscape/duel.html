@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>對決模式 (橫向)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="../original/style.css">
+<link rel="stylesheet" href="../style-visual-v2.css">
+<link rel="stylesheet" href="layout.css">
+<style>
+/* Demo 按鈕：浮在右下角，觸發動畫測試 */
+.demo-controls {
+    position: fixed;
+    bottom: 5vh;
+    right: 14px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.demo-controls button {
+    background: rgba(20,20,25,.92);
+    border: 1px solid rgba(212,175,55,.5);
+    color: var(--hp-gold);
+    font-family: "Cinzel", serif;
+    font-size: .75rem;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    letter-spacing: .04em;
+}
+.demo-controls button:hover {
+    background: rgba(127,9,9,.5);
+    color: #fff5c0;
+}
+</style>
+</head>
+<body class="duel">
+
+<div id="rotate-overlay">
+  <div>
+    <div class="phone-icon"></div>
+    <h2>請將手機橫放</h2>
+    <p>對決模式需要橫向螢幕</p>
+  </div>
+</div>
+
+<div id="game-container">
+
+  <!-- ===== 競技場 Bar（取代 info-bar） ===== -->
+  <div id="arena-bar">
+
+    <!-- 玩家一 -->
+    <div class="arena-player p1-side">
+      <div class="arena-avatar idle" id="avatar-p1" aria-hidden="true">🧙‍♂️</div>
+      <span class="pname" data-icon="wizard">玩家一</span>
+      <div class="hp-bar-container">
+        <div class="hp-bar" id="hp-p1" style="width: 75%;"></div>
+      </div>
+      <span class="pscore"><span class="mp-label">魔力</span><strong id="score-p1">180</strong></span>
+    </div>
+
+    <!-- 中央裁判 -->
+    <div class="arena-center">
+      <div class="arena-hat hat-char neutral" aria-hidden="true">
+        <div class="hat-img"></div>
+        <div class="brow left"></div><div class="brow right"></div>
+        <div class="eye left"><div class="pupil"></div></div>
+        <div class="eye right"><div class="pupil"></div></div>
+        <div class="mouth"></div>
+      </div>
+      <span class="arena-level">L4 · 酸酯</span>
+    </div>
+
+    <!-- 玩家二 -->
+    <div class="arena-player p2-side">
+      <span class="pname" data-icon="wizard">玩家二</span>
+      <div class="hp-bar-container">
+        <div class="hp-bar" id="hp-p2" style="width: 55%;"></div>
+      </div>
+      <span class="pscore"><span class="mp-label">魔力</span><strong id="score-p2">120</strong></span>
+      <div class="arena-avatar idle" id="avatar-p2" aria-hidden="true">🧙‍♀️</div>
+    </div>
+
+  </div>
+
+  <!-- ===== 三欄遊戲區 ===== -->
+  <div id="game-area">
+    <!-- P1 選項（左） -->
+    <div class="opts p1">
+      <button class="btn opt-btn magic-stone-btn"><span class="opt-zh">醇</span><span class="opt-en">Alcohol</span></button>
+      <button class="btn opt-btn magic-stone-btn"><span class="opt-zh">羧酸</span><span class="opt-en">Carboxylic Acid</span></button>
+      <button class="btn opt-btn magic-stone-btn"><span class="opt-zh">酯</span><span class="opt-en">Ester</span></button>
+      <button class="btn opt-btn magic-stone-btn"><span class="opt-zh">醚</span><span class="opt-en">Ether</span></button>
+    </div>
+
+    <!-- 中央共用題目 -->
+    <div class="q-frame parchment-bg" style="border-color: var(--hp-gold); border-style: double; border-width: 4px;">
+      <div class="question-content">
+        <svg viewBox="0 0 340 120" xmlns="http://www.w3.org/2000/svg" style="max-height: 70%;">
+          <g stroke="#1a1a1d" stroke-width="3" fill="none" stroke-linecap="round">
+            <text x="14" y="68" font-family="Georgia" font-size="30" fill="#1a1a1d">CH₃</text>
+            <line x1="68" y1="60" x2="92" y2="60"/>
+            <text x="96" y="68" font-family="Georgia" font-size="30" fill="#1a1a1d">C</text>
+            <line x1="118" y1="60" x2="146" y2="60"/>
+            <text x="150" y="68" font-family="Georgia" font-size="30" fill="#1a1a1d">O</text>
+            <line x1="180" y1="60" x2="208" y2="60"/>
+            <text x="212" y="68" font-family="Georgia" font-size="30" fill="#1a1a1d">CH₂CH₃</text>
+            <line x1="108" y1="48" x2="108" y2="22"/>
+            <line x1="112" y1="48" x2="112" y2="22"/>
+            <text x="98" y="18" font-family="Georgia" font-size="26" fill="#7f0909">O</text>
+          </g>
+        </svg>
+        <div style="text-align:center; font-size: clamp(.85rem, 2.2vh, 1.2rem); color:#5a4a3a; margin-top: 1vh;">是哪一類官能基？</div>
+      </div>
+    </div>
+
+    <!-- P2 選項（右） -->
+    <div class="opts p2">
+      <button class="btn opt-btn magic-stone-btn"><span class="opt-zh">醇</span><span class="opt-en">Alcohol</span></button>
+      <button class="btn opt-btn magic-stone-btn"><span class="opt-zh">羧酸</span><span class="opt-en">Carboxylic Acid</span></button>
+      <button class="btn opt-btn magic-stone-btn"><span class="opt-zh">酯</span><span class="opt-en">Ester</span></button>
+      <button class="btn opt-btn magic-stone-btn"><span class="opt-zh">醚</span><span class="opt-en">Ether</span></button>
+    </div>
+  </div>
+
+  <div id="time-bar-container" class="bottom-bar">
+    <div id="time-bar" style="width:45%;"></div>
+  </div>
+</div>
+
+<!-- ===== Demo 動畫測試控制 ===== -->
+<div class="demo-controls">
+  <button onclick="castSpell('p1')">▶ P1 施法 →</button>
+  <button onclick="castSpell('p2')">▶ P2 施法 ←</button>
+</div>
+
+<script>
+function castSpell(who) {
+    const arena = document.getElementById('arena-bar');
+    const caster = document.getElementById('avatar-' + who);
+    const targetSide = who === 'p1' ? 'p2' : 'p1';
+    const target = document.getElementById('avatar-' + targetSide);
+    const targetHp = document.getElementById('hp-' + targetSide);
+
+    // 1. 蓄力
+    caster.classList.remove('idle');
+    caster.classList.add('charging');
+
+    // 2. 0.35s 後發射 bolt
+    setTimeout(() => {
+        caster.classList.remove('charging');
+        caster.classList.add('idle');
+
+        const bolt = document.createElement('div');
+        bolt.className = 'arena-bolt ' + (who === 'p1' ? 'bolt-lr' : 'bolt-rl');
+        bolt.textContent = '⚡';
+        arena.appendChild(bolt);
+
+        // 3. 0.65s 後 bolt 抵達 → 爆炸 + 對方被打
+        setTimeout(() => {
+            bolt.remove();
+
+            const burst = document.createElement('div');
+            burst.className = 'arena-burst';
+            burst.textContent = '💥';
+            burst.style[who === 'p1' ? 'right' : 'left'] = '12%';
+            arena.appendChild(burst);
+
+            target.classList.remove('idle');
+            target.classList.add('hit');
+            arena.classList.add('shake');
+
+            // 扣 HP
+            const currentHp = parseFloat(targetHp.style.width);
+            targetHp.style.width = Math.max(0, currentHp - 15) + '%';
+
+            setTimeout(() => {
+                target.classList.remove('hit');
+                target.classList.add('idle');
+                arena.classList.remove('shake');
+                burst.remove();
+            }, 550);
+        }, 600);
+    }, 320);
+}
+
+// 5 秒一次自動演示，讓 iframe 預覽時就看得到動畫
+let autoTurn = 0;
+setInterval(() => {
+    castSpell(autoTurn % 2 === 0 ? 'p1' : 'p2');
+    autoTurn++;
+}, 3500);
+</script>
+</body>
+</html>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>分類帽圖鑑</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap">
+<link rel="stylesheet" href="../original/style.css">
+<link rel="stylesheet" href="../style-visual-v2.css">
+<link rel="stylesheet" href="codex.css">
+</head>
+<body>
+
+<div id="rotate-overlay">
+  <div>
+    <div class="phone-icon"></div>
+    <h2>請將手機橫放</h2>
+    <p>圖鑑建議橫向瀏覽</p>
+  </div>
+</div>
+
+<div class="codex-page">
+
+  <!-- ===== Header ===== -->
+  <header class="codex-header">
+    <h1 data-icon="codex">
+      分類帽圖鑑
+      <span class="summary-stat">— <strong>葛來分多魔法師</strong> 的修煉紀錄</span>
+    </h1>
+    <button class="back-btn" data-icon="back" onclick="history.back()">返回大廳</button>
+  </header>
+
+  <!-- ===== Tabs ===== -->
+  <nav class="codex-tabs">
+    <button class="tab active" data-tab="levels">闖關進度 <span class="count">2/7</span></button>
+    <button class="tab" data-tab="badges">勳章 <span class="count">2/8</span><span class="new-dot"></span></button>
+    <button class="tab" data-tab="molecules">分子 <span class="count">12/40</span></button>
+    <button class="tab" data-tab="story">劇情 <span class="count">2/7</span></button>
+  </nav>
+
+  <!-- ===== Content ===== -->
+  <main class="codex-content">
+
+    <!-- TAB: 闖關進度 -->
+    <section class="tab-panel active" data-panel="levels">
+      <div class="level-grid">
+        <div class="level-card cleared">
+          <div class="lv-header">
+            <span class="lv-tag">L1</span>
+            <div class="lv-stars"><span class="star on">★</span><span class="star on">★</span><span class="star on">★</span></div>
+          </div>
+          <h3 class="lv-title">碳氫骨架基礎</h3>
+          <div class="lv-meta"><span>最高 <strong>980</strong></span><span>2026/05/02</span></div>
+        </div>
+
+        <div class="level-card cleared">
+          <div class="lv-header">
+            <span class="lv-tag">L2</span>
+            <div class="lv-stars"><span class="star on">★</span><span class="star on">★</span><span class="star">★</span></div>
+          </div>
+          <h3 class="lv-title">單鍵氧家族 醇醚</h3>
+          <div class="lv-meta"><span>最高 <strong>720</strong></span><span>2026/05/10</span></div>
+        </div>
+
+        <div class="level-card">
+          <div class="lv-header">
+            <span class="lv-tag">L3</span>
+            <div class="lv-stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+          </div>
+          <h3 class="lv-title">雙鍵氧家族 醛酮</h3>
+          <div class="lv-meta"><span>尚未通關</span><span>嘗試 3 次</span></div>
+        </div>
+
+        <div class="level-card">
+          <div class="lv-header">
+            <span class="lv-tag">L4</span>
+            <div class="lv-stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+          </div>
+          <h3 class="lv-title">雙氧複合 酸酯</h3>
+          <div class="lv-meta"><span>尚未通關</span><span>嘗試 1 次</span></div>
+        </div>
+
+        <div class="level-card locked">
+          <div class="lv-header">
+            <span class="lv-tag">L5</span>
+            <div class="lv-stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+          </div>
+          <h3 class="lv-title">雜原子與鹵素</h3>
+          <div class="lv-meta"><span>通關 L4 後解鎖</span></div>
+        </div>
+
+        <div class="level-card boss locked">
+          <div class="lv-header">
+            <span class="lv-tag">L6</span>
+            <div class="lv-stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+          </div>
+          <h3 class="lv-title">終極分類帽</h3>
+          <div class="lv-meta"><span>通關 L5 後解鎖</span></div>
+        </div>
+
+        <div class="level-card genius locked">
+          <div class="lv-header">
+            <span class="lv-tag">L99</span>
+            <div class="lv-stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+          </div>
+          <h3 class="lv-title">資優全英挑戰</h3>
+          <div class="lv-meta"><span>通關 L6 後解鎖</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: 勳章 -->
+    <section class="tab-panel" data-panel="badges">
+      <div class="badge-grid">
+        <div class="badge-card unlocked">
+          <div class="badge-icon">🏅</div>
+          <div class="badge-name">初試啼聲</div>
+          <div class="badge-cond">完成第一次練習</div>
+        </div>
+        <div class="badge-card unlocked">
+          <div class="badge-icon">🎖️</div>
+          <div class="badge-name">百題達人</div>
+          <div class="badge-cond">累積答對 100 題</div>
+        </div>
+        <div class="badge-card locked">
+          <div class="badge-icon">⚗️</div>
+          <div class="badge-name">化學之子</div>
+          <div class="badge-cond">通關 L1 ~ L4</div>
+          <div class="badge-progress"><div class="fill" style="width:50%"></div></div>
+        </div>
+        <div class="badge-card locked">
+          <div class="badge-icon">🏆</div>
+          <div class="badge-name">完美主義</div>
+          <div class="badge-cond">任何關卡 ★★★</div>
+          <div class="badge-progress"><div class="fill" style="width:33%"></div></div>
+        </div>
+        <div class="badge-card locked">
+          <div class="badge-icon">⚡</div>
+          <div class="badge-name">迅雷不及</div>
+          <div class="badge-cond">競速 10 連對</div>
+          <div class="badge-progress"><div class="fill" style="width:60%"></div></div>
+        </div>
+        <div class="badge-card locked">
+          <div class="badge-icon">⚔️</div>
+          <div class="badge-name">對決王者</div>
+          <div class="badge-cond">對決勝 5 場</div>
+          <div class="badge-progress"><div class="fill" style="width:20%"></div></div>
+        </div>
+        <div class="badge-card locked">
+          <div class="badge-icon">💀</div>
+          <div class="badge-name">不死之身</div>
+          <div class="badge-cond">L6 零失誤通關</div>
+        </div>
+        <div class="badge-card locked">
+          <div class="badge-icon">🌟</div>
+          <div class="badge-name">分類帽傳人</div>
+          <div class="badge-cond">解鎖所有勳章</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: 分子 -->
+    <section class="tab-panel" data-panel="molecules">
+
+      <div class="molecule-section">
+        <h3 class="molecule-section-title">
+          <span class="lv-tag">L1</span> 碳氫骨架基礎
+          <span class="count">4/4</span>
+        </h3>
+        <div class="molecule-grid">
+          <button class="molecule-card">
+            <div class="mol-img"><svg viewBox="0 0 80 40"><g stroke="#1a1a1d" stroke-width="2" fill="none"><text x="6" y="26" font-size="16" fill="#1a1a1d">CH₃</text><line x1="34" y1="22" x2="46" y2="22"/><text x="50" y="26" font-size="16" fill="#1a1a1d">CH₃</text></g></svg></div>
+            <div class="mol-name">乙烷</div>
+            <div class="mol-formula">C₂H₆</div>
+          </button>
+          <button class="molecule-card">
+            <div class="mol-img"><svg viewBox="0 0 80 40"><g stroke="#1a1a1d" stroke-width="2" fill="none"><text x="4" y="26" font-size="16" fill="#1a1a1d">CH₂</text><line x1="32" y1="20" x2="48" y2="20"/><line x1="32" y1="24" x2="48" y2="24"/><text x="52" y="26" font-size="16" fill="#1a1a1d">CH₂</text></g></svg></div>
+            <div class="mol-name">乙烯</div>
+            <div class="mol-formula">C₂H₄</div>
+          </button>
+          <button class="molecule-card">
+            <div class="mol-img"><svg viewBox="0 0 80 40"><g stroke="#1a1a1d" stroke-width="2" fill="none" stroke-linecap="round"><text x="14" y="26" font-size="16" fill="#1a1a1d">HC</text><line x1="32" y1="18" x2="48" y2="18"/><line x1="32" y1="22" x2="48" y2="22"/><line x1="32" y1="26" x2="48" y2="26"/><text x="52" y="26" font-size="16" fill="#1a1a1d">CH</text></g></svg></div>
+            <div class="mol-name">乙炔</div>
+            <div class="mol-formula">C₂H₂</div>
+          </button>
+          <button class="molecule-card">
+            <div class="mol-img"><svg viewBox="0 0 80 60"><g stroke="#1a1a1d" stroke-width="2" fill="none"><polygon points="40,12 56,22 56,42 40,52 24,42 24,22" /><text x="34" y="34" font-size="11" fill="#1a1a1d">C₆H₆</text></g></svg></div>
+            <div class="mol-name">苯</div>
+            <div class="mol-formula">C₆H₆</div>
+          </button>
+        </div>
+      </div>
+
+      <div class="molecule-section">
+        <h3 class="molecule-section-title">
+          <span class="lv-tag">L2</span> 單鍵氧家族（醇醚）
+          <span class="count">3/6</span>
+        </h3>
+        <div class="molecule-grid">
+          <button class="molecule-card">
+            <div class="mol-img"><svg viewBox="0 0 80 40"><g stroke="#1a1a1d" stroke-width="2" fill="none"><text x="2" y="26" font-size="15" fill="#1a1a1d">CH₃</text><line x1="32" y1="22" x2="44" y2="22"/><text x="48" y="26" font-size="15" fill="#7f0909">OH</text></g></svg></div>
+            <div class="mol-name">甲醇</div>
+            <div class="mol-formula">CH₃OH</div>
+          </button>
+          <button class="molecule-card">
+            <div class="mol-img"><svg viewBox="0 0 100 40"><g stroke="#1a1a1d" stroke-width="2" fill="none"><text x="0" y="26" font-size="14" fill="#1a1a1d">CH₃CH₂</text><line x1="48" y1="22" x2="60" y2="22"/><text x="64" y="26" font-size="14" fill="#7f0909">OH</text></g></svg></div>
+            <div class="mol-name">乙醇</div>
+            <div class="mol-formula">C₂H₅OH</div>
+          </button>
+          <button class="molecule-card">
+            <div class="mol-img"><svg viewBox="0 0 100 40"><g stroke="#1a1a1d" stroke-width="2" fill="none"><text x="0" y="26" font-size="13" fill="#1a1a1d">CH₃</text><line x1="28" y1="22" x2="38" y2="22"/><text x="40" y="26" font-size="13" fill="#7f0909">O</text><line x1="54" y1="22" x2="64" y2="22"/><text x="66" y="26" font-size="13" fill="#1a1a1d">CH₃</text></g></svg></div>
+            <div class="mol-name">二甲醚</div>
+            <div class="mol-formula">CH₃OCH₃</div>
+          </button>
+          <div class="molecule-card locked">
+            <div class="mol-img"></div>
+            <div class="mol-name">???</div>
+          </div>
+          <div class="molecule-card locked">
+            <div class="mol-img"></div>
+            <div class="mol-name">???</div>
+          </div>
+          <div class="molecule-card locked">
+            <div class="mol-img"></div>
+            <div class="mol-name">???</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="molecule-section">
+        <h3 class="molecule-section-title">
+          <span class="lv-tag">L3</span> 雙鍵氧家族（醛酮）
+          <span class="count">5/8</span>
+        </h3>
+        <div class="molecule-grid">
+          <button class="molecule-card">
+            <div class="mol-img"><svg viewBox="0 0 100 50"><g stroke="#1a1a1d" stroke-width="2" fill="none" stroke-linecap="round"><text x="0" y="34" font-size="13" fill="#1a1a1d">CH₃</text><line x1="32" y1="30" x2="44" y2="30"/><text x="46" y="34" font-size="13" fill="#1a1a1d">C</text><line x1="60" y1="30" x2="72" y2="30"/><text x="74" y="34" font-size="13" fill="#1a1a1d">H</text><line x1="54" y1="26" x2="54" y2="12"/><line x1="58" y1="26" x2="58" y2="12"/><text x="50" y="10" font-size="11" fill="#7f0909">O</text></g></svg></div>
+            <div class="mol-name">乙醛</div>
+            <div class="mol-formula">CH₃CHO</div>
+          </button>
+          <button class="molecule-card">
+            <div class="mol-img"><svg viewBox="0 0 110 50"><g stroke="#1a1a1d" stroke-width="2" fill="none" stroke-linecap="round"><text x="0" y="34" font-size="13" fill="#1a1a1d">CH₃</text><line x1="32" y1="30" x2="44" y2="30"/><text x="46" y="34" font-size="13" fill="#1a1a1d">C</text><line x1="60" y1="30" x2="72" y2="30"/><text x="74" y="34" font-size="13" fill="#1a1a1d">CH₃</text><line x1="54" y1="26" x2="54" y2="12"/><line x1="58" y1="26" x2="58" y2="12"/><text x="50" y="10" font-size="11" fill="#7f0909">O</text></g></svg></div>
+            <div class="mol-name">丙酮</div>
+            <div class="mol-formula">(CH₃)₂CO</div>
+          </button>
+          <button class="molecule-card">
+            <div class="mol-img"><svg viewBox="0 0 80 50"><g stroke="#1a1a1d" stroke-width="2" fill="none" stroke-linecap="round"><text x="20" y="38" font-size="14" fill="#1a1a1d">H₂C</text><line x1="44" y1="34" x2="44" y2="14"/><line x1="48" y1="34" x2="48" y2="14"/><text x="40" y="12" font-size="12" fill="#7f0909">O</text></g></svg></div>
+            <div class="mol-name">甲醛</div>
+            <div class="mol-formula">HCHO</div>
+          </button>
+          <div class="molecule-card locked"><div class="mol-img"></div><div class="mol-name">???</div></div>
+          <div class="molecule-card locked"><div class="mol-img"></div><div class="mol-name">???</div></div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB: 劇情 -->
+    <section class="tab-panel" data-panel="story">
+      <div class="story-grid">
+        <div class="story-card">
+          <div class="ch-header">
+            <span class="ch-num">CH.1</span>
+            <h3 class="ch-title">分類帽的初次見面</h3>
+          </div>
+          <p class="ch-preview">歡迎來到霍格華茲的有機魔藥學院，年輕的魔法師。我是分類帽，今天我要看看你能不能分辨碳氫骨架...</p>
+          <div class="ch-meta"><span>🎩 分類帽</span><span>3 對話</span></div>
+        </div>
+        <div class="story-card">
+          <div class="ch-header">
+            <span class="ch-num">CH.2</span>
+            <h3 class="ch-title">醇與醚的祕密</h3>
+          </div>
+          <p class="ch-preview">羥基（-OH）藏在哪裡？這是個關於氧原子站位的故事。讓我告訴你一個秘密...</p>
+          <div class="ch-meta"><span>🎩 分類帽</span><span>5 對話</span></div>
+        </div>
+        <div class="story-card locked">
+          <div class="ch-header">
+            <span class="ch-num">CH.3</span>
+            <h3 class="ch-title">??? ??? ???</h3>
+          </div>
+          <p class="ch-preview">通關 L3 後解鎖</p>
+          <div class="ch-meta"><span>尚未解鎖</span></div>
+        </div>
+        <div class="story-card locked">
+          <div class="ch-header">
+            <span class="ch-num">CH.4</span>
+            <h3 class="ch-title">??? ??? ???</h3>
+          </div>
+          <p class="ch-preview">通關 L4 後解鎖</p>
+          <div class="ch-meta"><span>尚未解鎖</span></div>
+        </div>
+        <div class="story-card locked">
+          <div class="ch-header">
+            <span class="ch-num">CH.5</span>
+            <h3 class="ch-title">??? ??? ???</h3>
+          </div>
+          <p class="ch-preview">通關 L5 後解鎖</p>
+          <div class="ch-meta"><span>尚未解鎖</span></div>
+        </div>
+        <div class="story-card locked">
+          <div class="ch-header">
+            <span class="ch-num">CH.6</span>
+            <h3 class="ch-title">??? ??? ???</h3>
+          </div>
+          <p class="ch-preview">通關 L6 後解鎖</p>
+          <div class="ch-meta"><span>尚未解鎖</span></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+</div>
+
+<script>
+// Tab switching
+document.querySelectorAll('.codex-tabs .tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.codex-tabs .tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    const target = tab.dataset.tab;
+    document.querySelector(`.tab-panel[data-panel="${target}"]`).classList.add('active');
+    document.querySelector('.codex-content').scrollTop = 0;
+  });
+});
+</script>
+
+</body>
+</html>

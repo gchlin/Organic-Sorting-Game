@@ -1,0 +1,569 @@
+/* ============================================================
+   codex.css — 分類帽圖鑑（橫向全螢幕）
+   ============================================================ */
+
+body {
+    display: block;
+    align-items: stretch;
+    justify-content: stretch;
+}
+
+.codex-page {
+    width: 100vw;
+    height: 100dvh;
+    max-width: 1800px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-rows:
+        minmax(40px, 8vh)        /* header */
+        minmax(36px, 7vh)        /* tabs */
+        1fr;                     /* content */
+    background:
+        radial-gradient(circle at top, rgba(40,25,30,.7), transparent 60%),
+        var(--hp-bg-darker);
+    overflow: hidden;
+}
+
+/* ============================================================
+   Header
+   ============================================================ */
+.codex-header {
+    display: flex;
+    align-items: center;
+    gap: clamp(10px, 2vw, 20px);
+    padding: 0 clamp(14px, 2.5vw, 28px);
+    background: rgba(0,0,0,.6);
+    border-bottom: 1px solid rgba(212,175,55,.35);
+}
+.codex-header h1 {
+    margin: 0;
+    font-family: "Cinzel", serif;
+    font-size: clamp(1rem, 2.6vh, 1.4rem);
+    color: var(--hp-gold);
+    letter-spacing: .05em;
+    text-shadow: 0 0 8px rgba(212,175,55,.4);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.codex-header .back-btn {
+    background: transparent;
+    border: 1px solid rgba(212,175,55,.5);
+    color: var(--hp-gold);
+    padding: clamp(4px, 1vh, 8px) clamp(10px, 1.5vw, 16px);
+    border-radius: 6px;
+    font-size: clamp(.72rem, 1.7vh, .88rem);
+    cursor: pointer;
+    font-family: var(--font-serif);
+    transition: all .2s;
+}
+.codex-header .back-btn:hover {
+    background: rgba(212,175,55,.15);
+    color: #fff5c0;
+}
+.codex-header .summary-stat {
+    font-size: clamp(.72rem, 1.7vh, .88rem);
+    color: var(--hp-parchment);
+    opacity: .8;
+    margin-left: 8px;
+}
+.codex-header .summary-stat strong {
+    color: var(--hp-gold);
+}
+
+/* ============================================================
+   Tab bar
+   ============================================================ */
+.codex-tabs {
+    display: flex;
+    align-items: stretch;
+    padding: 0 clamp(14px, 2.5vw, 28px);
+    background: rgba(20,15,15,.85);
+    border-bottom: 1px solid rgba(212,175,55,.2);
+    gap: clamp(4px, .8vw, 12px);
+}
+.codex-tabs .tab {
+    background: transparent;
+    border: none;
+    color: var(--hp-parchment-dark);
+    font-family: "Cinzel", "Georgia", serif;
+    font-size: clamp(.78rem, 1.9vh, 1rem);
+    padding: 0 clamp(10px, 1.5vw, 18px);
+    cursor: pointer;
+    letter-spacing: .03em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 3px solid transparent;
+    transition: all .18s;
+    position: relative;
+}
+.codex-tabs .tab:hover {
+    color: var(--hp-parchment);
+    background: rgba(212,175,55,.06);
+}
+.codex-tabs .tab.active {
+    color: var(--hp-gold);
+    border-bottom-color: var(--hp-gold);
+    text-shadow: 0 0 6px rgba(212,175,55,.4);
+}
+.codex-tabs .tab .count {
+    font-size: .8em;
+    background: rgba(212,175,55,.15);
+    border: 1px solid rgba(212,175,55,.4);
+    color: var(--hp-gold);
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-family: "Consolas", monospace;
+    letter-spacing: 0;
+}
+.codex-tabs .tab .new-dot {
+    position: absolute;
+    top: 8px; right: 4px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--hp-red-bright);
+    box-shadow: 0 0 6px var(--hp-red-bright);
+    animation: dotPulse 1.6s ease-in-out infinite;
+}
+@keyframes dotPulse {
+    0%,100% { opacity: 1; }
+    50%     { opacity: .5; }
+}
+
+/* ============================================================
+   Content area
+   ============================================================ */
+.codex-content {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: clamp(10px, 2vh, 18px) clamp(14px, 2.5vw, 28px);
+    min-height: 0;
+}
+.codex-content::-webkit-scrollbar { width: 5px; }
+.codex-content::-webkit-scrollbar-thumb {
+    background: rgba(212,175,55,.35);
+    border-radius: 3px;
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ============================================================
+   闖關進度 — Level cards
+   ============================================================ */
+.level-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: clamp(8px, 1.4vh, 14px);
+}
+.level-card {
+    background: linear-gradient(180deg, rgba(40,30,35,.85), rgba(20,15,18,.95));
+    border: 1px solid rgba(212,175,55,.3);
+    border-radius: 10px;
+    padding: clamp(8px, 1.5vh, 14px) clamp(8px, 1.2vw, 14px);
+    color: var(--hp-parchment);
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
+    min-height: clamp(110px, 18vh, 150px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3px, .8vh, 6px);
+}
+.level-card:hover {
+    border-color: var(--hp-gold);
+    background: linear-gradient(180deg, rgba(60,45,50,.9), rgba(30,20,25,.95));
+    box-shadow: 0 0 16px rgba(212,175,55,.3);
+    transform: translateY(-2px);
+}
+.level-card.cleared {
+    border-color: rgba(212,175,55,.55);
+}
+.level-card.cleared::before {
+    content: '';
+    position: absolute;
+    top: -50%; right: -50%;
+    width: 100%; height: 100%;
+    background: radial-gradient(circle, rgba(212,175,55,.15), transparent 60%);
+    pointer-events: none;
+}
+.level-card.locked {
+    opacity: .55;
+    filter: grayscale(.7);
+}
+.level-card .lv-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+.level-card .lv-tag {
+    flex-shrink: 0;
+    background: rgba(212,175,55,.15);
+    border: 1px solid rgba(212,175,55,.45);
+    color: var(--hp-gold);
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-family: "Cinzel", serif;
+    font-size: clamp(.7rem, 1.6vh, .8rem);
+    letter-spacing: .04em;
+}
+.level-card.cleared .lv-tag {
+    background: radial-gradient(circle at 35% 30%, #fff5c0, var(--hp-gold) 60%, #8c6b1d);
+    color: #1a1a1d;
+    border-color: #fff5c0;
+}
+.level-card.boss .lv-tag {
+    background: rgba(192,57,43,.25);
+    border-color: var(--hp-red-bright);
+    color: #ffadad;
+}
+.level-card.genius .lv-tag {
+    background: rgba(180,195,230,.18);
+    border-color: rgba(180,195,230,.6);
+    color: #d4dcf0;
+}
+.level-card .lv-title {
+    font-size: clamp(.82rem, 2vh, 1rem);
+    font-weight: 700;
+    color: var(--hp-parchment);
+    line-height: 1.2;
+    margin: 0;
+}
+.level-card .lv-stars {
+    display: flex;
+    gap: 2px;
+    font-size: clamp(.95rem, 2.4vh, 1.2rem);
+    letter-spacing: -1px;
+    color: rgba(255,255,255,.18);
+}
+.level-card .lv-stars .star.on {
+    color: var(--hp-gold);
+    text-shadow: 0 0 6px rgba(212,175,55,.7);
+}
+.level-card .lv-meta {
+    margin-top: auto;
+    font-size: clamp(.66rem, 1.5vh, .78rem);
+    color: var(--hp-parchment-dark);
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+}
+.level-card .lv-meta strong {
+    color: var(--hp-gold);
+}
+.level-card.locked .lv-title { color: #555; }
+.level-card.locked .lv-meta::before {
+    content: '🔒 ';
+}
+
+/* ============================================================
+   勳章 — Badge grid
+   ============================================================ */
+.badge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: clamp(8px, 1.4vh, 14px);
+}
+.badge-card {
+    background: linear-gradient(180deg, rgba(40,30,35,.85), rgba(20,15,18,.95));
+    border: 1px solid rgba(212,175,55,.3);
+    border-radius: 10px;
+    padding: clamp(8px, 1.5vh, 14px);
+    text-align: center;
+    color: var(--hp-parchment);
+    position: relative;
+    transition: all .2s;
+    min-height: clamp(105px, 17vh, 140px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(2px, .6vh, 6px);
+}
+.badge-card.unlocked {
+    border-color: rgba(212,175,55,.6);
+    background:
+        radial-gradient(circle at center, rgba(212,175,55,.12), transparent 70%),
+        linear-gradient(180deg, rgba(50,35,20,.85), rgba(25,18,10,.95));
+}
+.badge-card.unlocked::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, transparent, rgba(212,175,55,.35), transparent);
+    z-index: -1;
+}
+.badge-card.locked {
+    opacity: .5;
+    filter: grayscale(1);
+}
+.badge-icon {
+    width: clamp(34px, 7vh, 56px);
+    height: clamp(34px, 7vh, 56px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1.4rem, 4vh, 2.2rem);
+    background: rgba(0,0,0,.4);
+    border: 2px solid rgba(212,175,55,.4);
+    margin-bottom: 2px;
+}
+.badge-card.unlocked .badge-icon {
+    border-color: var(--hp-gold);
+    background: radial-gradient(circle, rgba(127,9,9,.5), rgba(20,15,10,.9));
+    box-shadow:
+        inset 0 0 8px rgba(255,200,100,.4),
+        0 0 12px rgba(212,175,55,.5);
+}
+.badge-name {
+    font-size: clamp(.78rem, 1.9vh, .95rem);
+    font-weight: 700;
+    color: var(--hp-gold);
+    font-family: "Cinzel", "Georgia", serif;
+    letter-spacing: .03em;
+}
+.badge-card.locked .badge-name { color: #666; }
+.badge-cond {
+    font-size: clamp(.66rem, 1.5vh, .76rem);
+    color: var(--hp-parchment-dark);
+    line-height: 1.3;
+    max-width: 95%;
+}
+.badge-progress {
+    width: 80%;
+    height: 4px;
+    background: rgba(0,0,0,.5);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+.badge-progress .fill {
+    height: 100%;
+    background: linear-gradient(to right, var(--hp-gold), #fff5c0);
+    box-shadow: 0 0 4px rgba(212,175,55,.6);
+}
+.badge-card.unlocked .badge-progress { display: none; }
+
+/* ============================================================
+   分子圖鑑 — Molecule cards
+   ============================================================ */
+.molecule-section {
+    margin-bottom: clamp(12px, 2vh, 20px);
+}
+.molecule-section-title {
+    color: var(--hp-gold);
+    font-family: "Cinzel", serif;
+    font-size: clamp(.82rem, 2vh, 1rem);
+    margin: 0 0 clamp(6px, 1.2vh, 10px);
+    padding-bottom: 4px;
+    border-bottom: 1px dashed rgba(212,175,55,.35);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.molecule-section-title .lv-tag {
+    font-size: .78em;
+    background: rgba(212,175,55,.15);
+    border: 1px solid rgba(212,175,55,.4);
+    padding: 1px 8px;
+    border-radius: 4px;
+}
+.molecule-section-title .count {
+    font-size: .8em;
+    color: var(--hp-parchment-dark);
+    font-family: "Consolas", monospace;
+    margin-left: auto;
+}
+.molecule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: clamp(6px, 1.2vh, 10px);
+}
+.molecule-card {
+    background: var(--hp-parchment);
+    border: 1px solid rgba(120,90,40,.4);
+    border-radius: 8px;
+    padding: 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    color: #2c2416;
+    min-height: clamp(85px, 13vh, 120px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+.molecule-card:hover {
+    border-color: var(--hp-gold);
+    box-shadow: 0 0 12px rgba(212,175,55,.4);
+    transform: scale(1.02);
+}
+.molecule-card.locked {
+    background: rgba(20,15,15,.55);
+    color: #666;
+    border-color: rgba(255,255,255,.08);
+    cursor: not-allowed;
+}
+.molecule-card.locked:hover {
+    transform: none;
+    box-shadow: none;
+}
+.molecule-card .mol-img {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.molecule-card .mol-img svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+.molecule-card.locked .mol-img::before {
+    content: '?';
+    font-size: clamp(1.6rem, 4.5vh, 2.5rem);
+    color: rgba(255,255,255,.2);
+    font-family: "Cinzel", serif;
+    font-weight: 700;
+}
+.molecule-card .mol-name {
+    font-size: clamp(.68rem, 1.6vh, .82rem);
+    font-weight: 700;
+    line-height: 1.2;
+}
+.molecule-card .mol-formula {
+    font-size: clamp(.6rem, 1.4vh, .72rem);
+    color: #5a4a3a;
+    font-family: "Consolas", monospace;
+}
+
+/* ============================================================
+   劇情 — Story chapter cards
+   ============================================================ */
+.story-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: clamp(8px, 1.4vh, 14px);
+}
+.story-card {
+    background: linear-gradient(135deg, rgba(127,9,9,.18), rgba(20,15,18,.92));
+    border: 1px solid rgba(212,175,55,.35);
+    border-radius: 10px;
+    padding: clamp(10px, 1.8vh, 14px);
+    color: var(--hp-parchment);
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
+    min-height: clamp(100px, 16vh, 130px);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.story-card:hover {
+    border-color: var(--hp-gold);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(212,175,55,.25);
+}
+.story-card.locked {
+    opacity: .55;
+    filter: grayscale(.6);
+    cursor: not-allowed;
+}
+.story-card .ch-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.story-card .ch-num {
+    font-family: "Cinzel", serif;
+    font-size: clamp(.7rem, 1.7vh, .85rem);
+    color: var(--hp-gold);
+    background: rgba(0,0,0,.4);
+    border: 1px solid rgba(212,175,55,.4);
+    padding: 1px 8px;
+    border-radius: 999px;
+}
+.story-card .ch-title {
+    margin: 0;
+    font-size: clamp(.88rem, 2.2vh, 1.1rem);
+    color: var(--hp-gold);
+    font-family: "Cinzel", "Georgia", serif;
+    flex: 1;
+}
+.story-card .ch-preview {
+    margin: 0;
+    font-size: clamp(.74rem, 1.7vh, .88rem);
+    color: var(--hp-parchment);
+    line-height: 1.55;
+    font-style: italic;
+    opacity: .9;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.story-card .ch-preview::before {
+    content: '"';
+    color: var(--hp-gold);
+    font-size: 1.4em;
+    line-height: 0;
+    margin-right: 3px;
+    vertical-align: -0.3em;
+}
+.story-card.locked .ch-preview {
+    color: #666;
+    font-style: normal;
+}
+.story-card.locked .ch-preview::before {
+    content: '🔒 ';
+}
+.story-card .ch-meta {
+    margin-top: auto;
+    font-size: clamp(.66rem, 1.5vh, .76rem);
+    color: var(--hp-parchment-dark);
+    display: flex;
+    gap: 12px;
+}
+
+/* Rotate overlay (reuse) */
+#rotate-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    place-items: center;
+    background: radial-gradient(circle at center, #1a1a1d, #0a0a0d);
+    color: var(--hp-parchment);
+    text-align: center;
+    padding: 24px;
+}
+#rotate-overlay .phone-icon {
+    width: 100px; height: 60px;
+    border: 4px solid var(--hp-gold);
+    border-radius: 12px;
+    margin: 0 auto 24px;
+    animation: rotateHint 1.6s ease-in-out infinite;
+}
+@keyframes rotateHint {
+    0%,100% { transform: rotate(0deg); }
+    50%     { transform: rotate(90deg); }
+}
+#rotate-overlay h2 {
+    font-family: "Cinzel", serif;
+    color: var(--hp-gold);
+    margin: 0 0 8px;
+}
+@media (orientation: portrait) and (max-width: 900px) {
+    #rotate-overlay { display: grid; }
+    .codex-page { display: none; }
+}
