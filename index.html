@@ -50,6 +50,7 @@
                     分類帽圖鑑
                     <span class="new-dot" title="有新內容"></span>
                 </button>
+                <button id="btn-open-settings" class="settings-entry btn" data-icon="settings" title="設定"></button>
             </div>
             <!-- wizard-pill：wizard-status-bar 就是 pill 本身，JS 控制顯示/隱藏 -->
             <div id="wizard-status-bar" class="wizard-pill wizard-status-bar hidden" data-icon="wizard">
@@ -357,6 +358,61 @@
                 <button id="btn-import-confirm" class="btn magic-btn boss-btn">確認匯入 ✓</button>
                 <button id="btn-import-cancel" class="btn magic-btn">取消</button>
             </div>
+        </div>
+    </div>
+
+    <!-- 設定 Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content settings-modal-content">
+            <header class="settings-header">
+                <h2 class="magical-text" data-icon="settings">設定</h2>
+                <button id="btn-close-settings" class="btn magic-btn codex-back-btn" data-icon="back">返回</button>
+            </header>
+            <main class="settings-content">
+
+                <section class="settings-section">
+                    <h3 class="settings-section-title">🔊 遊戲設定</h3>
+                    <div class="settings-row">
+                        <button id="btn-settings-mute" class="settings-item-btn btn magic-btn" data-icon="sound-on">
+                            <span class="si-title">音效</span>
+                            <span class="si-desc">開啟或關閉所有音效</span>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="settings-section">
+                    <h3 class="settings-section-title">💾 進度管理</h3>
+                    <div class="settings-row">
+                        <button id="btn-settings-export" class="settings-item-btn btn magic-btn">
+                            <span class="si-icon">📤</span>
+                            <span class="si-title">導出存檔</span>
+                            <span class="si-desc">下載 .json 檔，可備份或在其他裝置使用</span>
+                        </button>
+                        <button id="btn-settings-import" class="settings-item-btn btn magic-btn">
+                            <span class="si-icon">📥</span>
+                            <span class="si-title">導入存檔</span>
+                            <span class="si-desc">從 .json 檔載入進度（會覆蓋現有進度）</span>
+                        </button>
+                        <button id="btn-settings-reset" class="settings-item-btn btn magic-btn danger-btn">
+                            <span class="si-icon">🗑️</span>
+                            <span class="si-title">重置進度</span>
+                            <span class="si-desc">清除全部紀錄，回到初始狀態（不可復原）</span>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="settings-section">
+                    <h3 class="settings-section-title">📖 說明</h3>
+                    <div class="settings-row">
+                        <button id="btn-settings-tutorial" class="settings-item-btn btn magic-btn">
+                            <span class="si-icon">📖</span>
+                            <span class="si-title">新手導覽</span>
+                            <span class="si-desc">重新觀看操作說明與遊戲規則介紹</span>
+                        </button>
+                    </div>
+                </section>
+
+            </main>
         </div>
     </div>
 

@@ -255,7 +255,16 @@ const Game = (function() {
         tutorialModalTitle: document.getElementById('tutorial-modal-title'),
         btnTutorialNext: document.getElementById('btn-tutorial-next'),
         btnTutorialPrev: document.getElementById('btn-tutorial-prev'),
-        btnTutorialSkip: document.getElementById('btn-tutorial-skip')
+        btnTutorialSkip: document.getElementById('btn-tutorial-skip'),
+        settingsModal: document.getElementById('settings-modal'),
+        btnOpenSettings: document.getElementById('btn-open-settings'),
+        btnCloseSettings: document.getElementById('btn-close-settings'),
+        btnSettingsMute: document.getElementById('btn-settings-mute'),
+        btnSettingsExport: document.getElementById('btn-settings-export'),
+        btnSettingsImport: document.getElementById('btn-settings-import'),
+        btnSettingsReset: document.getElementById('btn-settings-reset'),
+        btnSettingsTutorial: document.getElementById('btn-settings-tutorial'),
+        importFile: document.getElementById('import-file')
     };
 
     // 音效 Context
@@ -548,6 +557,39 @@ const Game = (function() {
         if (UI.btnOpenCodex) UI.btnOpenCodex.addEventListener('click', openCodex);
         if (UI.btnCloseCodex) UI.btnCloseCodex.addEventListener('click', closeCodex);
         initCodexTabs();
+        if (UI.btnOpenSettings) UI.btnOpenSettings.addEventListener('click', openSettings);
+        if (UI.btnCloseSettings) UI.btnCloseSettings.addEventListener('click', closeSettings);
+        if (UI.btnSettingsMute) UI.btnSettingsMute.addEventListener('click', () => {
+            toggleMute();
+            _syncSettingsMuteBtn();
+        });
+        if (UI.btnSettingsExport) UI.btnSettingsExport.addEventListener('click', () => {
+            if (typeof Save !== 'undefined') {
+                const text = Save.exportText();
+                const blob = new Blob([text], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sort-hat-save-${new Date().getTime()}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+        if (UI.btnSettingsImport) UI.btnSettingsImport.addEventListener('click', () => {
+            if (UI.importFile) UI.importFile.click();
+        });
+        if (UI.btnSettingsReset) UI.btnSettingsReset.addEventListener('click', () => {
+            if (confirm('確定要清除所有進度？這個操作無法復原。')) {
+                if (typeof Save !== 'undefined') Save.reset();
+                location.reload();
+            }
+        });
+        if (UI.btnSettingsTutorial) UI.btnSettingsTutorial.addEventListener('click', () => {
+            closeSettings();
+            showTutorial(true);
+        });
         if (UI.btnShowRef) UI.btnShowRef.addEventListener('click', showReference);
         if (UI.btnCloseRef) {
             UI.btnCloseRef.setAttribute('role', 'button');
@@ -1022,6 +1064,24 @@ const Game = (function() {
     function closeCodex() {
         if (UI.codexModal) UI.codexModal.classList.add('hidden');
         if (UI.btnOpenCodex) try { UI.btnOpenCodex.focus(); } catch(e) {}
+    }
+
+    // --- 設定 (Settings) ---
+    function openSettings() {
+        _syncSettingsMuteBtn();
+        if (UI.settingsModal) UI.settingsModal.classList.remove('hidden');
+        if (UI.btnCloseSettings) try { UI.btnCloseSettings.focus(); } catch(e) {}
+    }
+    function closeSettings() {
+        if (UI.settingsModal) UI.settingsModal.classList.add('hidden');
+        if (UI.btnOpenSettings) try { UI.btnOpenSettings.focus(); } catch(e) {}
+    }
+    function _syncSettingsMuteBtn() {
+        if (!UI.btnSettingsMute) return;
+        const isMuted = _muted;
+        UI.btnSettingsMute.dataset.icon = isMuted ? 'sound-off' : 'sound-on';
+        const desc = UI.btnSettingsMute.querySelector('.si-desc');
+        if (desc) desc.textContent = isMuted ? '音效已關閉，點擊開啟' : '點擊關閉音效';
     }
 
     function initCodexTabs() {
@@ -1993,6 +2053,14 @@ const Game = (function() {
             if (e.code === 'KeyT' && UI.btnShowTutorial && !UI.btnShowTutorial.classList.contains('hidden')) { e.preventDefault(); UI.btnShowTutorial.click(); return true; }
             if (e.code === 'KeyM' || e.code === 'Escape') { e.preventDefault(); showMenu(); return true; }
             return false;
+        }
+
+        if (isVisible(UI.settingsModal)) {
+            if (e.code === 'Escape' || e.code === 'KeyX') {
+                e.preventDefault();
+                closeSettings();
+            }
+            return true;
         }
 
         if (isVisible(UI.codexModal)) {
