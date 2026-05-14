@@ -789,13 +789,7 @@ body.duel-desktop #p2-area {
     border-left: 3px solid var(--hp-wood-dark);
 }
 
-/* 各自題目：隱藏中間共用區，顯示 P2 自己的題目框 */
-body.duel-desktop #shared-question-area {
-    display: none !important;
-}
-body.duel-desktop #q-container-p2 {
-    display: flex !important;
-}
+/* duel-desktop：中間共用題目區正常顯示（JS 寫入 #q-shared） */
 
 /* 各自 2x2 選項 */
 body.duel-desktop .options-container {
@@ -832,13 +826,7 @@ body.duel-mobile #game-area {
     flex-direction: column;
 }
 
-/* 手機 Duel：各自題目，隱藏共用區 */
-body.duel-mobile #shared-question-area {
-    display: none !important;
-}
-body.duel-mobile #q-container-p2 {
-    display: flex !important;
-}
+/* duel-mobile：中間共用題目區正常顯示（JS 寫入 #q-shared） */
 
 body.duel-mobile .key-hint {
     display: none;
