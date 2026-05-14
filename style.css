@@ -315,23 +315,30 @@ body, html {
     flex: 2; /* 題目區佔較大比例 */
     margin: 5px 0;
     padding: 10px;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
     gap: 10px;
     border: 3px double var(--hp-wood-dark);
+    min-height: 0;
+    overflow: hidden;
     /* 羊皮紙背景已在 .parchment-bg定義 */
+}
+.question-container:has(.coach-bubble:not(.hidden)) {
+    grid-template-columns: minmax(0, 1fr) minmax(190px, 34%);
 }
 
 .wizard-avatar {
+    display: none;
     flex-shrink: 0;
-    align-self: center;
+    align-self: start;
     font-size: clamp(2rem, 5vw, 3rem);
     line-height: 1;
     user-select: none;
     pointer-events: none;
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+    z-index: 1;
 }
 
 /* 帽子 + 說話泡泡的包裝（泡泡在帽子左邊，箭頭指向帽子） */
@@ -346,12 +353,15 @@ body, html {
 }
 
 .hat-display {
-    flex-shrink: 0;
+    display: none;
+    grid-column: 2;
+    grid-row: 1;
     align-self: center;
-    height: 70%;            /* 題目區高度的 70% */
+    justify-self: end;
+    flex-shrink: 0;
+    height: clamp(42px, 13vh, 76px);
     width:  auto;
     aspect-ratio: 1 / 1;
-    min-height: 48px;
     filter: drop-shadow(0 0 8px rgba(212,175,55,0.55));
     user-select: none;
     pointer-events: none;
@@ -477,10 +487,14 @@ body.duel-mode .wizard-avatar {
 }
 
 .question-content {
+    grid-column: 1;
+    grid-row: 1;
     width: 100%;
     height: 100%;
+    min-width: 0;
+    min-height: 0;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
 }
 
@@ -998,6 +1012,12 @@ body.countdown-active .hat-display {
 }
 
 .coach-bubble {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: stretch;
+    align-self: center;
+    max-height: 100%;
+    overflow-y: auto;
     padding: 10px 13px;
     border-radius: 10px;
     border: 2px solid rgba(212, 175, 55, 0.75);
@@ -1007,19 +1027,12 @@ body.countdown-active .hat-display {
     line-height: 1.45;
     text-align: left;
     box-shadow: 0 0 14px rgba(0,0,0,0.55), 0 0 8px rgba(212, 175, 55, 0.22);
-    max-width: clamp(130px, 20vw, 240px);
+    max-width: min(520px, 100%);
     position: relative;
 }
 /* 泡泡右側箭頭指向（右邊的）帽子 */
 .coach-bubble::after {
-    content: '';
-    position: absolute;
-    right: -9px;
-    top: 50%;
-    transform: translateY(-50%);
-    border: 8px solid transparent;
-    border-left-color: rgba(212, 175, 55, 0.75);
-    border-right: none;
+    display: none;
 }
 
 @keyframes coachFloat {
@@ -1084,12 +1097,44 @@ body.countdown-active .hat-display {
 @media (max-width: 760px) {
     .coach-bubble {
         font-size: 0.8rem;
-        max-width: clamp(60px, 18vw, 100px);
+        max-width: min(420px, 100%);
     }
 
     .practice-why-hint {
         font-size: 0.9rem;
         padding: 7px 10px;
+    }
+}
+
+@media (max-height: 620px) and (orientation: landscape) {
+    .question-container {
+        gap: 6px;
+        padding: 6px 8px;
+    }
+
+    .question-container:has(.coach-bubble:not(.hidden)) {
+        grid-template-columns: minmax(0, 1fr) minmax(210px, 36%);
+    }
+
+    .question-content img,
+    .question-content svg {
+        max-height: 100%;
+    }
+
+    .coach-bubble {
+        padding: 7px 10px;
+        font-size: clamp(.78rem, 3.1vh, .92rem);
+        line-height: 1.35;
+        max-width: 100%;
+    }
+
+    .practice-button-row {
+        margin: 3px auto;
+    }
+
+    .practice-hint-btn {
+        padding: 5px 12px;
+        font-size: .84rem;
     }
 }
 
@@ -1786,9 +1831,18 @@ body.duel-mobile  #duel-arena { display: none; }
     border-color: var(--hp-gold);
     box-shadow: 0 0 12px rgba(212,175,55,0.35);
 }
-.tutorial-modal-content { max-width: 520px; width: 92vw; text-align: center; }
+.tutorial-modal-content {
+    max-width: 560px;
+    width: 92vw;
+    max-height: calc(100dvh - 24px);
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    text-align: center;
+    overflow: hidden;
+}
 .tutorial-slide {
-    min-height: 200px;
+    min-height: 0;
+    overflow-y: auto;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 10px; padding: 8px 4px 14px;
 }
@@ -1824,10 +1878,76 @@ body.duel-mobile  #duel-arena { display: none; }
 .tutorial-text {
     margin: 0; color: #2c2416; font-size: 1.02rem; line-height: 1.7;
     max-width: 440px; text-align: left;
+    white-space: pre-line;
 }
-.tutorial-footer { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.tutorial-footer { display: flex; flex-direction: column; align-items: center; gap: 12px; flex-shrink: 0; }
 .tutorial-btn-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .tutorial-btn-row .btn:disabled { opacity: 0.4; cursor: default; }
+
+@media (max-height: 620px) and (orientation: landscape) {
+    #tutorial-modal.modal,
+    #story-modal.modal {
+        align-items: stretch;
+        padding: 8px;
+    }
+
+    .tutorial-modal-content,
+    .story-modal-content {
+        width: min(96vw, 680px);
+        max-height: calc(100dvh - 16px);
+        margin: auto;
+        padding: 12px 14px 10px;
+    }
+
+    .tutorial-modal-content .magical-text {
+        margin: 0 0 4px;
+        font-size: clamp(1.05rem, 4.6vh, 1.35rem);
+    }
+
+    .tutorial-slide {
+        justify-content: flex-start;
+        gap: 6px;
+        padding: 2px 4px 8px;
+    }
+
+    .tutorial-slide-media {
+        gap: 8px;
+    }
+
+    #tutorial-hat {
+        width: clamp(48px, 14vh, 72px);
+        height: clamp(54px, 16vh, 80px);
+    }
+
+    .tutorial-icon {
+        font-size: clamp(2rem, 9vh, 3rem);
+    }
+
+    .tutorial-icon .tutorial-img {
+        max-height: clamp(86px, 28vh, 130px);
+    }
+
+    .tutorial-title {
+        font-size: clamp(1rem, 4.2vh, 1.16rem);
+    }
+
+    .tutorial-text {
+        font-size: clamp(.86rem, 3.7vh, .96rem);
+        line-height: 1.5;
+        max-width: 560px;
+    }
+
+    .tutorial-footer {
+        gap: 6px;
+        padding-top: 4px;
+    }
+
+    .tutorial-btn-row .btn {
+        margin: 2px;
+        padding: 7px 14px;
+        font-size: .92rem;
+    }
+}
 
 /* ==============================
    勳章解鎖 Toast
