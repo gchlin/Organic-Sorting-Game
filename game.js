@@ -1,18 +1,9 @@
 // game.js - 有機分類帽 (修復音效、冷卻與Combo攻擊版)
 
 const WIZARD_PRESETS = [
-    { emoji: '🧙', name: '凱庫勒傳人',  title: '苯環發現者嫡傳弟子' },
-    { emoji: '🔬', name: '居里見習生',  title: '放射性學徒巫師' },
-    { emoji: '⚗️', name: '拉瓦節信徒',  title: '質量守恆的信仰者' },
-    { emoji: '🧪', name: '費雪酯化師',  title: '酯化反應大師' },
-    { emoji: '💜', name: '羰基魔女',    title: 'C=O 的召喚者' },
-    { emoji: '⚡', name: '鹵素獵人',    title: '追蹤 F·Cl·Br·I 者' },
-    { emoji: '🔥', name: '烯炔騎士',    title: 'π 鍵破壞者' },
-    { emoji: '🌿', name: '胺基戰士',    title: '氮原子的詩人' },
-    { emoji: '🫧', name: '醚類隱士',    title: 'C–O–C 的守護者' },
-    { emoji: '🍷', name: '乙醇愛好者',  title: '–OH 的忠實信徒' },
-    { emoji: '🍋', name: '羧酸女俠',    title: '酸性官能基代言人' },
-    { emoji: '🌸', name: '酚環衛士',    title: '苯酚直系護衛' },
+    { emoji: '🧙', name: '凱庫勒傳人', title: '苯環發現者嫡傳弟子', avatar: 'assets/images/wizard-avatars/kekule.webp' },
+    { emoji: '💜', name: '羰基魔女',   title: 'C=O 的召喚者',       avatar: 'assets/images/wizard-avatars/carbonyl-witch.webp' },
+    { emoji: '🔥', name: '烯炔騎士',   title: 'π 鍵破壞者',         avatar: 'assets/images/wizard-avatars/alkene-alkyne-knight.webp' },
 ];
 
 const Game = (function() {
@@ -232,7 +223,6 @@ const Game = (function() {
         pickerTitle: document.getElementById('picker-title'),
         pickerSubtitle: document.getElementById('picker-subtitle'),
         wizardGrid: document.getElementById('wizard-grid'),
-        customNameInput: document.getElementById('custom-name-input'),
         btnPickerConfirm: document.getElementById('btn-picker-confirm'),
         btnPickerCancel: document.getElementById('btn-picker-cancel'),
         codexModal: document.getElementById('codex-modal'),
@@ -286,7 +276,7 @@ const Game = (function() {
             const card = document.createElement('div');
             card.className = 'wizard-card';
             card.dataset.idx = i;
-            card.innerHTML = `<div class="wizard-card-emoji">${w.emoji}</div>
+            card.innerHTML = `<div class="wizard-card-avatar"><img src="${w.avatar}" alt="${w.name}" loading="lazy"></div>
                               <div class="wizard-card-name">${w.name}</div>
                               <div class="wizard-card-title">${w.title}</div>`;
             card.addEventListener('click', () => {
@@ -294,7 +284,6 @@ const Game = (function() {
                 card.classList.add('selected');
                 _pickerSelectedIdx = i;
                 _pickerKeyFocusIdx = i;
-                UI.customNameInput.value = '';
                 UI.btnPickerConfirm.disabled = false;
             });
             UI.wizardGrid.appendChild(card);
@@ -322,13 +311,11 @@ const Game = (function() {
         if (mode === '_change') {
             _pickerStep = 'change';
             buildWizardGrid();
-            UI.customNameInput.value = '';
             UI.btnPickerConfirm.disabled = true;
             UI.pickerTitle.textContent = '更換你的魔法師';
             UI.pickerSubtitle.textContent = `目前：${wizardPersonas.p1.emoji} ${wizardPersonas.p1.name}`;
             UI.menu.classList.add('hidden');
             UI.wizardPicker.classList.remove('hidden');
-            UI.customNameInput.focus();
             return;
         }
 
@@ -340,7 +327,6 @@ const Game = (function() {
         }
 
         buildWizardGrid();
-        UI.customNameInput.value = '';
         UI.btnPickerConfirm.disabled = true;
 
         if (mode === 'duel') {
@@ -357,12 +343,11 @@ const Game = (function() {
         } else {
             _pickerStep = 'solo';
             UI.pickerTitle.textContent = '選擇你的魔法師';
-            UI.pickerSubtitle.textContent = '選一個身份，或輸入自訂名稱';
+            UI.pickerSubtitle.textContent = '選擇一個身份';
         }
 
         UI.menu.classList.add('hidden');
         UI.wizardPicker.classList.remove('hidden');
-        UI.customNameInput.focus();
     }
 
     function _updateWizardStatusBar() {
@@ -378,24 +363,11 @@ const Game = (function() {
     }
 
     function _applyPickerChoice(player) {
-        if (_pickerSelectedIdx >= 0) {
-            const w = WIZARD_PRESETS[_pickerSelectedIdx];
-            wizardPersonas[player] = { emoji: w.emoji, name: w.name };
-        } else {
-            const custom = UI.customNameInput.value.trim();
-            wizardPersonas[player] = { emoji: '🧙', name: custom || (player === 'p1' ? '玩家一' : '玩家二') };
-        }
+        const w = WIZARD_PRESETS[_pickerSelectedIdx];
+        wizardPersonas[player] = { emoji: w.emoji, name: w.name };
     }
 
     function initPickerListeners() {
-        UI.customNameInput.addEventListener('input', () => {
-            const hasText = UI.customNameInput.value.trim().length > 0;
-            if (hasText) {
-                document.querySelectorAll('.wizard-card').forEach(c => c.classList.remove('selected'));
-                _pickerSelectedIdx = -1;
-            }
-            UI.btnPickerConfirm.disabled = !hasText && _pickerSelectedIdx < 0;
-        });
 
         UI.btnPickerConfirm.addEventListener('click', () => {
             if (_pickerStep === 'solo') {
@@ -414,7 +386,6 @@ const Game = (function() {
                 _pickerSelectedIdx = -1;
                 _pickerKeyFocusIdx = -1;
                 buildWizardGrid();
-                UI.customNameInput.value = '';
                 UI.btnPickerConfirm.disabled = true;
                 UI.pickerTitle.textContent = '⚔️ 玩家二，選擇你的魔法師';
                 UI.pickerSubtitle.textContent = `P2 · 右側 / 下側玩家　（P1 已選：${wizardPersonas.p1.emoji} ${wizardPersonas.p1.name}）`;
