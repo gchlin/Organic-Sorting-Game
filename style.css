@@ -1406,7 +1406,6 @@ body.countdown-active .hat-display {
     transition: all .2s;
 }
 .codex-level-card {
-    min-height: clamp(112px, 18vh, 150px);
     padding: clamp(8px, 1.5vh, 14px) clamp(8px, 1.2vw, 14px);
     display: flex;
     flex-direction: column;
@@ -1542,7 +1541,7 @@ body.countdown-active .hat-display {
     padding: 8px 10px;
     border-radius: 6px;
     background: rgba(0,0,0,0.05);
-    color: #2c2416;
+    color: #f0e6d2;
     line-height: 1.55;
     font-size: 0.95rem;
 }
