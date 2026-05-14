@@ -569,3 +569,120 @@ body.duel .opts.p2 .opt-btn {
     #rotate-overlay { display: grid; }
     #game-container { display: none; }
 }
+
+/* ========================================
+   ZOOM DUEL MODE STYLES
+   ======================================== */
+
+/* Zoom-out reveal animation */
+@keyframes zoomReveal {
+    0%   { transform: scale(7) translate(var(--zoom-ox, 0%), var(--zoom-oy, 0%)); }
+    100% { transform: scale(1) translate(0, 0); }
+}
+
+body.duel-zoom #q-shared {
+    overflow: hidden;
+}
+
+body.duel-zoom #q-shared img.zoom-playing {
+    animation: zoomReveal var(--zoom-duration, 12s) linear forwards;
+    animation-play-state: running;
+    will-change: transform;
+    transform-origin: center center;
+}
+
+body.duel-zoom #q-shared img.zoom-playing.zoom-paused {
+    animation-play-state: paused;
+}
+
+/* Pre-buzz state: show hint, hide buttons */
+body.duel-zoom .opts.pre-buzz {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.duel-zoom .opts.pre-buzz .opt-btn {
+    display: none;
+}
+
+body.duel-zoom .opts.pre-buzz::after {
+    content: attr(data-buzz-label);
+    font-family: "Cinzel", serif;
+    font-size: clamp(1rem, 3vh, 1.8rem);
+    color: var(--hp-gold);
+    opacity: 0.55;
+    letter-spacing: 0.1em;
+    text-align: center;
+}
+
+/* Buzz-in flash animation */
+@keyframes buzzFlash {
+    0%, 100% { box-shadow: none; }
+    30%      { box-shadow: 0 0 0 4px var(--buzz-color, #d4af37), 0 0 24px 8px var(--buzz-color, #d4af37); }
+}
+
+body.duel-zoom #opts-p1.buzz-active {
+    --buzz-color: var(--hp-red-bright);
+    animation: buzzFlash 0.4s ease-out;
+}
+
+body.duel-zoom #opts-p2.buzz-active {
+    --buzz-color: var(--hp-green-bright);
+    animation: buzzFlash 0.4s ease-out;
+}
+
+/* Lock out other player */
+body.duel-zoom .opts.buzz-locked-out {
+    opacity: 0.35;
+    pointer-events: none;
+    filter: grayscale(0.6);
+    transition: opacity 0.3s, filter 0.3s;
+}
+
+/* Timeout reveal banner */
+.zoom-timeout-banner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 8, 6, 0.78);
+    z-index: 25;
+    gap: clamp(6px, 1.5vh, 14px);
+    border-radius: 8px;
+}
+
+.zoom-timeout-banner .timeout-label {
+    font-family: "Cinzel", serif;
+    font-size: clamp(0.9rem, 2.4vh, 1.5rem);
+    color: var(--hp-gold);
+    letter-spacing: 0.06em;
+}
+
+.zoom-timeout-banner .timeout-answer {
+    font-size: clamp(1.1rem, 3vh, 1.9rem);
+    color: var(--hp-parchment);
+    font-weight: 700;
+}
+
+/* Penalty badge */
+.buzz-penalty-badge {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: clamp(1.4rem, 4vh, 2.5rem);
+    color: var(--hp-red-bright);
+    font-family: "Cinzel", serif;
+    font-weight: 900;
+    pointer-events: none;
+    z-index: 30;
+    animation: penaltyFade 2s ease-out forwards;
+}
+
+@keyframes penaltyFade {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+}

@@ -151,6 +151,41 @@ const Game = (function() {
     const DUEL_READING_MS = 1500;
     const DUEL_LOCK_MS = 2000;
 
+    // Zoom duel mode constants
+    const ZOOM_DURATION_MS = 12000;
+    const ZOOM_PENALTY_MS = 800;
+
+    // Module variables for zoom mode
+    let duelVariant = 'standard';    // 'standard' | 'zoom'
+    let _pendingVariant = 'standard';
+
+    // Buzz-in state machine
+    const _buzz = { phase: 'idle', buzzedBy: null, penaltyPlayer: null };
+
+    // Zoom animation time tracking
+    let _zoomStartTime = 0;
+    let _zoomPausedAt = 0;
+    let _zoomElapsedMs = 0;
+    let _zoomTimeoutId = null;
+    let _penaltyTimerId = null;
+
+    // Confusable categories for generating wrong-answer options
+    const CONFUSABLE_CATS = {
+        aldehyde:   ['ketone','carboxylic','ester'],
+        ketone:     ['aldehyde','ester','alcohol'],
+        carboxylic: ['ester','aldehyde','alcohol'],
+        ester:      ['carboxylic','ether','ketone'],
+        alcohol:    ['ether','phenol','carboxylic'],
+        ether:      ['alcohol','ester','alkane'],
+        aromatic:   ['phenol','halide','alkene'],
+        phenol:     ['alcohol','aromatic','ether'],
+        amine:      ['halide','alcohol','alkane'],
+        halide:     ['alkane','amine','aromatic'],
+        alkane:     ['alkene','ether','alkyne'],
+        alkene:     ['alkyne','alkane','aromatic'],
+        alkyne:     ['alkene','alkane','amine']
+    };
+
     const readingTimers = { p1: null, p2: null };
     // Per-player question state (used in duel mode)
     const duelQ = {
@@ -503,6 +538,7 @@ const Game = (function() {
         initHatChars();
         document.querySelectorAll('.menu-btn').forEach(btn => {
             btn.addEventListener('click', () => {
+                _pendingVariant = btn.dataset.variant || 'standard';
                 showWizardPicker(btn.dataset.mode, btn.dataset.level);
             });
         });
@@ -715,6 +751,7 @@ const Game = (function() {
     function _doStartGame(mode, level) {
         currentMode = mode;
         currentLevel = level;
+        duelVariant = _pendingVariant;
         gameActive = true;
         timeLeft = (mode === 'practice') ? 0 : MAX_TIME;
 
@@ -761,6 +798,11 @@ const Game = (function() {
         UI.game.classList.remove('hidden');
         UI.modeTitle.textContent = getModeName(mode);
         UI.levelTitle.textContent = (LEVEL_INFO[level] && LEVEL_INFO[level].titleShort) ? LEVEL_INFO[level].titleShort : level.toUpperCase();
+
+        document.body.classList.remove('duel-zoom');
+        if (mode === 'duel' && duelVariant === 'zoom') {
+            document.body.classList.add('duel-zoom');
+        }
 
         setupLayout(mode);
         setupPracticeFeedback(mode);
@@ -1009,7 +1051,7 @@ const Game = (function() {
         if (UI.storyModal) UI.storyModal.classList.add('hidden');
         if (UI.codexModal) UI.codexModal.classList.add('hidden');
         UI.menu.classList.remove('hidden');
-        document.body.classList.remove('duel', 'duel-mode', 'duel-desktop', 'duel-mobile', 'countdown-active');
+        document.body.classList.remove('duel', 'duel-mode', 'duel-desktop', 'duel-mobile', 'duel-zoom', 'countdown-active');
         if (UI.arenaBar) UI.arenaBar.classList.add('hidden');
         UI.infoBar.classList.remove('hidden');
         updateMenuProgress();
@@ -1673,8 +1715,12 @@ const Game = (function() {
         if (!gameActive) return;
         setHatExpr('neutral');
         if (currentMode === 'duel') {
-            nextDuelQuestion('p1');
-            nextDuelQuestion('p2');
+            if (duelVariant === 'zoom') {
+                nextDuelZoomQuestion();
+            } else {
+                nextDuelQuestion('p1');
+                nextDuelQuestion('p2');
+            }
             return;
         }
         const list = QuestionSets[currentLevel];
@@ -1882,7 +1928,17 @@ const Game = (function() {
     // --- 互動處理 (冷卻、Combo、音效) ---
     function handleOptionClick(e, player) {
         if (!gameActive) return;
-        
+
+        // Zoom duel mode: intercept tap as buzz-in if in zooming phase
+        if (currentMode === 'duel' && duelVariant === 'zoom') {
+            if (_buzz.phase === 'zooming' && !isPenaltyPlayer(player)) {
+                handleZoomBuzzIn(player);
+                return;
+            }
+            if (_buzz.phase !== 'buzzed' || _buzz.buzzedBy !== player) return;
+            // Fall through to normal option-click handling for buzzed player
+        }
+
         // 1. 檢查是否在冷卻中
         if (players[player].isLocked) return;
 
@@ -1972,6 +2028,10 @@ const Game = (function() {
         let optionIndex;
 
         if (currentMode === 'duel') {
+            if (duelVariant === 'zoom') {
+                handleZoomBuzzKey(e);
+                return;
+            }
             if (!isDuelDesktop) return;
             if (Object.prototype.hasOwnProperty.call(DUEL_DESKTOP_KEYS.p1, e.code)) {
                 player = 'p1';
@@ -2229,6 +2289,11 @@ const Game = (function() {
     }
 
     function handleCorrect(player, btn) {
+        if (currentMode === 'duel' && duelVariant === 'zoom') {
+            handleZoomCorrect(player, btn);
+            return;
+        }
+
         playSound('correct');
         btn.classList.add('correct');
         if (currentMode !== 'duel') setHatExpr(currentMode === 'speed' ? 'wink' : 'happy', 1300);
@@ -2296,6 +2361,11 @@ const Game = (function() {
     }
 
     function handleWrong(player, btn) {
+        if (currentMode === 'duel' && duelVariant === 'zoom') {
+            handleZoomWrong(player, btn);
+            return;
+        }
+
         playSound('wrong');
         btn.classList.add('wrong');
         if (currentMode !== 'duel') setHatExpr('sad', 1600);
@@ -2630,6 +2700,291 @@ const Game = (function() {
             });
         } else if (type === 'beep') {
             tone(660, 'sine', 0.08, 0.08);
+        } else if (type === 'buzz') {
+            // Buzz-in sound: sliding frequency down from 880 to 660 Hz
+            const now = audioCtx.currentTime;
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.connect(g);
+            g.connect(audioCtx.destination);
+            o.type = 'sine';
+            o.frequency.setValueAtTime(880, now);
+            o.frequency.linearRampToValueAtTime(660, now + 0.12);
+            g.gain.setValueAtTime(0.28, now);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+            o.start(now);
+            o.stop(now + 0.18);
+        }
+    }
+
+    // ========================================
+    // ZOOM DUEL MODE FUNCTIONS
+    // ========================================
+
+    function nextDuelZoomQuestion() {
+        if (!gameActive) return;
+        clearZoomState();
+
+        const list = QuestionSets[currentLevel];
+        if (!list || !list.length) return;
+        if (_duelOrderLevel !== currentLevel || !_duelOrder || !_duelOrder.length) {
+            _duelOrder = shuffleArray([...list]);
+            _duelOrderLevel = currentLevel;
+        }
+        const pq = duelQ.p1;
+        if (pq.queueLevel !== currentLevel || !pq.queue.length) {
+            pq.queue = [..._duelOrder];
+            pq.queueLevel = currentLevel;
+        }
+        const qData = pq.queue.pop();
+        if (!qData) return;
+
+        const correctCat = getAnswerCategory(qData.aKey);
+        duelQ.p1.question = qData;
+        duelQ.p1.correctKey = correctCat;
+        duelQ.p2.question = qData;
+        duelQ.p2.correctKey = correctCat;
+
+        const imgTag = `<img src="${qData.qContent}" alt="Structure" draggable="false">`;
+        UI.qContentShared.innerHTML = imgTag;
+
+        setZoomPreBuzzState();
+        startZoomAnimation(qData);
+        _buzz.phase = 'zooming';
+        _buzz.buzzedBy = null;
+        _buzz.penaltyPlayer = null;
+    }
+
+    function startZoomAnimation(qData) {
+        const img = UI.qContentShared.querySelector('img');
+        if (!img) return;
+
+        const ox = (Math.random() * 30 - 15).toFixed(1);
+        const oy = (Math.random() * 30 - 15).toFixed(1);
+        img.style.setProperty('--zoom-ox', `${ox}%`);
+        img.style.setProperty('--zoom-oy', `${oy}%`);
+        img.style.setProperty('--zoom-duration', '12s');
+
+        img.classList.remove('zoom-playing', 'zoom-paused');
+        void img.offsetWidth;
+        img.classList.add('zoom-playing');
+
+        _zoomStartTime = Date.now();
+        _zoomElapsedMs = 0;
+
+        if (_zoomTimeoutId) clearTimeout(_zoomTimeoutId);
+        _zoomTimeoutId = setTimeout(() => handleZoomTimeout(), ZOOM_DURATION_MS);
+    }
+
+    function handleZoomBuzzIn(player) {
+        if (_buzz.phase !== 'zooming') return;
+        _buzz.phase = 'buzzed';
+        _buzz.buzzedBy = player;
+
+        const img = UI.qContentShared.querySelector('img');
+        if (img) {
+            img.classList.remove('zoom-playing');
+            img.classList.add('zoom-paused');
+        }
+
+        if (_zoomTimeoutId) {
+            clearTimeout(_zoomTimeoutId);
+            _zoomTimeoutId = null;
+        }
+        _zoomPausedAt = Date.now();
+        _zoomElapsedMs += _zoomPausedAt - _zoomStartTime;
+
+        const buzzingOpts = player === 'p1' ? UI.optsP1 : UI.optsP2;
+        const otherOpts = player === 'p1' ? UI.optsP2 : UI.optsP1;
+
+        buzzingOpts.classList.remove('pre-buzz', 'buzz-locked-out');
+        buzzingOpts.classList.add('buzz-active');
+        otherOpts.classList.add('buzz-locked-out');
+        otherOpts.classList.remove('buzz-active');
+
+        const options = generateCategoryOptions(duelQ[player].question.aKey);
+        renderZoomOptions(player, options);
+
+        const avatarEl = player === 'p1' ? arenaP1El : arenaP2El;
+        _arenaOnce(avatarEl, 'charging', 400);
+
+        playSound('buzz');
+    }
+
+    function handleZoomTimeout() {
+        if (_buzz.phase !== 'zooming') return;
+        _buzz.phase = 'timeout';
+        clearTimeout(_zoomTimeoutId);
+        _zoomTimeoutId = null;
+
+        const correctCat = duelQ.p1.correctKey;
+        const correctLabel = CATEGORY_NAMES[correctCat] || correctCat;
+
+        const banner = document.createElement('div');
+        banner.className = 'zoom-timeout-banner';
+        banner.innerHTML = `
+            <span class="timeout-label">時間到！正確答案：</span>
+            <span class="timeout-answer">${correctLabel}</span>`;
+        UI.sharedArea.appendChild(banner);
+
+        setTimeout(() => {
+            banner.remove();
+            nextDuelZoomQuestion();
+        }, 2500);
+    }
+
+    function handleZoomCorrect(player, btn) {
+        playSound('correct');
+        btn.classList.add('correct');
+        _buzz.phase = 'idle';
+
+        Save.addCorrect(1);
+        Save.seeMolecule(duelQ[player].question.aKey);
+
+        players[player].correctCount++;
+        updateDuelProgress(player);
+        duelArenaAttack(player);
+
+        const devWin = _devQuickWin && players[player].correctCount >= DEV_WIN_AFTER;
+        if (devWin || players[player].correctCount >= DUEL_WIN_TARGET) {
+            endGame('win', player);
+            return;
+        }
+        setTimeout(() => nextDuelZoomQuestion(), 700);
+    }
+
+    function handleZoomWrong(player, btn) {
+        playSound('wrong');
+        btn.classList.add('wrong');
+
+        _buzz.phase = 'penalty';
+        _buzz.penaltyPlayer = player;
+
+        duelArenaFizzle(player);
+        showZoomPenaltyBadge(player);
+
+        const container = player === 'p1' ? UI.optsP1 : UI.optsP2;
+        const other = player === 'p1' ? 'p2' : 'p1';
+        container.classList.add('buzz-locked-out');
+
+        if (_penaltyTimerId) clearTimeout(_penaltyTimerId);
+        _penaltyTimerId = setTimeout(() => {
+            btn.classList.remove('wrong');
+            container.classList.remove('buzz-active');
+
+            const otherOpts = other === 'p1' ? UI.optsP1 : UI.optsP2;
+            otherOpts.classList.remove('buzz-locked-out');
+            setZoomPreBuzzStateFor(other);
+
+            const img = UI.qContentShared.querySelector('img');
+            if (img) {
+                img.classList.remove('zoom-paused');
+                img.classList.add('zoom-playing');
+            }
+
+            _buzz.phase = 'zooming';
+            _buzz.penaltyPlayer = null;
+
+            if (_zoomTimeoutId) clearTimeout(_zoomTimeoutId);
+            const remainingMs = Math.max(500, ZOOM_DURATION_MS - _zoomElapsedMs);
+            _zoomTimeoutId = setTimeout(() => handleZoomTimeout(), remainingMs);
+            _zoomStartTime = Date.now();
+        }, ZOOM_PENALTY_MS);
+    }
+
+    function generateCategoryOptions(aKey) {
+        const correctCat = getAnswerCategory(aKey);
+        const distractors = (CONFUSABLE_CATS[correctCat] || []).slice(0, 3);
+        const finalCats = shuffleArray([correctCat, ...distractors]);
+        return finalCats.map(cat => ({ key: cat, text: CATEGORY_NAMES[cat] }));
+    }
+
+    function setZoomPreBuzzState() {
+        [UI.optsP1, UI.optsP2].forEach((el, i) => {
+            el.classList.add('pre-buzz');
+            el.classList.remove('buzz-active', 'buzz-locked-out');
+            el.innerHTML = '';
+            const player = i === 0 ? 'p1' : 'p2';
+            const label = isDuelDesktop ? '按任意鍵搶答' : '點此搶答';
+            el.dataset.buzzLabel = label;
+        });
+    }
+
+    function setZoomPreBuzzStateFor(player) {
+        const el = player === 'p1' ? UI.optsP1 : UI.optsP2;
+        el.classList.add('pre-buzz');
+        el.classList.remove('buzz-active', 'buzz-locked-out');
+        el.innerHTML = '';
+        el.dataset.buzzLabel = isDuelDesktop ? '按任意鍵搶答' : '點此搶答';
+    }
+
+    function renderZoomOptions(player, options) {
+        const optsEl = player === 'p1' ? UI.optsP1 : UI.optsP2;
+        optsEl.classList.remove('pre-buzz');
+        optsEl.innerHTML = '';
+        options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'btn opt-btn magic-stone-btn';
+            btn.dataset.idx = idx;
+            btn.dataset.key = opt.key;
+            const keyCodes = (player === 'p1')
+                ? DUEL_DESKTOP_KEYS.p1[idx]
+                : DUEL_DESKTOP_KEYS.p2[idx];
+            const keyLabel = isDuelDesktop ? formatKeyHint([keyCodes]) : '';
+            btn.innerHTML = keyLabel
+                ? `<span class="key-hint key-hint-left">[${keyLabel}]</span><span class="option-text">${opt.text}</span>`
+                : `<span class="option-text">${opt.text}</span>`;
+            optsEl.appendChild(btn);
+        });
+    }
+
+    function clearZoomState() {
+        if (_zoomTimeoutId) { clearTimeout(_zoomTimeoutId); _zoomTimeoutId = null; }
+        if (_penaltyTimerId) { clearTimeout(_penaltyTimerId); _penaltyTimerId = null; }
+        _buzz.phase = 'idle';
+        _buzz.buzzedBy = null;
+        _buzz.penaltyPlayer = null;
+        UI.sharedArea.querySelectorAll('.zoom-timeout-banner').forEach(el => el.remove());
+        const img = UI.qContentShared && UI.qContentShared.querySelector('img');
+        if (img) img.classList.remove('zoom-playing', 'zoom-paused');
+        [UI.optsP1, UI.optsP2].forEach(el => {
+            el.classList.remove('pre-buzz', 'buzz-active', 'buzz-locked-out');
+        });
+    }
+
+    function showZoomPenaltyBadge(player) {
+        const optsEl = player === 'p1' ? UI.optsP1 : UI.optsP2;
+        const badge = document.createElement('div');
+        badge.className = 'buzz-penalty-badge';
+        badge.textContent = '✗ 答錯！';
+        optsEl.style.position = 'relative';
+        optsEl.appendChild(badge);
+        setTimeout(() => badge.remove(), 2000);
+    }
+
+    function isPenaltyPlayer(player) {
+        return _buzz.penaltyPlayer === player;
+    }
+
+    function handleZoomBuzzKey(e) {
+        if (!isDuelDesktop) return;
+        let player = null;
+        if (_buzz.phase === 'zooming') {
+            if (Object.prototype.hasOwnProperty.call(DUEL_DESKTOP_KEYS.p1, e.code)) player = 'p1';
+            else if (Object.prototype.hasOwnProperty.call(DUEL_DESKTOP_KEYS.p2, e.code)) player = 'p2';
+            if (player && !isPenaltyPlayer(player)) {
+                e.preventDefault();
+                handleZoomBuzzIn(player);
+            }
+        } else if (_buzz.phase === 'buzzed' && _buzz.buzzedBy) {
+            const buzzedKeys = (_buzz.buzzedBy === 'p1') ? DUEL_DESKTOP_KEYS.p1 : DUEL_DESKTOP_KEYS.p2;
+            if (Object.prototype.hasOwnProperty.call(buzzedKeys, e.code)) {
+                e.preventDefault();
+                const idx = buzzedKeys[e.code];
+                const container = _buzz.buzzedBy === 'p1' ? UI.optsP1 : UI.optsP2;
+                const btn = container.querySelector(`.opt-btn[data-idx="${idx}"]`);
+                if (btn) handleOptionClick({ target: btn }, _buzz.buzzedBy);
+            }
         }
     }
 

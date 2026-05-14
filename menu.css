@@ -350,3 +350,47 @@
     #rotate-overlay { display: grid; }
     #menu-container.landscape { display: none; }
 }
+
+/* ============================================================
+   小螢幕橫向（iPhone SE landscape ≈ 667×375）：縮減頂列
+   隱藏次要元素，防止標題被擠成一字一行
+   ============================================================ */
+@media (orientation: landscape) and (max-width: 780px) {
+    /* 防止標題換行 */
+    .menu-landscape-top .game-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .menu-landscape-top .game-subtitle { display: none; }
+
+    /* 等級 chips 佔太多寬度，隱藏（!important 蓋過 style.css 的 display:flex） */
+    .prog-levels { display: none !important; }
+
+    /* 設定按鈕在小螢幕非必要，隱藏 */
+    #btn-open-settings { display: none !important; }
+
+    /* 帽子圖示縮小一點 */
+    .menu-landscape-top .title-hat {
+        width: clamp(32px, 5.5vh, 48px);
+        height: clamp(32px, 5.5vh, 48px);
+    }
+
+    /* top-progress gap 收緊 */
+    .top-progress { gap: clamp(8px, 1.4vw, 16px); }
+
+    /* 關卡按鈕文字縮小，換行時不佔太多高度 */
+    .menu-col .menu-btn {
+        font-size: clamp(0.72rem, 1.6vh, 0.92rem);
+        padding: clamp(7px, 1.4vh, 11px) clamp(7px, 1.2vw, 12px);
+        line-height: 1.25;
+    }
+    .menu-col .menu-btn .lv-tag {
+        width: clamp(26px, 3.8vh, 34px);
+        height: clamp(18px, 2.8vh, 24px);
+        font-size: clamp(0.62rem, 1.3vh, 0.72rem);
+    }
+    /* 欄位 gap 收緊，多擠出一點空間 */
+    .menu-col .btn-list { gap: clamp(3px, 0.8vh, 7px); }
+    .menu-landscape-main { gap: clamp(6px, 1.2vw, 14px); padding: 0 clamp(8px, 1.5vw, 16px); }
+}
