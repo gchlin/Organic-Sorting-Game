@@ -212,6 +212,7 @@ const Game = (function() {
         btnNextLevel: document.getElementById('btn-next-level'),
         btnMenu: document.getElementById('btn-menu'),
         btnBack: document.getElementById('btn-back'),
+        btnBackDuel: document.getElementById('btn-back-duel'),
         btnShowRef: document.getElementById('btn-show-ref'),
         refModal: document.getElementById('ref-modal'),
         btnCloseRef: document.getElementById('btn-close-ref'),
@@ -548,6 +549,7 @@ const Game = (function() {
         });
 
         UI.btnBack.addEventListener('click', showMenu);
+        if (UI.btnBackDuel) UI.btnBackDuel.addEventListener('click', showMenu);
         UI.btnMenu.addEventListener('click', showMenu);
         UI.btnRestart.addEventListener('click', () => startGame(currentMode, currentLevel));
         if (UI.btnNextLevel) UI.btnNextLevel.addEventListener('click', () => {
@@ -1068,6 +1070,8 @@ const Game = (function() {
 
     // --- 設定 (Settings) ---
     function openSettings() {
+        initSettingsTabs();
+        switchSettingsTab('options');
         _syncSettingsMuteBtn();
         if (UI.settingsModal) UI.settingsModal.classList.remove('hidden');
         if (UI.btnCloseSettings) try { UI.btnCloseSettings.focus(); } catch(e) {}
@@ -1078,10 +1082,30 @@ const Game = (function() {
     }
     function _syncSettingsMuteBtn() {
         if (!UI.btnSettingsMute) return;
-        const isMuted = _muted;
-        UI.btnSettingsMute.dataset.icon = isMuted ? 'sound-off' : 'sound-on';
-        const desc = UI.btnSettingsMute.querySelector('.si-desc');
-        if (desc) desc.textContent = isMuted ? '音效已關閉，點擊開啟' : '點擊關閉音效';
+        UI.btnSettingsMute.dataset.icon = _muted ? 'sound-off' : 'sound-on';
+        UI.btnSettingsMute.textContent = '音效';
+    }
+
+    function initSettingsTabs() {
+        if (!UI.settingsModal) return;
+        const settingsTabs = UI.settingsModal.querySelectorAll('[data-settings-tab]');
+        settingsTabs.forEach(tab => {
+            tab.addEventListener('click', () => switchSettingsTab(tab.dataset.settingsTab));
+        });
+    }
+
+    function switchSettingsTab(tabName) {
+        if (!tabName || !UI.settingsModal) return;
+        const settingsTabs = UI.settingsModal.querySelectorAll('[data-settings-tab]');
+        const settingsPanels = UI.settingsModal.querySelectorAll('[data-settings-panel]');
+        settingsTabs.forEach(tab => {
+            const active = tab.dataset.settingsTab === tabName;
+            tab.classList.toggle('active', active);
+            tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        settingsPanels.forEach(panel => {
+            panel.classList.toggle('active', panel.dataset.settingsPanel === tabName);
+        });
     }
 
     function initCodexTabs() {
@@ -2164,12 +2188,29 @@ const Game = (function() {
         const direction = directions[e.code];
         if (!direction) return false;
 
+        const current = document.activeElement;
+        const topProgress = document.querySelector('.top-progress');
+        const isTopButton = topProgress && topProgress.contains(current) && ['button', 'Button'].some(t => current.tagName === 'BUTTON');
+
+        if (isTopButton && (direction === 'left' || direction === 'right')) {
+            e.preventDefault();
+            const topButtons = [...topProgress.querySelectorAll('button')].filter(btn => !btn.disabled && isControlVisible(btn));
+            if (topButtons.length < 2) return true;
+            const currentIdx = topButtons.indexOf(current);
+            if (currentIdx === -1) {
+                topButtons[0].focus();
+            } else {
+                const nextIdx = direction === 'right' ? (currentIdx + 1) % topButtons.length : (currentIdx - 1 + topButtons.length) % topButtons.length;
+                topButtons[nextIdx].focus();
+            }
+            return true;
+        }
+
         const controls = getFocusableControls(getActivePanel());
         if (!controls.length) return false;
 
         e.preventDefault();
-        const current = controls.includes(document.activeElement) ? document.activeElement : null;
-        if (!current) {
+        if (!current || !controls.includes(current)) {
             controls[0].focus();
             return true;
         }

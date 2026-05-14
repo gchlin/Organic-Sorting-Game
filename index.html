@@ -50,7 +50,7 @@
                     分類帽圖鑑
                     <span class="new-dot" title="有新內容"></span>
                 </button>
-                <button id="btn-open-settings" class="settings-entry btn" data-icon="settings" title="設定"></button>
+                <button id="btn-open-settings" class="codex-entry btn" data-icon="settings">設定</button>
             </div>
             <!-- wizard-pill：wizard-status-bar 就是 pill 本身，JS 控制顯示/隱藏 -->
             <div id="wizard-status-bar" class="wizard-pill wizard-status-bar hidden" data-icon="wizard">
@@ -118,10 +118,10 @@
         <footer class="menu-landscape-bottom">
             <p class="keyboard-help">方向鍵選關卡，Enter / Space 開始；也可直接按按鈕前的 [快捷鍵]。</p>
             <div class="save-controls">
-                <button id="btn-mute" class="btn magic-btn save-ctrl-btn" data-icon="sound-on">音效</button>
-                <button id="btn-export" class="btn magic-btn save-ctrl-btn" data-icon="export">匯出存檔</button>
-                <button id="btn-import-open" class="btn magic-btn save-ctrl-btn" data-icon="import">匯入存檔</button>
-                <button id="btn-reset-save" class="btn magic-btn save-ctrl-btn reset-btn" data-icon="reset">重置</button>
+                <button id="btn-mute" class="btn magic-btn save-ctrl-btn hidden" data-icon="sound-on">音效</button>
+                <button id="btn-export" class="btn magic-btn save-ctrl-btn hidden" data-icon="export">匯出存檔</button>
+                <button id="btn-import-open" class="btn magic-btn save-ctrl-btn hidden" data-icon="import">匯入存檔</button>
+                <button id="btn-reset-save" class="btn magic-btn save-ctrl-btn reset-btn hidden" data-icon="reset">重置</button>
                 <button id="btn-show-ref" class="btn hidden">查看分類總表</button>
             </div>
         </footer>
@@ -152,6 +152,7 @@
 
         <!-- ② Duel 模式競技場 bar（預設 hidden，duel 時 JS 顯示並把 info-bar 隱藏） -->
         <div id="arena-bar" class="hidden">
+            <button id="btn-back-duel" class="btn magic-btn icon-btn arena-back-btn" data-icon="back">撤退</button>
             <div class="arena-player p1-side">
                 <div class="arena-avatar idle" id="avatar-p1" aria-hidden="true">🧙</div>
                 <span class="pname" id="wizard-p1">玩家一</span>
@@ -363,55 +364,49 @@
 
     <!-- 設定 Modal -->
     <div id="settings-modal" class="modal hidden">
-        <div class="modal-content settings-modal-content">
-            <header class="settings-header">
+        <div class="modal-content codex-modal-content">
+            <header class="codex-header">
                 <h2 class="magical-text" data-icon="settings">設定</h2>
-                <button id="btn-close-settings" class="btn magic-btn codex-back-btn" data-icon="back">返回</button>
+                <button id="btn-close-settings" class="btn magic-btn codex-back-btn" data-icon="back">返回大廳</button>
             </header>
-            <main class="settings-content">
-
-                <section class="settings-section">
-                    <h3 class="settings-section-title">🔊 遊戲設定</h3>
-                    <div class="settings-row">
-                        <button id="btn-settings-mute" class="settings-item-btn btn magic-btn" data-icon="sound-on">
-                            <span class="si-title">音效</span>
-                            <span class="si-desc">開啟或關閉所有音效</span>
-                        </button>
+            <nav class="codex-tabs" aria-label="設定分類">
+                <button class="tab active" type="button" data-settings-tab="options">設定</button>
+                <button class="tab" type="button" data-settings-tab="help">遊戲說明</button>
+            </nav>
+            <main class="codex-content">
+                <section id="settings-panel-options" class="codex-panel active" data-settings-panel="options">
+                    <div class="settings-option-row">
+                        <button id="btn-settings-mute" class="btn magic-btn codex-back-btn" data-icon="sound-on">音效</button>
+                        <p class="settings-option-desc">開啟或關閉所有音效</p>
+                    </div>
+                    <div class="settings-option-row">
+                        <button id="btn-settings-export" class="btn magic-btn codex-back-btn" data-icon="export">導出存檔</button>
+                        <p class="settings-option-desc">下載 .json 檔，可備份或在其他裝置使用</p>
+                    </div>
+                    <div class="settings-option-row">
+                        <button id="btn-settings-import" class="btn magic-btn codex-back-btn" data-icon="import">導入存檔</button>
+                        <p class="settings-option-desc">從 .json 檔載入進度（會覆蓋現有進度）</p>
+                    </div>
+                    <div class="settings-option-row danger-row">
+                        <button id="btn-settings-reset" class="btn magic-btn codex-back-btn" data-icon="reset">重置進度</button>
+                        <p class="settings-option-desc">清除全部紀錄，回到初始狀態（不可復原）</p>
                     </div>
                 </section>
-
-                <section class="settings-section">
-                    <h3 class="settings-section-title">💾 進度管理</h3>
-                    <div class="settings-row">
-                        <button id="btn-settings-export" class="settings-item-btn btn magic-btn">
-                            <span class="si-icon">📤</span>
-                            <span class="si-title">導出存檔</span>
-                            <span class="si-desc">下載 .json 檔，可備份或在其他裝置使用</span>
-                        </button>
-                        <button id="btn-settings-import" class="settings-item-btn btn magic-btn">
-                            <span class="si-icon">📥</span>
-                            <span class="si-title">導入存檔</span>
-                            <span class="si-desc">從 .json 檔載入進度（會覆蓋現有進度）</span>
-                        </button>
-                        <button id="btn-settings-reset" class="settings-item-btn btn magic-btn danger-btn">
-                            <span class="si-icon">🗑️</span>
-                            <span class="si-title">重置進度</span>
-                            <span class="si-desc">清除全部紀錄，回到初始狀態（不可復原）</span>
-                        </button>
+                <section id="settings-panel-help" class="codex-panel" data-settings-panel="help">
+                    <div class="settings-option-row">
+                        <button id="btn-settings-tutorial" class="btn magic-btn codex-back-btn" data-icon="books">新手導覽</button>
+                        <p class="settings-option-desc">重新觀看操作說明與遊戲規則介紹</p>
                     </div>
+                    <article class="settings-help-article">
+                        <h3 class="settings-help-title">遊戲說明</h3>
+                        <p><strong>遊戲目標</strong></p>
+                        <p>通過分類有機化合物來挑戰各種難度的關卡。根據分子結構特徵，準確判斷其官能基類型。</p>
+                        <p><strong>遊戲模式</strong></p>
+                        <p>自我修煉 — 練習模式，可查看提示與詳細解說<br>競速挑戰 — 限時模式，快速判斷化合物分類<br>巫師對決 — 對戰模式，與其他魔法師進行分類競賽</p>
+                        <p><strong>分類帽圖鑑</strong></p>
+                        <p>記錄已解鎖的關卡、勳章、分子與劇情。通過闖關可逐步解鎖更多內容。</p>
+                    </article>
                 </section>
-
-                <section class="settings-section">
-                    <h3 class="settings-section-title">📖 說明</h3>
-                    <div class="settings-row">
-                        <button id="btn-settings-tutorial" class="settings-item-btn btn magic-btn">
-                            <span class="si-icon">📖</span>
-                            <span class="si-title">新手導覽</span>
-                            <span class="si-desc">重新觀看操作說明與遊戲規則介紹</span>
-                        </button>
-                    </div>
-                </section>
-
             </main>
         </div>
     </div>

@@ -260,7 +260,7 @@ body.duel #game-area {
 #arena-bar {
     position: relative;
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: auto 1fr auto 1fr;
     align-items: center;
     gap: clamp(8px, 1.5vw, 22px);
     padding: clamp(6px, 1vh, 12px) clamp(12px, 2vw, 28px);
@@ -270,6 +270,12 @@ body.duel #game-area {
         linear-gradient(180deg, rgba(40,25,30,.85), rgba(15,8,12,.95));
     border-bottom: 2px solid rgba(212,175,55,.45);
     overflow: hidden;
+}
+
+#btn-back-duel {
+    padding: clamp(4px, .8vh, 7px) clamp(8px, 1.2vw, 12px);
+    font-size: clamp(.72rem, 1.6vh, .85rem);
+    justify-self: start;
 }
 
 /* 競技場玩家組合 */

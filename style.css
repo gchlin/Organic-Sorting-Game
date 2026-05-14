@@ -1316,6 +1316,42 @@ body.countdown-active .hat-display {
     font-size: clamp(.72rem, 1.7vh, .88rem);
 }
 
+.settings-back-row {
+    display: flex;
+    align-items: center;
+    gap: clamp(6px, 1vw, 10px);
+    white-space: nowrap;
+}
+
+.settings-back-row .back-label {
+    color: inherit;
+    font-family: inherit;
+    font-size: clamp(.72rem, 1.7vh, .88rem);
+    pointer-events: none;
+}
+
+.settings-option-row {
+    display: flex;
+    align-items: center;
+    gap: clamp(12px, 2vw, 18px);
+    padding: clamp(8px, 1.2vh, 12px) clamp(12px, 1.5vw, 16px);
+}
+
+.settings-option-row .codex-back-btn {
+    flex-shrink: 0;
+}
+
+.settings-option-desc {
+    margin: 0;
+    color: var(--hp-parchment-dark);
+    font-size: clamp(.8rem, 1.6vh, .88rem);
+}
+
+.settings-option-row.danger-row .codex-back-btn {
+    color: #ffadad;
+    border-color: rgba(255, 173, 173, .5);
+}
+
 .codex-tabs {
     display: flex;
     align-items: stretch;
@@ -1665,143 +1701,31 @@ body.countdown-active .hat-display {
    設定 Modal (Settings)
    ==================== */
 
-.settings-entry {
-    flex-shrink: 0;
-    padding: clamp(6px, 1.2vh, 10px) clamp(8px, 1.5vw, 12px);
-    font-size: clamp(0.8rem, 1.8vh, 1rem);
-    color: var(--hp-gold);
-    border-color: rgba(212,175,55,.3);
+.codex-line.danger-line {
+    color: rgba(255,173,173,.95);
 }
 
-.settings-modal-content {
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
-    height: 100vh;
-    width: 100vw;
-    background: radial-gradient(circle at center, rgba(26,26,29,0.95), rgba(15,15,18,0.98));
-    color: var(--hp-parchment);
+.codex-line.danger-line strong {
+    color: #ffadad;
 }
 
-.settings-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: clamp(10px, 2vh, 18px) clamp(10px, 1.5vw, 18px);
-    background: rgba(20, 15, 18, 0.7);
-    border-bottom: 2px solid var(--hp-gold);
-}
-
-.settings-header h2 {
-    margin: 0;
-    color: var(--hp-gold);
-    font-family: "Cinzel", serif;
-    font-size: clamp(1rem, 2.2vh, 1.3rem);
-}
-
-.settings-header .codex-back-btn {
-    flex-shrink: 0;
-}
-
-.settings-content {
-    overflow-y: auto;
-    padding: clamp(12px, 2vh, 18px) clamp(12px, 1.5vw, 18px);
-    display: flex;
-    flex-direction: column;
-    gap: clamp(12px, 2vh, 20px);
-}
-
-.settings-section {
-    background: linear-gradient(180deg, rgba(40,30,35,.85), rgba(20,15,18,.95));
-    border: 1px solid rgba(212,175,55,.3);
-    border-radius: 10px;
-    padding: clamp(12px, 1.8vh, 16px);
-}
-
-.settings-section-title {
-    margin: 0 0 clamp(10px, 1.5vh, 14px) 0;
-    color: var(--hp-gold);
-    font-family: "Cinzel", serif;
-    font-size: clamp(0.95rem, 1.8vh, 1.1rem);
-    letter-spacing: .03em;
-}
-
-.settings-row {
-    display: flex;
-    flex-direction: column;
-    gap: clamp(8px, 1.2vh, 12px);
-}
-
-.settings-item-btn {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    grid-template-rows: auto auto;
-    gap: 8px 12px;
-    align-items: start;
-    text-align: left;
-    padding: clamp(10px, 1.5vh, 14px) clamp(12px, 1.8vw, 16px) !important;
-    border: 1px solid rgba(212,175,55,.3);
-    border-radius: 8px;
-    background: linear-gradient(180deg, rgba(45,40,38,.6), rgba(30,25,23,.8));
-    color: var(--hp-parchment);
-    transition: all .15s;
-    cursor: pointer;
-}
-
-.settings-item-btn:hover {
-    border-color: rgba(212,175,55,.6);
-    background: linear-gradient(180deg, rgba(50,45,42,.8), rgba(35,30,28,.95));
-}
-
-.settings-item-btn:active {
-    transform: scale(0.98);
-}
-
-.settings-item-btn:has(.si-icon) {
-    grid-template-columns: auto 1fr;
-}
-
-.settings-item-btn:not(:has(.si-icon)) {
-    grid-template-columns: 1fr;
-}
-
-.si-icon {
-    font-size: clamp(1.4rem, 3vh, 1.8rem);
-    grid-row: 1 / 3;
-}
-
-.si-title {
-    grid-column: 2;
-    font-weight: 600;
-    font-size: clamp(0.92rem, 1.6vh, 1.05rem);
-    color: var(--hp-parchment);
-}
-
-.si-desc {
-    grid-column: 2;
-    font-size: clamp(0.75rem, 1.3vh, 0.9rem);
+.settings-help-article {
+    padding: 0 clamp(10px, 1.5vw, 16px);
     color: var(--hp-parchment-dark);
-    line-height: 1.4;
+    font-size: 0.95rem;
+    line-height: 1.65;
 }
 
-.settings-item-btn[data-icon="sound-on"],
-.settings-item-btn[data-icon="sound-off"] {
-    grid-template-columns: 1fr;
+.settings-help-title {
+    margin: 0 0 clamp(8px, 1.2vh, 12px) 0;
+    color: var(--hp-gold);
+    font-family: "Cinzel", serif;
+    font-size: clamp(1rem, 2vh, 1.1rem);
+    letter-spacing: .04em;
 }
 
-.settings-item-btn[data-icon="sound-on"] .si-title::before,
-.settings-item-btn[data-icon="sound-off"] .si-title::before {
-    content: attr(data-icon);
-    margin-right: 8px;
-}
-
-.settings-item-btn.danger-btn {
-    border-color: rgba(192,57,43,.5);
-}
-
-.settings-item-btn.danger-btn:hover {
-    border-color: var(--hp-red-bright);
-    background: linear-gradient(180deg, rgba(80,25,25,.7), rgba(50,15,15,.85));
+.settings-help-article p {
+    margin: 0 0 clamp(10px, 1.5vh, 14px) 0;
 }
 
 @media (orientation: portrait) {
@@ -2580,8 +2504,11 @@ body.muted #btn-mute-game::after { content: ' (靜音)'; font-size: 0.7em; opaci
     width: 1.15em;
     height: 1.15em;
     margin-right: 8px;
+    padding: 2px;
     vertical-align: -0.22em;
     background-color: currentColor;
+    border: 1px solid currentColor;
+    border-radius: 3px;
     -webkit-mask-size: contain;
     mask-size: contain;
     -webkit-mask-repeat: no-repeat;
@@ -2590,9 +2517,11 @@ body.muted #btn-mute-game::after { content: ' (靜音)'; font-size: 0.7em; opaci
     mask-position: center;
     flex-shrink: 0;
     transition: filter 0.2s;
+    box-sizing: border-box;
 }
 
 [data-icon="codex"]::before { -webkit-mask-image: url('assets/images/icons/codex.svg'); mask-image: url('assets/images/icons/codex.svg'); }
+[data-icon="settings"]::before { -webkit-mask-image: url('assets/images/icons/settings.svg'); mask-image: url('assets/images/icons/settings.svg'); }
 [data-icon="sound-on"]::before { -webkit-mask-image: url('assets/images/icons/sound-on.svg'); mask-image: url('assets/images/icons/sound-on.svg'); }
 [data-icon="sound-off"]::before { -webkit-mask-image: url('assets/images/icons/sound-off.svg'); mask-image: url('assets/images/icons/sound-off.svg'); }
 [data-icon="export"]::before { -webkit-mask-image: url('assets/images/icons/export.svg'); mask-image: url('assets/images/icons/export.svg'); }
