@@ -2766,9 +2766,9 @@ const Game = (function() {
         img.style.setProperty('--zoom-duration', '12s');
         img.style.animationDelay = '0s';
 
-        img.classList.remove('zoom-playing', 'zoom-paused');
+        img.classList.remove('zoom-active', 'zoom-paused');
         void img.offsetWidth;
-        img.classList.add('zoom-playing');
+        img.classList.add('zoom-active');
 
         _zoomStartTime = Date.now();
         _zoomElapsedMs = 0;
@@ -2788,8 +2788,11 @@ const Game = (function() {
             _zoomPausedAt = Date.now();
             _zoomElapsedMs += _zoomPausedAt - _zoomStartTime;
 
-            img.classList.remove('zoom-playing');
+            // Pause animation at current frame by adding zoom-paused class
+            // Keep zoom-active to preserve animation definition
             img.classList.add('zoom-paused');
+            // Clear any previous animation-delay to prevent interference
+            img.style.animationDelay = '';
         }
 
         if (_zoomTimeoutId) {
@@ -2883,14 +2886,14 @@ const Game = (function() {
             if (img) {
                 // Resume animation from paused position using negative animation-delay
                 const totalElapsedMs = _zoomElapsedMs;
-                const remainingMs = Math.max(500, ZOOM_DURATION_MS - totalElapsedMs);
 
-                // Set animation to start from the elapsed point
-                img.style.setProperty('--zoom-duration', `${remainingMs}ms`);
+                // Use negative delay to skip already-played time
+                // Keep original duration (12s) and use delay to resume from pause point
                 img.style.animationDelay = `-${totalElapsedMs}ms`;
 
+                // Resume by removing zoom-paused class
+                // zoom-active class remains, so animation definition is preserved
                 img.classList.remove('zoom-paused');
-                img.classList.add('zoom-playing');
             }
 
             _buzz.phase = 'zooming';
@@ -2957,7 +2960,7 @@ const Game = (function() {
         UI.sharedArea.querySelectorAll('.zoom-timeout-banner').forEach(el => el.remove());
         const img = UI.qContentShared && UI.qContentShared.querySelector('img');
         if (img) {
-            img.classList.remove('zoom-playing', 'zoom-paused');
+            img.classList.remove('zoom-active', 'zoom-paused');
             img.style.animationDelay = '';
             img.style.setProperty('--zoom-duration', '');
         }

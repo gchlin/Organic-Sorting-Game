@@ -600,14 +600,17 @@ body.duel-zoom #q-shared img {
     -moz-osx-font-smoothing: grayscale;
 }
 
-body.duel-zoom #q-shared img.zoom-playing {
+body.duel-zoom #q-shared img.zoom-active {
     animation: zoomReveal var(--zoom-duration, 12s) linear forwards;
-    animation-play-state: running;
     will-change: transform;
     transform-origin: center center;
 }
 
-body.duel-zoom #q-shared img.zoom-playing.zoom-paused {
+body.duel-zoom #q-shared img.zoom-active:not(.zoom-paused) {
+    animation-play-state: running;
+}
+
+body.duel-zoom #q-shared img.zoom-active.zoom-paused {
     animation-play-state: paused;
 }
 
