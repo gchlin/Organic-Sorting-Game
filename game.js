@@ -2764,6 +2764,7 @@ const Game = (function() {
         img.style.setProperty('--zoom-ox', `${ox}%`);
         img.style.setProperty('--zoom-oy', `${oy}%`);
         img.style.setProperty('--zoom-duration', '12s');
+        img.style.animationDelay = '0s';
 
         img.classList.remove('zoom-playing', 'zoom-paused');
         void img.offsetWidth;
@@ -2783,6 +2784,10 @@ const Game = (function() {
 
         const img = UI.qContentShared.querySelector('img');
         if (img) {
+            // Store current animation progress before pausing
+            _zoomPausedAt = Date.now();
+            _zoomElapsedMs += _zoomPausedAt - _zoomStartTime;
+
             img.classList.remove('zoom-playing');
             img.classList.add('zoom-paused');
         }
@@ -2791,8 +2796,6 @@ const Game = (function() {
             clearTimeout(_zoomTimeoutId);
             _zoomTimeoutId = null;
         }
-        _zoomPausedAt = Date.now();
-        _zoomElapsedMs += _zoomPausedAt - _zoomStartTime;
 
         const buzzingOpts = player === 'p1' ? UI.optsP1 : UI.optsP2;
         const otherOpts = player === 'p1' ? UI.optsP2 : UI.optsP1;
@@ -2878,6 +2881,14 @@ const Game = (function() {
 
             const img = UI.qContentShared.querySelector('img');
             if (img) {
+                // Resume animation from paused position using negative animation-delay
+                const totalElapsedMs = _zoomElapsedMs;
+                const remainingMs = Math.max(500, ZOOM_DURATION_MS - totalElapsedMs);
+
+                // Set animation to start from the elapsed point
+                img.style.setProperty('--zoom-duration', `${remainingMs}ms`);
+                img.style.animationDelay = `-${totalElapsedMs}ms`;
+
                 img.classList.remove('zoom-paused');
                 img.classList.add('zoom-playing');
             }
@@ -2888,7 +2899,6 @@ const Game = (function() {
             if (_zoomTimeoutId) clearTimeout(_zoomTimeoutId);
             const remainingMs = Math.max(500, ZOOM_DURATION_MS - _zoomElapsedMs);
             _zoomTimeoutId = setTimeout(() => handleZoomTimeout(), remainingMs);
-            _zoomStartTime = Date.now();
         }, ZOOM_PENALTY_MS);
     }
 
@@ -2946,7 +2956,11 @@ const Game = (function() {
         _buzz.penaltyPlayer = null;
         UI.sharedArea.querySelectorAll('.zoom-timeout-banner').forEach(el => el.remove());
         const img = UI.qContentShared && UI.qContentShared.querySelector('img');
-        if (img) img.classList.remove('zoom-playing', 'zoom-paused');
+        if (img) {
+            img.classList.remove('zoom-playing', 'zoom-paused');
+            img.style.animationDelay = '';
+            img.style.setProperty('--zoom-duration', '');
+        }
         [UI.optsP1, UI.optsP2].forEach(el => {
             el.classList.remove('pre-buzz', 'buzz-active', 'buzz-locked-out');
         });

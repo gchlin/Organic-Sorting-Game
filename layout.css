@@ -594,6 +594,10 @@ body.duel-zoom #q-shared img {
     width: 100%;
     height: 100%;
     object-fit: contain;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 body.duel-zoom #q-shared img.zoom-playing {
