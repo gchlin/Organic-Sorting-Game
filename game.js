@@ -237,11 +237,14 @@ const Game = (function() {
         codexModal: document.getElementById('codex-modal'),
         btnOpenCodex: document.getElementById('btn-open-codex'),
         btnCloseCodex: document.getElementById('btn-close-codex'),
-        codexLevelList: document.getElementById('codex-level-list'),
-        codexDetail: document.getElementById('codex-detail'),
-        codexDetailTitle: document.getElementById('codex-detail-title'),
-        codexDetailBody: document.getElementById('codex-detail-body'),
-        btnCodexBack: document.getElementById('btn-codex-back'),
+        codexSummary: document.getElementById('codex-summary'),
+        codexContent: document.querySelector('#codex-modal .codex-content'),
+        codexTabs: document.querySelectorAll('#codex-modal [data-codex-tab]'),
+        codexPanels: document.querySelectorAll('#codex-modal [data-codex-panel]'),
+        codexPanelLevels: document.getElementById('codex-panel-levels'),
+        codexPanelBadges: document.getElementById('codex-panel-badges'),
+        codexPanelMolecules: document.getElementById('codex-panel-molecules'),
+        codexPanelStory: document.getElementById('codex-panel-story'),
         tutorialModal: document.getElementById('tutorial-modal'),
         btnTutorial: document.getElementById('btn-tutorial'),
         tutorialIcon: document.getElementById('tutorial-icon'),
@@ -544,7 +547,7 @@ const Game = (function() {
         });
         if (UI.btnOpenCodex) UI.btnOpenCodex.addEventListener('click', openCodex);
         if (UI.btnCloseCodex) UI.btnCloseCodex.addEventListener('click', closeCodex);
-        if (UI.btnCodexBack) UI.btnCodexBack.addEventListener('click', codexShowList);
+        initCodexTabs();
         if (UI.btnShowRef) UI.btnShowRef.addEventListener('click', showReference);
         if (UI.btnCloseRef) {
             UI.btnCloseRef.setAttribute('role', 'button');
@@ -1010,94 +1013,196 @@ const Game = (function() {
 
     // --- 圖鑑 (Codex) ---
     function openCodex() {
-        codexShowList();
+        renderCodex();
+        switchCodexTab('levels');
         if (UI.codexModal) UI.codexModal.classList.remove('hidden');
-        if (UI.btnCloseCodex) try { UI.btnCloseCodex.focus(); } catch(e) {}
+        const firstTab = UI.codexModal ? UI.codexModal.querySelector('[data-codex-tab="levels"]') : null;
+        if (firstTab) try { firstTab.focus(); } catch(e) {}
     }
     function closeCodex() {
         if (UI.codexModal) UI.codexModal.classList.add('hidden');
         if (UI.btnOpenCodex) try { UI.btnOpenCodex.focus(); } catch(e) {}
     }
-    function codexShowList() {
-        if (UI.codexDetail) UI.codexDetail.classList.add('hidden');
-        if (UI.codexLevelList) UI.codexLevelList.classList.remove('hidden');
-        _buildCodexList();
+
+    function initCodexTabs() {
+        if (!UI.codexTabs) return;
+        UI.codexTabs.forEach(tab => {
+            tab.addEventListener('click', () => switchCodexTab(tab.dataset.codexTab));
+        });
     }
-    function _buildCodexList() {
-        if (!UI.codexLevelList) return;
-        UI.codexLevelList.innerHTML = '';
+
+    function switchCodexTab(tabName) {
+        if (!tabName) return;
+        UI.codexTabs.forEach(tab => {
+            const active = tab.dataset.codexTab === tabName;
+            tab.classList.toggle('active', active);
+            tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        UI.codexPanels.forEach(panel => {
+            panel.classList.toggle('active', panel.dataset.codexPanel === tabName);
+        });
+        if (UI.codexContent) UI.codexContent.scrollTop = 0;
+    }
+
+    function renderCodex() {
+        const data = (typeof Save !== 'undefined') ? Save.get() : null;
+        const totalMol = _totalMoleculeCount();
+        const seenMol = data ? data.seenMolecules.length : 0;
+        const clearedCount = (typeof Save !== 'undefined')
+            ? LEVEL_ORDER.filter(lv => Save.isLevelCleared(lv)).length
+            : 0;
+        const storyCount = (typeof Save !== 'undefined')
+            ? LEVEL_ORDER.filter(lv => Save.isLevelCleared(lv) && typeof StoryScripts !== 'undefined' && StoryScripts[lv]).length
+            : 0;
+        const badgeDefs = (typeof Save !== 'undefined') ? Save.allBadgeDefs() : [];
+        const badgeCount = data ? data.badges.length : 0;
+
+        if (UI.codexSummary) UI.codexSummary.textContent = `— ${wizardPersonas.p1.name} 的修煉紀錄`;
+        _setText('codex-count-levels', `${clearedCount}/${LEVEL_ORDER.length}`);
+        _setText('codex-count-badges', `${badgeCount}/${badgeDefs.length}`);
+        _setText('codex-count-molecules', `${seenMol}/${totalMol}`);
+        _setText('codex-count-story', `${storyCount}/${LEVEL_ORDER.length}`);
+
+        renderCodexLevels();
+        renderCodexBadges(badgeDefs, data);
+        renderCodexMolecules(data);
+        renderCodexStories();
+    }
+
+    function _setText(id, text) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    }
+
+    function _levelShortLabel(lv) {
+        if (lv === 'levelShell') return '龜殼';
+        if (lv === 'level99') return 'L99';
+        return lv.replace('level', 'L');
+    }
+
+    function _uniqueQuestionsForLevel(lv) {
+        const list = (typeof QuestionSets !== 'undefined') ? QuestionSets[lv] : null;
+        if (!list || !list.length) return [];
+        const seen = new Set();
+        return list.filter(q => {
+            if (!q || !q.aKey || seen.has(q.aKey)) return false;
+            seen.add(q.aKey);
+            return true;
+        });
+    }
+
+    function renderCodexLevels() {
+        if (!UI.codexPanelLevels) return;
+        let html = '<div class="codex-level-grid">';
         LEVEL_ORDER.forEach(lv => {
             const info = LEVEL_INFO[lv];
             if (!info) return;
             const cleared = (typeof Save !== 'undefined') && Save.isLevelCleared(lv);
-            const card = document.createElement('button');
-            card.className = 'btn codex-level-card' + (cleared ? ' cleared' : ' locked');
-            card.innerHTML = `<span class="codex-lv-name">${info.name}</span>
-                              <span class="codex-lv-state">${cleared ? '✅ 已通過' : '🔒 未通過'}</span>`;
-            card.disabled = false;
-            card.addEventListener('click', () => codexShowLevel(lv));
-            UI.codexLevelList.appendChild(card);
+            const cls = `codex-level-card ${cleared ? 'cleared' : 'locked'}${lv === 'level6' ? ' boss' : ''}${lv === 'level99' ? ' genius' : ''}`;
+            html += `<article class="${cls}">
+                <div class="codex-level-head">
+                    <span class="codex-level-tag">${_levelShortLabel(lv)}</span>
+                    <span class="codex-level-state">${cleared ? '已通過' : '未通過'}</span>
+                </div>
+                <h3>${info.name}</h3>
+                <p>${cleared ? '劇情、分子與梗圖已解鎖。' : '通過這一關後解鎖圖鑑內容。'}</p>
+            </article>`;
         });
+        html += '</div>';
+        UI.codexPanelLevels.innerHTML = html;
     }
-    function codexShowLevel(lv) {
-        const info = LEVEL_INFO[lv];
-        if (!info || !UI.codexDetail) return;
-        const cleared = (typeof Save !== 'undefined') && Save.isLevelCleared(lv);
-        UI.codexDetailTitle.textContent = info.name;
-        let html = '';
 
-        if (!cleared) {
-            html += `<p class="codex-locked-msg">🔒 通過這一關後，就能在這裡回顧劇情、化合物小知識與梗圖。</p>`;
-        } else {
-            // 1) 劇情：可收合，預設收起
-            const script = (typeof StoryScripts !== 'undefined') ? StoryScripts[lv] : null;
-            if (script && script.length) {
-                html += `<details class="codex-details"><summary>📖 劇情對話</summary><div class="codex-story">`;
-                script.forEach(line => {
-                    const isWiz = line.who === 'wiz';
-                    const who = isWiz ? `${wizardPersonas.p1.emoji} ${wizardPersonas.p1.name}` : '🎩 分類帽';
-                    const cls = isWiz ? 'codex-line-wiz' : 'codex-line-hat';
-                    const text = line.text.replace(/\{name\}/g, wizardPersonas.p1.name || '你');
-                    html += `<p class="codex-line ${cls}"><strong>${who}：</strong>${text}</p>`;
-                });
-                html += `</div></details>`;
-            }
-            // 2) 化合物小知識卡片（2 欄格狀；點卡片展開小維基說明）
-            const list = (typeof QuestionSets !== 'undefined') ? QuestionSets[lv] : null;
-            if (list && list.length) {
-                const seen = new Set();
-                html += `<div class="codex-section-title">這一關的化合物（點卡片看小知識）</div><div class="codex-mol-grid">`;
-                list.forEach(q => {
-                    if (seen.has(q.aKey)) return;
-                    seen.add(q.aKey);
-                    const ab = (typeof AnswerBank !== 'undefined') ? AnswerBank[q.aKey] : null;
-                    const name = ab ? ab.content : q.aKey;
-                    const fact = (typeof CompoundFacts !== 'undefined' && CompoundFacts[q.aKey]) ? CompoundFacts[q.aKey] : '（小知識整理中……）';
-                    html += `<button class="codex-mol-card" type="button" aria-expanded="false">` +
-                        `<img class="codex-mol-img" src="${q.qContent}" alt="" loading="lazy">` +
-                        `<span class="codex-mol-name">${name}</span>` +
-                        `<span class="codex-mol-fact">${fact}</span>` +
-                        `</button>`;
-                });
-                html += `</div>`;
-            }
-            // 3) 梗圖：只放圖、不寫字、擺最後（沒有就不顯示；一關可有多張）
-            const memes = (info.memes && info.memes.length) ? info.memes : (info.meme ? [info.meme] : []);
-            memes.forEach(m => {
-                html += `<img class="codex-meme-img" src="assets/images/meme/${m}" alt="" loading="lazy">`;
-            });
+    function renderCodexBadges(badgeDefs, data) {
+        if (!UI.codexPanelBadges) return;
+        const totalCorrect = data ? data.totalCorrect : 0;
+        const unlocked = new Set(data ? data.badges : []);
+        if (!badgeDefs || !badgeDefs.length) {
+            UI.codexPanelBadges.innerHTML = '<p class="codex-empty">目前沒有勳章設定。</p>';
+            return;
         }
+        UI.codexPanelBadges.innerHTML = `<div class="codex-badge-grid">${badgeDefs.map(b => {
+            const isUnlocked = unlocked.has(b.id);
+            const progress = b.needCorrect ? Math.min(100, Math.round(totalCorrect / b.needCorrect * 100)) : 0;
+            return `<article class="codex-badge-card ${isUnlocked ? 'unlocked' : 'locked'}">
+                <div class="codex-badge-icon">${b.emoji || '🏅'}</div>
+                <div class="codex-badge-name">${b.label}</div>
+                <div class="codex-badge-cond">${isUnlocked ? '已解鎖' : `累積答對 ${b.needCorrect} 題`}</div>
+                <div class="codex-badge-progress"><div class="fill" style="width:${progress}%"></div></div>
+            </article>`;
+        }).join('')}</div>`;
+    }
 
-        UI.codexDetailBody.innerHTML = html;
-        UI.codexDetailBody.querySelectorAll('.codex-mol-card').forEach(card => {
+    function renderCodexMolecules(data) {
+        if (!UI.codexPanelMolecules) return;
+        const seenKeys = new Set(data ? data.seenMolecules : []);
+        let html = '';
+        LEVEL_ORDER.forEach(lv => {
+            const info = LEVEL_INFO[lv];
+            const questions = _uniqueQuestionsForLevel(lv);
+            if (!info || !questions.length) return;
+            const levelCleared = (typeof Save !== 'undefined') && Save.isLevelCleared(lv);
+            const unlockedCount = questions.filter(q => levelCleared || seenKeys.has(q.aKey)).length;
+            html += `<section class="codex-molecule-section">
+                <h3 class="codex-section-title"><span class="codex-level-tag">${_levelShortLabel(lv)}</span>${info.name}<span class="codex-section-count">${unlockedCount}/${questions.length}</span></h3>
+                <div class="codex-mol-grid">`;
+            questions.forEach(q => {
+                const unlocked = levelCleared || seenKeys.has(q.aKey);
+                const ab = (typeof AnswerBank !== 'undefined') ? AnswerBank[q.aKey] : null;
+                const name = ab ? ab.content : q.aKey;
+                const fact = (typeof CompoundFacts !== 'undefined' && CompoundFacts[q.aKey]) ? CompoundFacts[q.aKey] : '（小知識整理中……）';
+                if (!unlocked) {
+                    html += `<div class="codex-mol-card locked"><span class="codex-mol-img placeholder">?</span><span class="codex-mol-name">???</span></div>`;
+                    return;
+                }
+                html += `<button class="codex-mol-card" type="button" aria-expanded="false">
+                    <img class="codex-mol-img" src="${q.qContent}" alt="" loading="lazy">
+                    <span class="codex-mol-name">${name}</span>
+                    <span class="codex-mol-fact">${fact}</span>
+                </button>`;
+            });
+            html += '</div></section>';
+        });
+        UI.codexPanelMolecules.innerHTML = html || '<p class="codex-empty">還沒有可顯示的分子。</p>';
+        UI.codexPanelMolecules.querySelectorAll('.codex-mol-card:not(.locked)').forEach(card => {
             card.addEventListener('click', () => {
                 const open = card.classList.toggle('open');
                 card.setAttribute('aria-expanded', open ? 'true' : 'false');
             });
         });
-        UI.codexLevelList.classList.add('hidden');
-        UI.codexDetail.classList.remove('hidden');
-        if (UI.btnCodexBack) try { UI.btnCodexBack.focus(); } catch(e) {}
+    }
+
+    function renderCodexStories() {
+        if (!UI.codexPanelStory) return;
+        let html = '';
+        LEVEL_ORDER.forEach(lv => {
+            const info = LEVEL_INFO[lv];
+            const script = (typeof StoryScripts !== 'undefined') ? StoryScripts[lv] : null;
+            if (!info || !script || !script.length) return;
+            const cleared = (typeof Save !== 'undefined') && Save.isLevelCleared(lv);
+            if (!cleared) {
+                html += `<article class="codex-story-card locked">
+                    <div class="codex-story-head"><span class="codex-level-tag">${_levelShortLabel(lv)}</span><h3>${info.name}</h3></div>
+                    <p>通過這一關後解鎖劇情。</p>
+                </article>`;
+                return;
+            }
+            html += `<details class="codex-story-card">
+                <summary><span class="codex-level-tag">${_levelShortLabel(lv)}</span><strong>${info.name}</strong><span>${script.length} 句對話</span></summary>
+                <div class="codex-story">`;
+            script.forEach(line => {
+                    const isWiz = line.who === 'wiz';
+                    const who = isWiz ? `${wizardPersonas.p1.emoji} ${wizardPersonas.p1.name}` : '🎩 分類帽';
+                    const cls = isWiz ? 'codex-line-wiz' : 'codex-line-hat';
+                    const text = line.text.replace(/\{name\}/g, wizardPersonas.p1.name || '你');
+                    html += `<p class="codex-line ${cls}"><strong>${who}：</strong>${text}</p>`;
+            });
+            const memes = (info.memes && info.memes.length) ? info.memes : (info.meme ? [info.meme] : []);
+            if (memes.length) {
+                html += `<div class="codex-meme-strip">${memes.map(m => `<img class="codex-meme-img" src="assets/images/meme/${m}" alt="" loading="lazy">`).join('')}</div>`;
+            }
+            html += '</div></details>';
+        });
+        UI.codexPanelStory.innerHTML = html || '<p class="codex-empty">還沒有可顯示的劇情。</p>';
     }
 
     function isVisible(el) {
@@ -1169,13 +1274,10 @@ const Game = (function() {
         addButtonHint(UI.btnTutorialNext, 'Enter / →');
         addButtonHint(UI.btnTutorialPrev, '←');
         addButtonHint(UI.btnTutorialSkip, 'Esc');
-        if (UI.btnCodexBack) addButtonHint(UI.btnCodexBack, '←');
+        addButtonHint(UI.btnCloseCodex, 'Esc / X');
 
         if (UI.btnCloseRef && !UI.btnCloseRef.querySelector('.button-hotkey')) {
             UI.btnCloseRef.innerHTML = `<span class="button-hotkey button-hotkey-left">[X]</span><span aria-hidden="true">×</span>`;
-        }
-        if (UI.btnCloseCodex && !UI.btnCloseCodex.querySelector('.button-hotkey')) {
-            UI.btnCloseCodex.innerHTML = `<span class="button-hotkey button-hotkey-left">[X]</span><span aria-hidden="true">×</span>`;
         }
     }
 
@@ -1896,8 +1998,7 @@ const Game = (function() {
         if (isVisible(UI.codexModal)) {
             if (e.code === 'Escape' || e.code === 'KeyX') {
                 e.preventDefault();
-                if (UI.codexDetail && !UI.codexDetail.classList.contains('hidden')) codexShowList();
-                else closeCodex();
+                closeCodex();
             }
             // 圖鑑開著時消化所有快捷鍵（避免觸發底下選單的關卡捷徑）；不 preventDefault 讓 Tab/Enter 原生行為仍可用
             return true;

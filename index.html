@@ -296,16 +296,26 @@
 
     <!-- 圖鑑 Modal -->
     <div id="codex-modal" class="modal hidden">
-        <div class="modal-content magic-scroll codex-modal-content">
-            <span id="btn-close-codex" class="close-btn">×</span>
-            <h2 class="magical-text">📔 分類帽圖鑑</h2>
-            <p class="codex-subtitle">通過關卡解鎖劇情與梗圖。點關卡看劇情。</p>
-            <div id="codex-level-list" class="codex-level-list"></div>
-            <div id="codex-detail" class="codex-detail hidden">
-                <button id="btn-codex-back" class="btn magic-btn">← 返回列表</button>
-                <h3 id="codex-detail-title" class="magical-text"></h3>
-                <div id="codex-detail-body"></div>
-            </div>
+        <div class="modal-content codex-modal-content">
+            <header class="codex-header">
+                <h2 class="magical-text" data-icon="codex">
+                    分類帽圖鑑
+                    <span id="codex-summary" class="summary-stat"></span>
+                </h2>
+                <button id="btn-close-codex" class="btn magic-btn codex-back-btn" data-icon="back">返回大廳</button>
+            </header>
+            <nav class="codex-tabs" aria-label="分類帽圖鑑分類">
+                <button class="tab active" type="button" data-codex-tab="levels">闖關進度 <span id="codex-count-levels" class="count"></span></button>
+                <button class="tab" type="button" data-codex-tab="badges">勳章 <span id="codex-count-badges" class="count"></span></button>
+                <button class="tab" type="button" data-codex-tab="molecules">分子 <span id="codex-count-molecules" class="count"></span></button>
+                <button class="tab" type="button" data-codex-tab="story">劇情 <span id="codex-count-story" class="count"></span></button>
+            </nav>
+            <main class="codex-content">
+                <section id="codex-panel-levels" class="codex-panel active" data-codex-panel="levels"></section>
+                <section id="codex-panel-badges" class="codex-panel" data-codex-panel="badges"></section>
+                <section id="codex-panel-molecules" class="codex-panel" data-codex-panel="molecules"></section>
+                <section id="codex-panel-story" class="codex-panel" data-codex-panel="story"></section>
+            </main>
         </div>
     </div>
 
