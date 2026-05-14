@@ -168,6 +168,9 @@ const Game = (function() {
     let _zoomElapsedMs = 0;
     let _zoomTimeoutId = null;
     let _penaltyTimerId = null;
+    let _buzzCountdownId = null;
+    let _buzzCountdownRemaining = 3;
+    const BUZZ_TIMEOUT_MS = 3000;
 
     // Confusable categories for generating wrong-answer options
     const CONFUSABLE_CATS = {
@@ -2815,6 +2818,10 @@ const Game = (function() {
         _arenaOnce(avatarEl, 'charging', 400);
 
         playSound('buzz');
+
+        // Start 3-second countdown for buzz-in answering
+        _buzzCountdownRemaining = 3;
+        startBuzzCountdown(player);
     }
 
     function handleZoomTimeout() {
@@ -2844,6 +2851,8 @@ const Game = (function() {
         btn.classList.add('correct');
         _buzz.phase = 'idle';
 
+        clearBuzzCountdown();
+
         Save.addCorrect(1);
         Save.seeMolecule(duelQ[player].question.aKey);
 
@@ -2862,6 +2871,8 @@ const Game = (function() {
     function handleZoomWrong(player, btn) {
         playSound('wrong');
         btn.classList.add('wrong');
+
+        clearBuzzCountdown();
 
         _buzz.phase = 'penalty';
         _buzz.penaltyPlayer = player;
@@ -2935,6 +2946,14 @@ const Game = (function() {
         const optsEl = player === 'p1' ? UI.optsP1 : UI.optsP2;
         optsEl.classList.remove('pre-buzz');
         optsEl.innerHTML = '';
+
+        // Add countdown timer display
+        const countdownDiv = document.createElement('div');
+        countdownDiv.className = 'buzz-countdown countdown-tick';
+        countdownDiv.id = `buzz-countdown-${player}`;
+        countdownDiv.textContent = '3';
+        optsEl.appendChild(countdownDiv);
+
         options.forEach((opt, idx) => {
             const btn = document.createElement('button');
             btn.className = 'btn opt-btn magic-stone-btn';
@@ -2951,9 +2970,59 @@ const Game = (function() {
         });
     }
 
+    function startBuzzCountdown(player) {
+        // Clear any existing countdown
+        if (_buzzCountdownId) clearTimeout(_buzzCountdownId);
+
+        // Update display immediately
+        const countdownEl = document.getElementById(`buzz-countdown-${player}`);
+        if (countdownEl) {
+            countdownEl.textContent = `${_buzzCountdownRemaining}`;
+            // Force animation replay by removing and re-adding class
+            countdownEl.classList.remove('countdown-tick');
+            void countdownEl.offsetWidth; // trigger reflow
+            countdownEl.classList.add('countdown-tick');
+        }
+
+        if (_buzzCountdownRemaining <= 0) {
+            // Time's up: auto-submit as wrong answer
+            handleBuzzTimeout(player);
+            return;
+        }
+
+        _buzzCountdownRemaining--;
+        _buzzCountdownId = setTimeout(() => startBuzzCountdown(player), 1000);
+    }
+
+    function handleBuzzTimeout(player) {
+        if (_buzz.buzzedBy !== player) return;
+
+        // Auto-submit as wrong answer
+        playSound('wrong');
+        const container = player === 'p1' ? UI.optsP1 : UI.optsP2;
+        const btn = container.querySelector('.opt-btn');
+        if (btn) {
+            btn.classList.add('wrong');
+            setTimeout(() => {
+                handleZoomWrong(player, btn);
+            }, 300);
+        }
+    }
+
+    function clearBuzzCountdown() {
+        if (_buzzCountdownId) {
+            clearTimeout(_buzzCountdownId);
+            _buzzCountdownId = null;
+        }
+        _buzzCountdownRemaining = 3;
+        // Remove countdown display
+        document.querySelectorAll('.buzz-countdown').forEach(el => el.remove());
+    }
+
     function clearZoomState() {
         if (_zoomTimeoutId) { clearTimeout(_zoomTimeoutId); _zoomTimeoutId = null; }
         if (_penaltyTimerId) { clearTimeout(_penaltyTimerId); _penaltyTimerId = null; }
+        clearBuzzCountdown();
         _buzz.phase = 'idle';
         _buzz.buzzedBy = null;
         _buzz.penaltyPlayer = null;
