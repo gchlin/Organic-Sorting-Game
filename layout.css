@@ -582,6 +582,18 @@ body.duel .opts.p2 .opt-btn {
 
 body.duel-zoom #q-shared {
     overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body.duel-zoom #q-shared img {
+    max-width: none;
+    max-height: none;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 body.duel-zoom #q-shared img.zoom-playing {
@@ -595,25 +607,47 @@ body.duel-zoom #q-shared img.zoom-playing.zoom-paused {
     animation-play-state: paused;
 }
 
-/* Pre-buzz state: show hint, hide buttons */
+/* Pre-buzz state: show bell ring hint */
 body.duel-zoom .opts.pre-buzz {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: clamp(8px, 2vh, 16px);
+    padding: clamp(16px, 4vh, 24px);
 }
 
 body.duel-zoom .opts.pre-buzz .opt-btn {
     display: none;
 }
 
+body.duel-zoom .opts.pre-buzz::before {
+    content: '🔔';
+    font-size: clamp(3rem, 8vh, 5rem);
+    display: block;
+    animation: bellRing 0.6s ease-in-out infinite;
+}
+
+@keyframes bellRing {
+    0%, 100% { transform: rotate(0deg); }
+    15% { transform: rotate(-15deg); }
+    30% { transform: rotate(15deg); }
+    45% { transform: rotate(-15deg); }
+    60% { transform: rotate(15deg); }
+    75% { transform: rotate(-5deg); }
+}
+
 body.duel-zoom .opts.pre-buzz::after {
     content: attr(data-buzz-label);
     font-family: "Cinzel", serif;
-    font-size: clamp(1rem, 3vh, 1.8rem);
+    font-size: clamp(0.95rem, 2.8vh, 1.6rem);
     color: var(--hp-gold);
-    opacity: 0.55;
-    letter-spacing: 0.1em;
+    opacity: 0.85;
+    letter-spacing: 0.08em;
     text-align: center;
+    font-weight: 700;
+    white-space: pre-wrap;
+    line-height: 1.3;
 }
 
 /* Buzz-in flash animation */

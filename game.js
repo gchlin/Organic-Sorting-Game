@@ -2905,7 +2905,7 @@ const Game = (function() {
             el.classList.remove('buzz-active', 'buzz-locked-out');
             el.innerHTML = '';
             const player = i === 0 ? 'p1' : 'p2';
-            const label = isDuelDesktop ? '按任意鍵搶答' : '點此搶答';
+            const label = isDuelDesktop ? '按任意鍵\n快速搶答' : '點按搶答';
             el.dataset.buzzLabel = label;
         });
     }
@@ -2915,7 +2915,7 @@ const Game = (function() {
         el.classList.add('pre-buzz');
         el.classList.remove('buzz-active', 'buzz-locked-out');
         el.innerHTML = '';
-        el.dataset.buzzLabel = isDuelDesktop ? '按任意鍵搶答' : '點此搶答';
+        el.dataset.buzzLabel = isDuelDesktop ? '按任意鍵\n快速搶答' : '點按搶答';
     }
 
     function renderZoomOptions(player, options) {
