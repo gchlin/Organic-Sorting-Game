@@ -174,7 +174,7 @@ const Game = (function() {
     let _pendingVariant = 'standard';
 
     // Buzz-in state machine
-    const _buzz = { phase: 'idle', buzzedBy: null, penaltyPlayer: null };
+    const _buzz = { phase: 'idle', buzzedBy: null, penaltyPlayer: null, failedPlayers: new Set() };
 
     // Zoom animation time tracking
     let _zoomStartTime = 0;
@@ -1831,6 +1831,11 @@ const Game = (function() {
         startReadingPeriod(player);
     }
 
+    function nextDuelStandardRound() {
+        nextDuelQuestion('p1');
+        nextDuelQuestion('p2');
+    }
+
     function renderDuelQuestion(player, qData, options) {
         setGlobalInputLocked(false);
         // 新版 landscape：兩位玩家共用中央 #q-shared 題目框
@@ -2364,7 +2369,7 @@ const Game = (function() {
             }
             setTimeout(() => {
                 setGlobalInputLocked(false);
-                nextDuelQuestion(player);
+                nextDuelStandardRound();
             }, 700);
             return;
         }
@@ -2437,7 +2442,7 @@ const Game = (function() {
         if (currentMode !== 'duel') setHatExpr('sad', 1600);
         players[player].totalAsked++;
         if (currentMode === 'practice') recordPracticeProgress(false);
-        revealCorrectAnswer(player);
+        if (currentMode !== 'duel') revealCorrectAnswer(player);
         showPracticeWrongHint();
 
         players[player].combo = 0;
@@ -2472,7 +2477,7 @@ const Game = (function() {
             warnEl.classList.add('hidden');
             warnEl.textContent = '魔力告急!';
             btn.classList.remove('wrong');
-            clearCorrectReveal(player);
+            if (currentMode === 'duel') clearCorrectReveal(player);
             lockTimers[player] = null;
             setGlobalInputLocked(false);
             if (gameActive && currentMode !== 'duel') {
@@ -2804,6 +2809,7 @@ const Game = (function() {
     function nextDuelZoomQuestion() {
         if (!gameActive) return;
         clearZoomState();
+        if (UI.qContentShared) UI.qContentShared.innerHTML = '';
 
         const list = QuestionSets[currentLevel];
         if (!list || !list.length) return;
@@ -2829,10 +2835,12 @@ const Game = (function() {
         UI.qContentShared.innerHTML = imgTag;
 
         setZoomPreBuzzState();
+        setGlobalInputLocked(false);
         startZoomAnimation(qData);
         _buzz.phase = 'zooming';
         _buzz.buzzedBy = null;
         _buzz.penaltyPlayer = null;
+        _buzz.failedPlayers.clear();
     }
 
     function startZoomAnimation(qData) {
@@ -2953,12 +2961,13 @@ const Game = (function() {
         if (_globalInputLocked) return;
         setGlobalInputLocked(true);
         playSound('wrong');
-        btn.classList.add('wrong');
+        if (btn) btn.classList.add('wrong');
 
         clearBuzzCountdown();
 
         _buzz.phase = 'penalty';
         _buzz.penaltyPlayer = player;
+        _buzz.failedPlayers.add(player);
 
         duelArenaFizzle(player);
         showZoomPenaltyBadge(player);
@@ -2969,29 +2978,33 @@ const Game = (function() {
 
         if (_penaltyTimerId) clearTimeout(_penaltyTimerId);
         _penaltyTimerId = setTimeout(() => {
-            btn.classList.remove('wrong');
+            if (btn) btn.classList.remove('wrong');
             container.classList.remove('buzz-active');
 
             const otherOpts = other === 'p1' ? UI.optsP1 : UI.optsP2;
-            otherOpts.classList.remove('buzz-locked-out');
-            setZoomPreBuzzStateFor(other);
+            removeZoomPenaltyBadges();
 
-            const img = UI.qContentShared.querySelector('img');
-            if (img) {
-                // Resume animation from paused position using negative animation-delay
-                const totalElapsedMs = _zoomElapsedMs;
-
-                // Use negative delay to skip already-played time
-                // Keep original duration (12s) and use delay to resume from pause point
-                img.style.animationDelay = `-${totalElapsedMs}ms`;
-
-                // Resume by removing zoom-paused class
-                // zoom-active class remains, so animation definition is preserved
-                img.classList.remove('zoom-paused');
+            if (!_buzz.failedPlayers.has(other)) {
+                container.classList.add('buzz-locked-out');
+                otherOpts.classList.remove('pre-buzz', 'buzz-locked-out');
+                otherOpts.classList.add('buzz-active');
+                const options = generateCategoryOptions(duelQ[other].question.aKey);
+                renderZoomOptions(other, options);
+                _buzz.phase = 'buzzed';
+                _buzz.buzzedBy = other;
+                _buzz.penaltyPlayer = null;
+                _buzzCountdownRemaining = BUZZ_ANSWER_SECONDS;
+                setGlobalInputLocked(false);
+                startBuzzCountdown(other);
+                return;
             }
 
+            setZoomPreBuzzState();
+            resumeZoomAnimation();
             _buzz.phase = 'zooming';
             _buzz.penaltyPlayer = null;
+            _buzz.buzzedBy = null;
+            _buzz.failedPlayers.clear();
 
             if (_zoomTimeoutId) clearTimeout(_zoomTimeoutId);
             const remainingMs = Math.max(500, ZOOM_DURATION_MS - _zoomElapsedMs);
@@ -3026,6 +3039,14 @@ const Game = (function() {
         el.dataset.buzzLabel = isDuelDesktop ? '按任意鍵\n快速搶答' : '點按搶答';
     }
 
+    function resumeZoomAnimation() {
+        const img = UI.qContentShared.querySelector('img');
+        if (!img) return;
+        const totalElapsedMs = _zoomElapsedMs;
+        img.style.animationDelay = `-${totalElapsedMs}ms`;
+        img.classList.remove('zoom-paused');
+    }
+
     function renderZoomOptions(player, options) {
         const optsEl = player === 'p1' ? UI.optsP1 : UI.optsP2;
         optsEl.classList.remove('pre-buzz');
@@ -3044,9 +3065,9 @@ const Game = (function() {
             btn.dataset.idx = idx;
             btn.dataset.key = opt.key;
             const keyCodes = (player === 'p1')
-                ? DUEL_DESKTOP_KEYS.p1[idx]
-                : DUEL_DESKTOP_KEYS.p2[idx];
-            const keyLabel = isDuelDesktop ? formatKeyHint([keyCodes]) : '';
+                ? ANSWER_KEY_BINDINGS.duelDesktop.p1[idx]
+                : ANSWER_KEY_BINDINGS.duelDesktop.p2[idx];
+            const keyLabel = isDuelDesktop ? formatKeyHint(keyCodes) : '';
             btn.innerHTML = keyLabel
                 ? `<span class="key-hint key-hint-left">[${keyLabel}]</span><span class="option-text">${opt.text}</span>`
                 : `<span class="option-text">${opt.text}</span>`;
@@ -3081,16 +3102,7 @@ const Game = (function() {
     function handleBuzzTimeout(player) {
         if (_buzz.buzzedBy !== player) return;
 
-        // Auto-submit as wrong answer
-        playSound('wrong');
-        const container = player === 'p1' ? UI.optsP1 : UI.optsP2;
-        const btn = container.querySelector('.opt-btn');
-        if (btn) {
-            btn.classList.add('wrong');
-            setTimeout(() => {
-                handleZoomWrong(player, btn);
-            }, 300);
-        }
+        handleZoomWrong(player, null);
     }
 
     function clearBuzzCountdown() {
@@ -3110,6 +3122,7 @@ const Game = (function() {
         _buzz.phase = 'idle';
         _buzz.buzzedBy = null;
         _buzz.penaltyPlayer = null;
+        _buzz.failedPlayers.clear();
         UI.sharedArea.querySelectorAll('.zoom-timeout-banner').forEach(el => el.remove());
         const img = UI.qContentShared && UI.qContentShared.querySelector('img');
         if (img) {
@@ -3119,7 +3132,9 @@ const Game = (function() {
         }
         [UI.optsP1, UI.optsP2].forEach(el => {
             el.classList.remove('pre-buzz', 'buzz-active', 'buzz-locked-out');
+            el.innerHTML = '';
         });
+        removeZoomPenaltyBadges();
     }
 
     function showZoomPenaltyBadge(player) {
@@ -3130,6 +3145,10 @@ const Game = (function() {
         optsEl.style.position = 'relative';
         optsEl.appendChild(badge);
         setTimeout(() => badge.remove(), 2000);
+    }
+
+    function removeZoomPenaltyBadges() {
+        document.querySelectorAll('.buzz-penalty-badge').forEach(el => el.remove());
     }
 
     function isPenaltyPlayer(player) {
