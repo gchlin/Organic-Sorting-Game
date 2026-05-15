@@ -11,7 +11,7 @@
 //   Save.seeMolecule("ethanol")   // 圖鑑·分類：認得了
 //   Save.unlockProperty("ethanol")// 圖鑑·性質用途
 //   Save.unlockMeme(3)            // 圖鑑·迷因梗圖（用編號）
-//   Save.markLevelClear("level3") // 該關達門檻 → 同時解鎖該關劇情
+//   Save.markLevelClear("level3") // 該關完成題庫 → 同時解鎖該關劇情
 //   Save.recordBest("speed_level3", 120)
 //   Save.get()                    // 取得當前存檔物件（唯讀心態，要改請走上面的方法）
 //   Save.exportText() / Save.importText(str) / Save.reset()
@@ -41,7 +41,8 @@ const Save = (function () {
             memes: [],              // 圖鑑·迷因梗圖：已解鎖編號
             wrongQueue: {},         // 錯題：{ molKey: 還沒攻克的次數 }
             storyUnlocked: [],      // 已解鎖劇情的關卡 ["level1", …]
-            levelClears: {},        // 各關是否達門檻過 { "level1": true, … }
+            levelClears: {},        // 各關是否完成題庫 { "level1": true, … }
+            practiceStats: {},      // { levelKey: { answered: [], lastRate, bestRate, lastCorrect, lastTotal } }
             bestScores: {},         // { "speed_level3": 120, "duel_level6": 80, … }
             tutorialSeen: false,    // 全域新手導覽是否已看過（首次進站自動跳出）
             levelTutorialsSeen: []  // 已看過「本關分類帽教學」的關卡 ["level1", …]（第一次進關自動跳出）
@@ -132,12 +133,40 @@ const Save = (function () {
 
     function unlockStory(levelKey) { return addToSet('storyUnlocked', levelKey); }
 
-    // 該關達門檻：記 levelClears + 順帶解鎖該關劇情
+    // 該關完成題庫：記 levelClears + 順帶解鎖該關劇情
     function markLevelClear(levelKey) {
         let changed = false;
         if (!data.levelClears[levelKey]) { data.levelClears[levelKey] = true; changed = true; }
         if (!data.storyUnlocked.includes(levelKey)) { data.storyUnlocked.push(levelKey); changed = true; }
         if (changed) persist();
+    }
+
+    function recordPracticeAttempt(levelKey, questionId, correct, roundCorrect, roundTotal) {
+        if (!levelKey) return null;
+        if (!data.practiceStats[levelKey]) {
+            data.practiceStats[levelKey] = {
+                answered: [],
+                lastRate: 0,
+                bestRate: 0,
+                lastCorrect: 0,
+                lastTotal: 0
+            };
+        }
+        const stat = data.practiceStats[levelKey];
+        if (questionId && !stat.answered.includes(questionId)) stat.answered.push(questionId);
+        if (typeof roundCorrect === 'number' && typeof roundTotal === 'number' && roundTotal > 0) {
+            const rate = roundCorrect / roundTotal;
+            stat.lastRate = rate;
+            stat.bestRate = Math.max(stat.bestRate || 0, rate);
+            stat.lastCorrect = roundCorrect;
+            stat.lastTotal = roundTotal;
+        }
+        persist();
+        return stat;
+    }
+
+    function practiceStats(levelKey) {
+        return data.practiceStats[levelKey] || null;
     }
 
     function recordBest(modeKey, score) {
@@ -191,7 +220,7 @@ const Save = (function () {
         load, get,
         addCorrect, recordWrong, clearWrong,
         seeMolecule, unlockProperty, unlockMeme,
-        unlockStory, markLevelClear, recordBest,
+        unlockStory, markLevelClear, recordPracticeAttempt, practiceStats, recordBest,
         knows, isStoryUnlocked, isLevelCleared,
         unlockedBadges, allBadgeDefs, wrongList,
         markTutorialSeen, isTutorialSeen,

@@ -149,7 +149,7 @@ const Game = (function() {
     const DEV_WIN_AFTER = 2;       // 測試模式：答對幾題就過關
     let _muted = false;
     let practiceWrongStreak = 0;
-    // Practice 一輪計數（用於 markLevelClear 門檻判斷：正確率 ≥ 60%）
+    // Practice round counters; pass/clear is based on answering the full level bank.
     let practiceRoundTotal = 0;
     let practiceRoundCorrect = 0;
     let practiceCoachEl = null;
@@ -1426,8 +1426,9 @@ const Game = (function() {
     }
 
     // --- 故事播放系統 ---
-    const STORY_THRESHOLD = 0.6;  // 答對率 ≥ 60%，且至少答 4 題
-    const STORY_MIN_ASKED = 4;
+    const STORY_MIN_ASKED = (typeof ModeRules !== 'undefined' && ModeRules.get('practice'))
+        ? ModeRules.get('practice').roundSize
+        : 10;
 
     let _storyLines = [];
     let _storyIdx = 0;
@@ -1524,7 +1525,7 @@ const Game = (function() {
         { icon: '🔬', title: '怎麼玩', text: '螢幕中間會出現一個分子結構圖，你要從四個選項裡選出它屬於哪一類官能基（烷、烯、醇、醛、酮、酸、酯……）。選對，魔法成功率上升；選錯，咒語會失控、成功率下降；歸零就魔力耗盡。' },
         { icon: '⌨️', title: '怎麼按', text: '用滑鼠直接點選項就行。也可以用鍵盤——每個選項上會標 [快捷鍵]。對決模式時，玩家一用左邊那組鍵、玩家二用右邊那組。結算頁可用 Enter（下一關）、R（再玩）、Esc（回大廳）。' },
         { icon: '⚗️', title: '三種模式', text: '⚗️ 自我修煉：慢慢練，答錯會給你提示。⏳ 競速挑戰：限時作答，答對加秒、連對加更多。⚔️ 巫師對決：兩人同一台搶答（桌面用鍵盤、手機橫放用觸控）。' },
-        { icon: '📖', title: '通關與劇情', text: '每一關答對率達 60%（至少答 4 題）就算通過，會解鎖分類帽的劇情對話。通過的關卡可以在首頁「📔 圖鑑」裡回顧劇情和梗圖。' },
+        { icon: '📖', title: '通關與劇情', text: '每一關把題庫全部題目都至少作答過一次就算通過，並解鎖分類帽的劇情對話。單次答對率會記錄在圖鑑裡，方便回顧練習狀況。' },
         { icon: '✨', title: '開始吧', text: '方向鍵選關卡、Enter 開始。隨時可以從首頁的「新手導覽」再看一次這份說明。去吧，別讓帽子等太久。' },
     ];
     let _tutIdx = 0;
@@ -1625,14 +1626,27 @@ const Game = (function() {
     }
 
     function _checkStoryThreshold() {
-        // 回傳是否本次達門檻
-        if (currentMode === 'duel') {
-            // 任一玩家贏（correctCount >= DUEL_WIN_TARGET）就算
-            return players.p1.correctCount >= DUEL_WIN_TARGET || players.p2.correctCount >= DUEL_WIN_TARGET;
-        }
-        const p = players.p1;
-        if (p.totalAsked < STORY_MIN_ASKED) return false;
-        return (p.correctCount / p.totalAsked) >= STORY_THRESHOLD;
+        if (currentMode !== 'practice') return false;
+        const stat = (typeof Save !== 'undefined' && Save.practiceStats) ? Save.practiceStats(currentLevel) : null;
+        const list = (typeof QuestionSets !== 'undefined') ? QuestionSets[currentLevel] : null;
+        return !!(stat && list && stat.answered.length >= list.length);
+    }
+
+    function getPracticeQuestionId(qData) {
+        if (!qData) return '';
+        return qData.id || qData.key || qData.qContent || qData.aKey || '';
+    }
+
+    function recordPracticeProgress(isCorrect) {
+        if (currentMode !== 'practice' || typeof Save === 'undefined' || !Save.recordPracticeAttempt) return;
+        const roundTotal = practiceRoundTotal || players.p1.totalAsked || 1;
+        Save.recordPracticeAttempt(
+            currentLevel,
+            getPracticeQuestionId(currentQuestion),
+            isCorrect,
+            practiceRoundCorrect,
+            roundTotal
+        );
     }
 
     function endGame(resultType, winner) {
@@ -1661,16 +1675,23 @@ const Game = (function() {
                 playSound('lose');
             }
             UI.resultStats.innerHTML = `P1: ${players.p1.correctCount}/${DUEL_WIN_TARGET} 題 <br> P2: ${players.p2.correctCount}/${DUEL_WIN_TARGET} 題`;
+        } else if (currentMode === 'practice') {
+            const total = Math.max(players.p1.totalAsked, 1);
+            const pct = Math.round((players.p1.correctCount / total) * 100);
+            const cleared = _checkStoryThreshold();
+            title = cleared ? "練習通關" : "本輪完成";
+            msg = cleared ? "已完成本關題庫，解鎖本關進度。" : "已記錄本輪答對率，可繼續練習剩餘題目。";
+            playSound(cleared ? 'win' : 'lose');
+            UI.resultStats.innerHTML = `答對: ${players.p1.correctCount}/${players.p1.totalAsked}<br>本輪答對率: ${pct}%`;
+        } else if (currentMode === 'speed') {
+            title = "Speed 結算";
+            msg = `答對題數: ${players.p1.correctCount}`;
+            playSound('win');
+            UI.resultStats.innerHTML = `答對: ${players.p1.correctCount}<br>得分: ${players.p1.score}`;
         } else {
-            if (players.p1.hp <= 0) {
-                title = "魔力耗盡";
-                msg = getRandomMsg('lose');
-                playSound('lose');
-            } else {
-                title = "練習完成";
-                msg = `最終魔力: ${players.p1.score}`;
-                playSound('win');
-            }
+            title = "練習完成";
+            msg = `最終魔力: ${players.p1.score}`;
+            playSound('win');
             UI.resultStats.innerHTML = `得分: ${players.p1.score}`;
         }
         UI.resultTitle.textContent = title;
@@ -1681,11 +1702,11 @@ const Game = (function() {
         const hasScript = (typeof StoryScripts !== 'undefined') && !!StoryScripts[currentLevel];
         const metThreshold = _checkStoryThreshold();
 
-        if (hasScript && metThreshold && typeof Save !== 'undefined') {
+        if (metThreshold && typeof Save !== 'undefined') {
             Save.markLevelClear(currentLevel);
         }
 
-        // 達門檻：顯示「解鎖劇情」按鈕，由玩家點按才播劇情（不自動跳）
+        // 完成題庫：顯示「解鎖劇情」按鈕，由玩家點按才播劇情（不自動跳）
         let freshStory = false;
         if (UI.btnShowStory) {
             if (hasScript && metThreshold) {
@@ -1749,16 +1770,20 @@ const Game = (function() {
         const list = QuestionSets[currentLevel];
         if (!list || list.length === 0) return;
 
+        if (currentMode === 'practice' && practiceRoundTotal > 0 && players.p1.totalAsked >= practiceRoundTotal) {
+            endGame(_checkStoryThreshold() ? 'win' : 'lose');
+            return;
+        }
+
         if (questionQueueLevel !== currentLevel || questionQueue.length === 0) {
-            // 一輪結束：判斷 Practice 通關門檻（正確率 ≥ 60%）
-            if (currentMode === 'practice' && practiceRoundTotal > 0) {
-                if (practiceRoundCorrect / practiceRoundTotal >= 0.6) {
-                    Save.markLevelClear(currentLevel);
-                }
-            }
             practiceRoundTotal = list.length;
             practiceRoundCorrect = 0;
             questionQueue = shuffleArray([...list]);
+            if (currentMode === 'practice') {
+                const roundSize = STORY_MIN_ASKED;
+                questionQueue = questionQueue.slice(0, Math.min(roundSize, questionQueue.length));
+                practiceRoundTotal = questionQueue.length;
+            }
             if (currentQuestion && questionQueue.length > 1 &&
                 questionQueue[questionQueue.length - 1] === currentQuestion) {
                 [questionQueue[0], questionQueue[questionQueue.length - 1]] =
@@ -2330,9 +2355,6 @@ const Game = (function() {
         players[player].correctCount++;
 
         if (currentMode === 'duel') {
-            const duelBadges = Save.addCorrect(1);
-            if (duelBadges && duelBadges.length) showBadgeToast(duelBadges[0]);
-            Save.seeMolecule(duelQ[player].correctKey);
             updateDuelProgress(player);
             duelArenaAttack(player);
             const devWin = _devQuickWin && players[player].correctCount >= DEV_WIN_AFTER;
@@ -2349,7 +2371,7 @@ const Game = (function() {
 
         // practice / speed mode
         if (_devQuickWin) {
-            // 測試模式：答對 DEV_WIN_AFTER 題就強制達門檻結算
+            // 測試模式：答對 DEV_WIN_AFTER 題就強制結算
             players[player].score += 10;
             updateStats(player);
             Save.addCorrect(1);
@@ -2370,11 +2392,12 @@ const Game = (function() {
         }
 
         practiceWrongStreak = 0;
-        const newBadges = Save.addCorrect(1);
-        if (newBadges && newBadges.length) showBadgeToast(newBadges[0]);
-        Save.seeMolecule(correctAnswerKey);
         if (currentMode === 'practice') {
             practiceRoundCorrect++;
+            const newBadges = Save.addCorrect(1);
+            if (newBadges && newBadges.length) showBadgeToast(newBadges[0]);
+            Save.seeMolecule(correctAnswerKey);
+            recordPracticeProgress(true);
             const lines = COACH_LINES.correct;
             setPracticeCoachText(lines[Math.floor(Math.random() * lines.length)]);
         }
@@ -2389,7 +2412,7 @@ const Game = (function() {
 
         players[player].score += (10 + players[player].combo * 2);
         players[player].combo++;
-        if (currentMode !== 'speed') {
+        if (currentMode !== 'speed' && currentMode !== 'practice') {
             players[player].hp = Math.min(players[player].hp + 5, players[player].maxHp);
         }
         triggerComboAttack(player);
@@ -2413,6 +2436,7 @@ const Game = (function() {
         btn.classList.add('wrong');
         if (currentMode !== 'duel') setHatExpr('sad', 1600);
         players[player].totalAsked++;
+        if (currentMode === 'practice') recordPracticeProgress(false);
         revealCorrectAnswer(player);
         showPracticeWrongHint();
 
@@ -2422,9 +2446,9 @@ const Game = (function() {
             const penalty = speedRules ? Math.abs(speedRules.wrongTimeDelta) : 3;
             timeLeft = Math.max(timeLeft - penalty, 0);
             showTimeBonus(-penalty, UI.optsP1);
-        } else if (currentMode !== 'duel') {
+        } else if (currentMode !== 'duel' && currentMode !== 'practice') {
             players[player].hp -= 20;
-        } else {
+        } else if (currentMode === 'duel') {
             duelArenaFizzle(player);
         }
 
@@ -2432,7 +2456,7 @@ const Game = (function() {
         const container = (player === 'p1') ? UI.optsP1 : UI.optsP2;
         container.classList.add('locked-area');
 
-        if (currentMode !== 'duel') {
+        if (currentMode === 'practice') {
             Save.recordWrong(correctAnswerKey);
         }
 
@@ -2451,13 +2475,16 @@ const Game = (function() {
             clearCorrectReveal(player);
             lockTimers[player] = null;
             setGlobalInputLocked(false);
+            if (gameActive && currentMode !== 'duel') {
+                nextQuestion();
+            }
         }, lockDuration);
 
         if (currentMode !== 'duel') {
             updateStats(player);
             if (currentMode === 'speed') {
                 if (timeLeft <= 0) endGame('lose');
-            } else if (players[player].hp <= 0) {
+            } else if (currentMode !== 'practice' && players[player].hp <= 0) {
                 endGame('lose');
             }
         }
@@ -2906,9 +2933,6 @@ const Game = (function() {
         _buzz.phase = 'idle';
 
         clearBuzzCountdown();
-
-        Save.addCorrect(1);
-        Save.seeMolecule(duelQ[player].question.aKey);
 
         players[player].correctCount++;
         updateDuelProgress(player);
