@@ -13,6 +13,8 @@ const Game = (function() {
     let timerInterval = null;
     let gameActive = false;
     let timeLeft = 0;
+    let _globalInputLocked = false;
+    const _coreState = (typeof GameState !== 'undefined') ? GameState.createState() : null;
     const MAX_TIME = (typeof ModeRules !== 'undefined' && ModeRules.get('speed'))
         ? ModeRules.get('speed').durationSeconds
         : 60;
@@ -23,6 +25,14 @@ const Game = (function() {
         p1: { score: 0, hp: 100, combo: 0, maxHp: 100, isLocked: false },
         p2: { score: 0, hp: 100, combo: 0, maxHp: 100, isLocked: false }
     };
+
+    function setGlobalInputLocked(locked) {
+        _globalInputLocked = Boolean(locked);
+        if (typeof GameState !== 'undefined' && _coreState) {
+            // Keep the new core-state scaffold in sync while game.js is migrated.
+            GameState.setGlobalInputLocked(_coreState, _globalInputLocked);
+        }
+    }
 
     // 魔法師身份（角色選擇彈窗設定）
     const wizardPersonas = {
@@ -763,6 +773,7 @@ const Game = (function() {
         currentLevel = level;
         duelVariant = _pendingVariant;
         gameActive = true;
+        setGlobalInputLocked(false);
         timeLeft = (mode === 'practice') ? 0 : MAX_TIME;
 
         // 重置玩家數據與殘留 UI 狀態
@@ -1049,6 +1060,7 @@ const Game = (function() {
 
     function showMenu() {
         gameActive = false;
+        setGlobalInputLocked(false);
         clearInterval(timerInterval);
         if (_autoStoryTimer) { clearTimeout(_autoStoryTimer); _autoStoryTimer = null; }
         ['p1', 'p2'].forEach(p => {
@@ -1625,6 +1637,7 @@ const Game = (function() {
 
     function endGame(resultType, winner) {
         gameActive = false;
+        setGlobalInputLocked(false);
         clearInterval(timerInterval);
         if (_autoStoryTimer) { clearTimeout(_autoStoryTimer); _autoStoryTimer = null; }
         ['p1', 'p2'].forEach(p => {
@@ -1794,6 +1807,7 @@ const Game = (function() {
     }
 
     function renderDuelQuestion(player, qData, options) {
+        setGlobalInputLocked(false);
         // 新版 landscape：兩位玩家共用中央 #q-shared 題目框
         const qContentEl = UI.qContentShared || ((player === 'p1') ? UI.qContentP1 : null);
         const optsEl = (player === 'p1') ? UI.optsP1 : UI.optsP2;
@@ -1883,6 +1897,7 @@ const Game = (function() {
     }
 
     function renderQuestion(qData, options) {
+        setGlobalInputLocked(false);
         clearPracticeFeedback();
         let targets = (currentMode === 'duel') ? [UI.qContentShared] : [UI.qContentP1];
         const imgTag = `<img src="${qData.qContent}" alt="Structure" draggable="false">`;
@@ -1938,6 +1953,7 @@ const Game = (function() {
     // --- 互動處理 (冷卻、Combo、音效) ---
     function handleOptionClick(e, player) {
         if (!gameActive) return;
+        if (_globalInputLocked) return;
 
         // Zoom duel mode: intercept tap as buzz-in if in zooming phase
         if (currentMode === 'duel' && duelVariant === 'zoom') {
@@ -2033,6 +2049,7 @@ const Game = (function() {
         if (handleArrowNavigation(e)) return;
         if (handleGlobalShortcut(e)) return;
         if (!gameActive) return;
+        if (_globalInputLocked) return;
 
         let player = 'p1';
         let optionIndex;
@@ -2303,6 +2320,8 @@ const Game = (function() {
             handleZoomCorrect(player, btn);
             return;
         }
+        if (_globalInputLocked) return;
+        setGlobalInputLocked(true);
 
         playSound('correct');
         btn.classList.add('correct');
@@ -2321,7 +2340,10 @@ const Game = (function() {
                 endGame('win', player);
                 return;
             }
-            setTimeout(() => nextDuelQuestion(player), 700);
+            setTimeout(() => {
+                setGlobalInputLocked(false);
+                nextDuelQuestion(player);
+            }, 700);
             return;
         }
 
@@ -2339,7 +2361,10 @@ const Game = (function() {
                 players[player].correctCount = STORY_MIN_ASKED;
                 setTimeout(() => endGame('win', player), 600);
             } else {
-                setTimeout(() => { nextQuestion(); }, 800);
+                setTimeout(() => {
+                    setGlobalInputLocked(false);
+                    nextQuestion();
+                }, 800);
             }
             return;
         }
@@ -2370,7 +2395,10 @@ const Game = (function() {
         triggerComboAttack(player);
         updateStats(player);
 
-        setTimeout(() => { nextQuestion(); }, 1000);
+        setTimeout(() => {
+            setGlobalInputLocked(false);
+            nextQuestion();
+        }, 1000);
     }
 
     function handleWrong(player, btn) {
@@ -2378,6 +2406,8 @@ const Game = (function() {
             handleZoomWrong(player, btn);
             return;
         }
+        if (_globalInputLocked) return;
+        setGlobalInputLocked(true);
 
         playSound('wrong');
         btn.classList.add('wrong');
@@ -2420,6 +2450,7 @@ const Game = (function() {
             btn.classList.remove('wrong');
             clearCorrectReveal(player);
             lockTimers[player] = null;
+            setGlobalInputLocked(false);
         }, lockDuration);
 
         if (currentMode !== 'duel') {
@@ -2845,6 +2876,7 @@ const Game = (function() {
 
     function handleZoomTimeout() {
         if (_buzz.phase !== 'zooming') return;
+        setGlobalInputLocked(true);
         _buzz.phase = 'timeout';
         clearTimeout(_zoomTimeoutId);
         _zoomTimeoutId = null;
@@ -2861,11 +2893,14 @@ const Game = (function() {
 
         setTimeout(() => {
             banner.remove();
+            setGlobalInputLocked(false);
             nextDuelZoomQuestion();
         }, 2500);
     }
 
     function handleZoomCorrect(player, btn) {
+        if (_globalInputLocked) return;
+        setGlobalInputLocked(true);
         playSound('correct');
         btn.classList.add('correct');
         _buzz.phase = 'idle';
@@ -2884,10 +2919,15 @@ const Game = (function() {
             endGame('win', player);
             return;
         }
-        setTimeout(() => nextDuelZoomQuestion(), 700);
+        setTimeout(() => {
+            setGlobalInputLocked(false);
+            nextDuelZoomQuestion();
+        }, 700);
     }
 
     function handleZoomWrong(player, btn) {
+        if (_globalInputLocked) return;
+        setGlobalInputLocked(true);
         playSound('wrong');
         btn.classList.add('wrong');
 
@@ -2932,6 +2972,7 @@ const Game = (function() {
             if (_zoomTimeoutId) clearTimeout(_zoomTimeoutId);
             const remainingMs = Math.max(500, ZOOM_DURATION_MS - _zoomElapsedMs);
             _zoomTimeoutId = setTimeout(() => handleZoomTimeout(), remainingMs);
+            setGlobalInputLocked(false);
         }, ZOOM_PENALTY_MS);
     }
 
