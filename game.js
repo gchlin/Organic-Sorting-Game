@@ -49,6 +49,26 @@ const Game = (function() {
         if (id) clearTimeout(id);
     }
 
+    function cleanupQuestionTransientState() {
+        if (typeof EffectManager !== 'undefined') {
+            if (EffectManager.removeTransientElements) EffectManager.removeTransientElements(UI.game);
+            if (EffectManager.clearTransientClasses) EffectManager.clearTransientClasses(UI.game);
+        } else {
+            UI.game.querySelectorAll('.buzz-countdown, .buzz-penalty-badge, .time-bonus, .combo-projectile, .bolt, .impact-burst, .spark')
+                .forEach(el => el.remove());
+            UI.game.querySelectorAll('.correct, .wrong, .reveal-correct, .locked-area, .buzz-active, .buzz-locked-out, .pre-buzz')
+                .forEach(el => el.classList.remove('correct', 'wrong', 'reveal-correct', 'locked-area', 'buzz-active', 'buzz-locked-out', 'pre-buzz'));
+        }
+        ['p1', 'p2'].forEach(player => {
+            players[player].isLocked = false;
+            const playerUI = getPlayerUI(player);
+            if (playerUI.warn) {
+                playerUI.warn.classList.add('hidden');
+                playerUI.warn.textContent = '魔力告急!';
+            }
+        });
+    }
+
     // 魔法師身份（角色選擇彈窗設定）
     const wizardPersonas = {
         p1: { emoji: '🧙', name: '玩家一' },
@@ -803,6 +823,7 @@ const Game = (function() {
         gameActive = true;
         setGlobalInputLocked(false);
         timeLeft = (mode === 'practice') ? 0 : MAX_TIME;
+        cleanupQuestionTransientState();
 
         // 重置玩家數據與殘留 UI 狀態
         ['p1', 'p2'].forEach(p => {
@@ -1092,6 +1113,7 @@ const Game = (function() {
         setGlobalInputLocked(false);
         clearInterval(timerInterval);
         clearZoomState();
+        cleanupQuestionTransientState();
         if (_autoStoryTimer) { clearTimeout(_autoStoryTimer); _autoStoryTimer = null; }
         ['p1', 'p2'].forEach(p => {
             if (readingTimers[p]) { clearTimeout(readingTimers[p]); readingTimers[p] = null; }
@@ -1693,6 +1715,7 @@ const Game = (function() {
         gameActive = false;
         setGlobalInputLocked(false);
         clearInterval(timerInterval);
+        cleanupQuestionTransientState();
         if (_autoStoryTimer) { clearTimeout(_autoStoryTimer); _autoStoryTimer = null; }
         ['p1', 'p2'].forEach(p => {
             if (readingTimers[p]) { clearTimeout(readingTimers[p]); readingTimers[p] = null; }
@@ -1798,6 +1821,7 @@ const Game = (function() {
     function nextQuestion() {
         if (!gameActive) return;
         setHatExpr('neutral');
+        cleanupQuestionTransientState();
         if (currentMode === 'duel') {
             if (duelVariant === 'zoom') {
                 nextDuelZoomQuestion();
