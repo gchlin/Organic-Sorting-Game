@@ -313,6 +313,19 @@ const Game = (function() {
         importFile: document.getElementById('import-file')
     };
 
+    function getPlayerUI(player) {
+        const isP1 = player === 'p1';
+        return {
+            options: isP1 ? UI.optsP1 : UI.optsP2,
+            warn: isP1 ? UI.warnP1 : UI.warnP2,
+            hp: isP1 ? UI.hpP1 : UI.hpP2,
+            score: isP1 ? UI.scoreP1 : UI.scoreP2,
+            hpInfo: isP1 ? UI.hpP1Info : null,
+            scoreInfo: isP1 ? UI.scoreP1Info : null,
+            questionContent: isP1 ? UI.qContentP1 : UI.qContentP2
+        };
+    }
+
     // 音效 Context
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -778,16 +791,17 @@ const Game = (function() {
 
         // 重置玩家數據與殘留 UI 狀態
         ['p1', 'p2'].forEach(p => {
+            const playerUI = getPlayerUI(p);
             players[p] = { score: 0, hp: 100, combo: 0, maxHp: 100, isLocked: false, correctCount: 0, totalAsked: 0 };
             updateStats(p);
             document.querySelectorAll(`.combo-projectile.${p}-atk`).forEach(el => el.remove());
             if (lockTimers[p]) { clearTimeout(lockTimers[p]); lockTimers[p] = null; }
             if (readingTimers[p]) { clearTimeout(readingTimers[p]); readingTimers[p] = null; }
             duelQ[p] = { queue: [], queueLevel: null, question: null, correctKey: '' };
-            const warnEl = (p === 'p1') ? UI.warnP1 : UI.warnP2;
+            const warnEl = playerUI.warn;
             warnEl.classList.add('hidden');
             warnEl.textContent = '魔力告急!';
-            const optsEl = (p === 'p1') ? UI.optsP1 : UI.optsP2;
+            const optsEl = playerUI.options;
             optsEl.classList.remove('locked-area');
         });
         // 更新玩家名稱標籤
@@ -1849,9 +1863,10 @@ const Game = (function() {
 
     function renderDuelQuestion(player, qData, options) {
         setGlobalInputLocked(false);
+        const playerUI = getPlayerUI(player);
         // 新版 landscape：兩位玩家共用中央 #q-shared 題目框
-        const qContentEl = UI.qContentShared || ((player === 'p1') ? UI.qContentP1 : null);
-        const optsEl = (player === 'p1') ? UI.optsP1 : UI.optsP2;
+        const qContentEl = UI.qContentShared || (player === 'p1' ? playerUI.questionContent : null);
+        const optsEl = playerUI.options;
 
         if (qContentEl) {
             const imgTag = `<img src="${qData.qContent}" alt="Structure" draggable="false">`;
@@ -1882,7 +1897,7 @@ const Game = (function() {
     }
 
     function startReadingPeriod(player) {
-        const optsEl = (player === 'p1') ? UI.optsP1 : UI.optsP2;
+        const optsEl = getPlayerUI(player).options;
         optsEl.classList.add('locked-area');
         players[player].isLocked = true;
         if (readingTimers[player]) clearTimeout(readingTimers[player]);
@@ -1895,7 +1910,7 @@ const Game = (function() {
     }
 
     function updateDuelProgress(player) {
-        const hpEl = (player === 'p1') ? UI.hpP1 : UI.hpP2;
+        const hpEl = getPlayerUI(player).hp;
         const count = players[player].correctCount;
         const pct = Math.min((count / DUEL_WIN_TARGET) * 100, 100);
         hpEl.style.width = `${pct}%`;
@@ -2115,7 +2130,7 @@ const Game = (function() {
             optionIndex = SOLO_KEYS[e.code];
         }
 
-        const container = player === 'p1' ? UI.optsP1 : UI.optsP2;
+        const container = getPlayerUI(player).options;
         const btn = container.querySelector(`.opt-btn[data-idx="${optionIndex}"]`);
         if (!btn) return;
         e.preventDefault();
@@ -2469,14 +2484,15 @@ const Game = (function() {
         }
 
         players[player].isLocked = true;
-        const container = (player === 'p1') ? UI.optsP1 : UI.optsP2;
+        const playerUI = getPlayerUI(player);
+        const container = playerUI.options;
         container.classList.add('locked-area');
 
         if (currentMode === 'practice') {
             Save.recordWrong(correctAnswerKey);
         }
 
-        const warnEl = (player === 'p1') ? UI.warnP1 : UI.warnP2;
+        const warnEl = playerUI.warn;
         warnEl.textContent = "魔力潰散!";
         warnEl.classList.remove('hidden');
 
@@ -2507,7 +2523,7 @@ const Game = (function() {
     }
 
     function getOptionContainerForPlayer(player) {
-        return player === 'p1' ? UI.optsP1 : UI.optsP2;
+        return getPlayerUI(player).options;
     }
 
     function revealCorrectAnswer(player) {
@@ -2524,7 +2540,7 @@ const Game = (function() {
     }
 
     function clearCorrectReveal(player) {
-        const container = player === 'p1' ? UI.optsP1 : UI.optsP2;
+        const container = getPlayerUI(player).options;
         container.querySelectorAll('.reveal-correct').forEach(el => el.classList.remove('reveal-correct'));
     }
 
@@ -2725,8 +2741,9 @@ const Game = (function() {
 
     function updateStats(p) {
         const data = players[p];
-        const hpEl = (p==='p1') ? UI.hpP1 : UI.hpP2;
-        const scoreEl = (p==='p1') ? UI.scoreP1 : UI.scoreP2;
+        const playerUI = getPlayerUI(p);
+        const hpEl = playerUI.hp;
+        const scoreEl = playerUI.score;
 
         hpEl.style.width = `${data.hp}%`;
         hpEl.classList.toggle('hp-low', data.hp < 30);
@@ -2734,8 +2751,11 @@ const Game = (function() {
 
         // 單人模式：同步 info-bar 的 HP/分數
         if (p === 'p1' && !document.body.classList.contains('duel')) {
-            if (UI.hpP1Info) { UI.hpP1Info.style.width = `${data.hp}%`; UI.hpP1Info.classList.toggle('hp-low', data.hp < 30); }
-            if (UI.scoreP1Info) UI.scoreP1Info.textContent = data.score;
+            if (playerUI.hpInfo) {
+                playerUI.hpInfo.style.width = `${data.hp}%`;
+                playerUI.hpInfo.classList.toggle('hp-low', data.hp < 30);
+            }
+            if (playerUI.scoreInfo) playerUI.scoreInfo.textContent = data.score;
         }
     }
 
@@ -2907,8 +2927,9 @@ const Game = (function() {
             _zoomTimeoutId = null;
         }
 
-        const buzzingOpts = player === 'p1' ? UI.optsP1 : UI.optsP2;
-        const otherOpts = player === 'p1' ? UI.optsP2 : UI.optsP1;
+        const other = player === 'p1' ? 'p2' : 'p1';
+        const buzzingOpts = getPlayerUI(player).options;
+        const otherOpts = getPlayerUI(other).options;
 
         buzzingOpts.classList.remove('pre-buzz', 'buzz-locked-out');
         buzzingOpts.classList.add('buzz-active');
@@ -2995,8 +3016,8 @@ const Game = (function() {
         duelArenaFizzle(player);
         showZoomPenaltyBadge(player);
 
-        const container = player === 'p1' ? UI.optsP1 : UI.optsP2;
         const other = player === 'p1' ? 'p2' : 'p1';
+        const container = getPlayerUI(player).options;
         container.classList.add('buzz-locked-out');
 
         if (_penaltyTimerId) clearTimeout(_penaltyTimerId);
@@ -3004,7 +3025,7 @@ const Game = (function() {
             if (btn) btn.classList.remove('wrong');
             container.classList.remove('buzz-active');
 
-            const otherOpts = other === 'p1' ? UI.optsP1 : UI.optsP2;
+            const otherOpts = getPlayerUI(other).options;
             removeZoomPenaltyBadges();
 
             if (!_buzz.failedPlayers.has(other)) {
@@ -3060,7 +3081,7 @@ const Game = (function() {
     }
 
     function setZoomPreBuzzStateFor(player) {
-        const el = player === 'p1' ? UI.optsP1 : UI.optsP2;
+        const el = getPlayerUI(player).options;
         el.classList.add('pre-buzz');
         el.classList.remove('buzz-active', 'buzz-locked-out');
         el.innerHTML = '';
@@ -3074,7 +3095,7 @@ const Game = (function() {
     }
 
     function renderZoomOptions(player, options) {
-        const optsEl = player === 'p1' ? UI.optsP1 : UI.optsP2;
+        const optsEl = getPlayerUI(player).options;
         optsEl.classList.remove('pre-buzz');
         optsEl.innerHTML = '';
 
@@ -3166,7 +3187,7 @@ const Game = (function() {
     }
 
     function showZoomPenaltyBadge(player) {
-        const optsEl = player === 'p1' ? UI.optsP1 : UI.optsP2;
+        const optsEl = getPlayerUI(player).options;
         const badge = document.createElement('div');
         badge.className = 'buzz-penalty-badge';
         badge.textContent = '✗ 答錯！';
@@ -3198,7 +3219,7 @@ const Game = (function() {
             if (Object.prototype.hasOwnProperty.call(buzzedKeys, e.code)) {
                 e.preventDefault();
                 const idx = buzzedKeys[e.code];
-                const container = _buzz.buzzedBy === 'p1' ? UI.optsP1 : UI.optsP2;
+                const container = getPlayerUI(_buzz.buzzedBy).options;
                 const btn = container.querySelector(`.opt-btn[data-idx="${idx}"]`);
                 if (btn) handleOptionClick({ target: btn }, _buzz.buzzedBy);
             }
