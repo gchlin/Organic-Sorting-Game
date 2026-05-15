@@ -559,13 +559,13 @@ const Game = (function() {
         document.querySelectorAll('.menu-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 _pendingVariant = btn.dataset.variant || 'standard';
-                showWizardPicker(btn.dataset.mode, btn.dataset.level);
+                startGame(btn.dataset.mode, btn.dataset.level);
             });
         });
 
         const btnChangeWizard = document.getElementById('btn-change-wizard');
         if (btnChangeWizard) {
-            btnChangeWizard.addEventListener('click', () => showWizardPicker('_change', null));
+            btnChangeWizard.classList.add('hidden');
         }
 
         UI.optsP1.addEventListener('click', e => handleOptionClick(e, 'p1'));
@@ -575,9 +575,9 @@ const Game = (function() {
             if (currentMode === 'duel') setupLayout(currentMode);
         });
 
-        UI.btnBack.addEventListener('click', showMenu);
-        if (UI.btnBackDuel) UI.btnBackDuel.addEventListener('click', showMenu);
-        UI.btnMenu.addEventListener('click', showMenu);
+        UI.btnBack.addEventListener('click', confirmReturnToMenu);
+        if (UI.btnBackDuel) UI.btnBackDuel.addEventListener('click', confirmReturnToMenu);
+        UI.btnMenu.addEventListener('click', confirmReturnToMenu);
         UI.btnRestart.addEventListener('click', () => startGame(currentMode, currentLevel));
         if (UI.btnNextLevel) UI.btnNextLevel.addEventListener('click', () => {
             const nextLv = _nextLevelKey(currentLevel);
@@ -1062,6 +1062,7 @@ const Game = (function() {
         gameActive = false;
         setGlobalInputLocked(false);
         clearInterval(timerInterval);
+        clearZoomState();
         if (_autoStoryTimer) { clearTimeout(_autoStoryTimer); _autoStoryTimer = null; }
         ['p1', 'p2'].forEach(p => {
             if (readingTimers[p]) { clearTimeout(readingTimers[p]); readingTimers[p] = null; }
@@ -1072,12 +1073,22 @@ const Game = (function() {
         UI.resultModal.classList.add('hidden');
         if (UI.storyModal) UI.storyModal.classList.add('hidden');
         if (UI.codexModal) UI.codexModal.classList.add('hidden');
+        if (UI.wizardPicker) UI.wizardPicker.classList.add('hidden');
         UI.menu.classList.remove('hidden');
         document.body.classList.remove('duel', 'duel-mode', 'duel-desktop', 'duel-mobile', 'duel-zoom', 'countdown-active');
         if (UI.arenaBar) UI.arenaBar.classList.add('hidden');
         UI.infoBar.classList.remove('hidden');
         updateMenuProgress();
         focusFirstAvailableControl(UI.menu);
+    }
+
+    function confirmReturnToMenu() {
+        if (!isVisible(UI.game) && !isVisible(UI.resultModal)) {
+            showMenu();
+            return;
+        }
+        if (!window.confirm('確定返回大廳？目前這題會中斷。')) return;
+        showMenu();
     }
 
     function showReference() {
@@ -2163,7 +2174,7 @@ const Game = (function() {
             if (e.code === 'KeyN' && nextAvail) { e.preventDefault(); UI.btnNextLevel.click(); return true; }
             if (e.code === 'KeyS' && UI.btnShowStory && !UI.btnShowStory.classList.contains('hidden')) { e.preventDefault(); UI.btnShowStory.click(); return true; }
             if (e.code === 'KeyT' && UI.btnShowTutorial && !UI.btnShowTutorial.classList.contains('hidden')) { e.preventDefault(); UI.btnShowTutorial.click(); return true; }
-            if (e.code === 'KeyM' || e.code === 'Escape') { e.preventDefault(); showMenu(); return true; }
+            if (e.code === 'KeyM' || e.code === 'Escape') { e.preventDefault(); confirmReturnToMenu(); return true; }
             return false;
         }
 
@@ -2204,7 +2215,7 @@ const Game = (function() {
         if (isVisible(UI.game)) {
             if (e.code === 'Escape' || e.code === 'KeyM') {
                 e.preventDefault();
-                showMenu();
+                confirmReturnToMenu();
                 return true;
             }
             if (e.code === 'KeyR') {
@@ -2883,8 +2894,6 @@ const Game = (function() {
             // Pause animation at current frame by adding zoom-paused class
             // Keep zoom-active to preserve animation definition
             img.classList.add('zoom-paused');
-            // Clear any previous animation-delay to prevent interference
-            img.style.animationDelay = '';
         }
 
         if (_zoomTimeoutId) {
@@ -2926,7 +2935,7 @@ const Game = (function() {
         setGlobalInputLocked(true);
         playSound('correct');
         btn.classList.add('correct');
-        _buzz.phase = 'idle';
+        _buzz.phase = 'correct_wait';
 
         clearBuzzCountdown();
 
@@ -2934,15 +2943,35 @@ const Game = (function() {
         updateDuelProgress(player);
         duelArenaAttack(player);
 
+        if (_zoomTimeoutId) {
+            clearTimeout(_zoomTimeoutId);
+            _zoomTimeoutId = null;
+        }
+
+        if (_buzz.effectComplete) {
+            setTimeout(() => finishZoomCorrect(player), 700);
+            return;
+        }
+
+        resumeZoomAnimation();
+        const remainingMs = Math.max(0, ZOOM_DURATION_MS - _zoomElapsedMs);
+        _zoomStartTime = Date.now() - _zoomElapsedMs;
+        _zoomTimeoutId = setTimeout(() => {
+            _zoomTimeoutId = null;
+            _zoomElapsedMs = ZOOM_DURATION_MS;
+            _buzz.effectComplete = true;
+            finishZoomCorrect(player);
+        }, remainingMs);
+    }
+
+    function finishZoomCorrect(player) {
         const devWin = _devQuickWin && players[player].correctCount >= DEV_WIN_AFTER;
         if (devWin || players[player].correctCount >= DUEL_WIN_TARGET) {
             endGame('win', player);
             return;
         }
-        setTimeout(() => {
-            setGlobalInputLocked(false);
-            nextDuelZoomQuestion();
-        }, 700);
+        setGlobalInputLocked(false);
+        nextDuelZoomQuestion();
     }
 
     function handleZoomWrong(player, btn) {
@@ -3035,8 +3064,6 @@ const Game = (function() {
     function resumeZoomAnimation() {
         const img = UI.qContentShared.querySelector('img');
         if (!img) return;
-        const totalElapsedMs = _zoomElapsedMs;
-        img.style.animationDelay = `-${totalElapsedMs}ms`;
         img.classList.remove('zoom-paused');
     }
 
@@ -3124,6 +3151,7 @@ const Game = (function() {
             img.style.animationDelay = '';
             img.style.setProperty('--zoom-duration', '');
         }
+        if (UI.qContentShared) UI.qContentShared.innerHTML = '';
         [UI.optsP1, UI.optsP2].forEach(el => {
             el.classList.remove('pre-buzz', 'buzz-active', 'buzz-locked-out');
             el.innerHTML = '';
