@@ -2453,7 +2453,7 @@ const Game = (function() {
         if (currentMode !== 'duel') setHatExpr('sad', 1600);
         players[player].totalAsked++;
         if (currentMode === 'practice') recordPracticeProgress(false);
-        if (currentMode === 'speed') revealCorrectAnswer(player);
+        if (shouldRevealCorrectOnWrong()) revealCorrectAnswer(player);
         showPracticeWrongHint();
 
         players[player].combo = 0;
@@ -2515,6 +2515,12 @@ const Game = (function() {
         const container = getOptionContainerForPlayer(player);
         const correctBtn = container.querySelector(`.opt-btn[data-key="${correctKey}"]`);
         if (correctBtn) correctBtn.classList.add('reveal-correct');
+    }
+
+    function shouldRevealCorrectOnWrong() {
+        if (typeof ModeRules === 'undefined' || !ModeRules.get) return false;
+        const rules = ModeRules.get(currentMode);
+        return !!(rules && rules.revealCorrectOnWrong);
     }
 
     function clearCorrectReveal(player) {
