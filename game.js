@@ -1811,11 +1811,35 @@ const Game = (function() {
 
     // --- 題目生成 ---
     function shuffleArray(arr) {
+        if (typeof QuestionEngine !== 'undefined' && QuestionEngine.shuffle) {
+            return QuestionEngine.shuffle(arr);
+        }
         for (let i = arr.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [arr[i], arr[j]] = [arr[j], arr[i]];
         }
         return arr;
+    }
+
+    function getLevelQuestions(levelKey) {
+        if (typeof QuestionEngine !== 'undefined' && QuestionEngine.getQuestions) {
+            return QuestionEngine.getQuestions(levelKey);
+        }
+        return (typeof QuestionSets !== 'undefined' && Array.isArray(QuestionSets[levelKey])) ? QuestionSets[levelKey] : [];
+    }
+
+    function avoidImmediateRepeat(queue, lastQuestion) {
+        if (lastQuestion && queue.length > 1 && queue[queue.length - 1] === lastQuestion) {
+            [queue[0], queue[queue.length - 1]] = [queue[queue.length - 1], queue[0]];
+        }
+        return queue;
+    }
+
+    function buildQuestionQueue(levelKey, lastQuestion, limit) {
+        const list = getLevelQuestions(levelKey);
+        let queue = shuffleArray([...list]);
+        if (typeof limit === 'number') queue = queue.slice(0, Math.min(limit, queue.length));
+        return avoidImmediateRepeat(queue, lastQuestion);
     }
 
     function nextQuestion() {
@@ -1831,7 +1855,7 @@ const Game = (function() {
             }
             return;
         }
-        const list = QuestionSets[currentLevel];
+        const list = getLevelQuestions(currentLevel);
         if (!list || list.length === 0) return;
 
         if (currentMode === 'practice' && practiceRoundTotal > 0 && players.p1.totalAsked >= practiceRoundTotal) {
@@ -1842,16 +1866,12 @@ const Game = (function() {
         if (questionQueueLevel !== currentLevel || questionQueue.length === 0) {
             practiceRoundTotal = list.length;
             practiceRoundCorrect = 0;
-            questionQueue = shuffleArray([...list]);
             if (currentMode === 'practice') {
                 const roundSize = STORY_MIN_ASKED;
-                questionQueue = questionQueue.slice(0, Math.min(roundSize, questionQueue.length));
+                questionQueue = buildQuestionQueue(currentLevel, currentQuestion, roundSize);
                 practiceRoundTotal = questionQueue.length;
-            }
-            if (currentQuestion && questionQueue.length > 1 &&
-                questionQueue[questionQueue.length - 1] === currentQuestion) {
-                [questionQueue[0], questionQueue[questionQueue.length - 1]] =
-                    [questionQueue[questionQueue.length - 1], questionQueue[0]];
+            } else {
+                questionQueue = buildQuestionQueue(currentLevel, currentQuestion);
             }
             questionQueueLevel = currentLevel;
         }
@@ -1866,23 +1886,19 @@ const Game = (function() {
 
     function nextDuelQuestion(player) {
         if (!gameActive) return;
-        const list = QuestionSets[currentLevel];
+        const list = getLevelQuestions(currentLevel);
         if (!list || list.length === 0) return;
         const pq = duelQ[player];
 
         // 共用題目順序：建一次，兩位玩家共用 → 第 N 題同一分子
         if (_duelOrderLevel !== currentLevel || !_duelOrder || _duelOrder.length === 0) {
-            _duelOrder = shuffleArray([...list]);
+            _duelOrder = buildQuestionQueue(currentLevel);
             _duelOrderLevel = currentLevel;
         }
 
         if (pq.queueLevel !== currentLevel || pq.queue.length === 0) {
             pq.queue = [..._duelOrder];   // 各自一份副本，但順序相同
-            if (pq.question && pq.queue.length > 1 &&
-                pq.queue[pq.queue.length - 1] === pq.question) {
-                [pq.queue[0], pq.queue[pq.queue.length - 1]] =
-                    [pq.queue[pq.queue.length - 1], pq.queue[0]];
-            }
+            avoidImmediateRepeat(pq.queue, pq.question);
             pq.queueLevel = currentLevel;
         }
 
@@ -2887,15 +2903,16 @@ const Game = (function() {
         clearZoomState();
         if (UI.qContentShared) UI.qContentShared.innerHTML = '';
 
-        const list = QuestionSets[currentLevel];
+        const list = getLevelQuestions(currentLevel);
         if (!list || !list.length) return;
         if (_duelOrderLevel !== currentLevel || !_duelOrder || !_duelOrder.length) {
-            _duelOrder = shuffleArray([...list]);
+            _duelOrder = buildQuestionQueue(currentLevel);
             _duelOrderLevel = currentLevel;
         }
         const pq = duelQ.p1;
         if (pq.queueLevel !== currentLevel || !pq.queue.length) {
             pq.queue = [..._duelOrder];
+            avoidImmediateRepeat(pq.queue, pq.question);
             pq.queueLevel = currentLevel;
         }
         const qData = pq.queue.pop();
