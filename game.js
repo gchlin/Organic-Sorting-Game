@@ -174,7 +174,7 @@ const Game = (function() {
     let _pendingVariant = 'standard';
 
     // Buzz-in state machine
-    const _buzz = { phase: 'idle', buzzedBy: null, penaltyPlayer: null, failedPlayers: new Set() };
+    const _buzz = { phase: 'idle', buzzedBy: null, penaltyPlayer: null, failedPlayers: new Set(), effectComplete: false };
 
     // Zoom animation time tracking
     let _zoomStartTime = 0;
@@ -2442,7 +2442,7 @@ const Game = (function() {
         if (currentMode !== 'duel') setHatExpr('sad', 1600);
         players[player].totalAsked++;
         if (currentMode === 'practice') recordPracticeProgress(false);
-        if (currentMode !== 'duel') revealCorrectAnswer(player);
+        if (currentMode === 'speed') revealCorrectAnswer(player);
         showPracticeWrongHint();
 
         players[player].combo = 0;
@@ -2841,6 +2841,7 @@ const Game = (function() {
         _buzz.buzzedBy = null;
         _buzz.penaltyPlayer = null;
         _buzz.failedPlayers.clear();
+        _buzz.effectComplete = false;
     }
 
     function startZoomAnimation(qData) {
@@ -2862,7 +2863,7 @@ const Game = (function() {
         _zoomElapsedMs = 0;
 
         if (_zoomTimeoutId) clearTimeout(_zoomTimeoutId);
-        _zoomTimeoutId = setTimeout(() => handleZoomTimeout(), ZOOM_DURATION_MS);
+        _zoomTimeoutId = setTimeout(() => handleZoomEffectComplete(), ZOOM_DURATION_MS);
     }
 
     function handleZoomBuzzIn(player) {
@@ -2872,9 +2873,12 @@ const Game = (function() {
 
         const img = UI.qContentShared.querySelector('img');
         if (img) {
-            // Store current animation progress before pausing
-            _zoomPausedAt = Date.now();
-            _zoomElapsedMs += _zoomPausedAt - _zoomStartTime;
+            if (!_buzz.effectComplete) {
+                _zoomPausedAt = Date.now();
+                _zoomElapsedMs += _zoomPausedAt - _zoomStartTime;
+            } else {
+                _zoomElapsedMs = ZOOM_DURATION_MS;
+            }
 
             // Pause animation at current frame by adding zoom-paused class
             // Keep zoom-active to preserve animation definition
@@ -2909,28 +2913,12 @@ const Game = (function() {
         startBuzzCountdown(player);
     }
 
-    function handleZoomTimeout() {
+    function handleZoomEffectComplete() {
         if (_buzz.phase !== 'zooming') return;
-        setGlobalInputLocked(true);
-        _buzz.phase = 'timeout';
         clearTimeout(_zoomTimeoutId);
         _zoomTimeoutId = null;
-
-        const correctCat = duelQ.p1.correctKey;
-        const correctLabel = CATEGORY_NAMES[correctCat] || correctCat;
-
-        const banner = document.createElement('div');
-        banner.className = 'zoom-timeout-banner';
-        banner.innerHTML = `
-            <span class="timeout-label">時間到！正確答案：</span>
-            <span class="timeout-answer">${correctLabel}</span>`;
-        UI.sharedArea.appendChild(banner);
-
-        setTimeout(() => {
-            banner.remove();
-            setGlobalInputLocked(false);
-            nextDuelZoomQuestion();
-        }, 2500);
+        _zoomElapsedMs = ZOOM_DURATION_MS;
+        _buzz.effectComplete = true;
     }
 
     function handleZoomCorrect(player, btn) {
@@ -3000,15 +2988,20 @@ const Game = (function() {
             }
 
             setZoomPreBuzzState();
-            resumeZoomAnimation();
             _buzz.phase = 'zooming';
             _buzz.penaltyPlayer = null;
             _buzz.buzzedBy = null;
             _buzz.failedPlayers.clear();
 
             if (_zoomTimeoutId) clearTimeout(_zoomTimeoutId);
-            const remainingMs = Math.max(500, ZOOM_DURATION_MS - _zoomElapsedMs);
-            _zoomTimeoutId = setTimeout(() => handleZoomTimeout(), remainingMs);
+            if (_buzz.effectComplete) {
+                _zoomTimeoutId = null;
+            } else {
+                resumeZoomAnimation();
+                const remainingMs = Math.max(500, ZOOM_DURATION_MS - _zoomElapsedMs);
+                _zoomTimeoutId = setTimeout(() => handleZoomEffectComplete(), remainingMs);
+                _zoomStartTime = Date.now() - _zoomElapsedMs;
+            }
             setGlobalInputLocked(false);
         }, ZOOM_PENALTY_MS);
     }
@@ -3123,6 +3116,7 @@ const Game = (function() {
         _buzz.buzzedBy = null;
         _buzz.penaltyPlayer = null;
         _buzz.failedPlayers.clear();
+        _buzz.effectComplete = false;
         UI.sharedArea.querySelectorAll('.zoom-timeout-banner').forEach(el => el.remove());
         const img = UI.qContentShared && UI.qContentShared.querySelector('img');
         if (img) {
