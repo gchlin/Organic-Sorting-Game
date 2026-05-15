@@ -34,6 +34,21 @@ const Game = (function() {
         }
     }
 
+    function setManagedTimeout(key, callback, delay) {
+        if (typeof EffectManager !== 'undefined' && EffectManager.setTimeoutTracked) {
+            return EffectManager.setTimeoutTracked(key, callback, delay);
+        }
+        return setTimeout(callback, delay);
+    }
+
+    function clearManagedTimeout(key, id) {
+        if (typeof EffectManager !== 'undefined' && EffectManager.clearTimeoutTracked) {
+            EffectManager.clearTimeoutTracked(key);
+            return;
+        }
+        if (id) clearTimeout(id);
+    }
+
     // 魔法師身份（角色選擇彈窗設定）
     const wizardPersonas = {
         p1: { emoji: '🧙', name: '玩家一' },
@@ -2899,8 +2914,8 @@ const Game = (function() {
         _zoomStartTime = Date.now();
         _zoomElapsedMs = 0;
 
-        if (_zoomTimeoutId) clearTimeout(_zoomTimeoutId);
-        _zoomTimeoutId = setTimeout(() => handleZoomEffectComplete(), ZOOM_DURATION_MS);
+        clearManagedTimeout('zoom-effect-complete', _zoomTimeoutId);
+        _zoomTimeoutId = setManagedTimeout('zoom-effect-complete', () => handleZoomEffectComplete(), ZOOM_DURATION_MS);
     }
 
     function handleZoomBuzzIn(player) {
@@ -2923,7 +2938,7 @@ const Game = (function() {
         }
 
         if (_zoomTimeoutId) {
-            clearTimeout(_zoomTimeoutId);
+            clearManagedTimeout('zoom-effect-complete', _zoomTimeoutId);
             _zoomTimeoutId = null;
         }
 
@@ -2951,7 +2966,7 @@ const Game = (function() {
 
     function handleZoomEffectComplete() {
         if (_buzz.phase !== 'zooming') return;
-        clearTimeout(_zoomTimeoutId);
+        clearManagedTimeout('zoom-effect-complete', _zoomTimeoutId);
         _zoomTimeoutId = null;
         _zoomElapsedMs = ZOOM_DURATION_MS;
         _buzz.effectComplete = true;
@@ -2971,19 +2986,19 @@ const Game = (function() {
         duelArenaAttack(player);
 
         if (_zoomTimeoutId) {
-            clearTimeout(_zoomTimeoutId);
+            clearManagedTimeout('zoom-effect-complete', _zoomTimeoutId);
             _zoomTimeoutId = null;
         }
 
         if (_buzz.effectComplete) {
-            setTimeout(() => finishZoomCorrect(player), 700);
+            setManagedTimeout('zoom-correct-finish', () => finishZoomCorrect(player), 700);
             return;
         }
 
         resumeZoomAnimation();
         const remainingMs = Math.max(0, ZOOM_DURATION_MS - _zoomElapsedMs);
         _zoomStartTime = Date.now() - _zoomElapsedMs;
-        _zoomTimeoutId = setTimeout(() => {
+        _zoomTimeoutId = setManagedTimeout('zoom-effect-complete', () => {
             _zoomTimeoutId = null;
             _zoomElapsedMs = ZOOM_DURATION_MS;
             _buzz.effectComplete = true;
@@ -3020,8 +3035,8 @@ const Game = (function() {
         const container = getPlayerUI(player).options;
         container.classList.add('buzz-locked-out');
 
-        if (_penaltyTimerId) clearTimeout(_penaltyTimerId);
-        _penaltyTimerId = setTimeout(() => {
+        clearManagedTimeout('zoom-penalty', _penaltyTimerId);
+        _penaltyTimerId = setManagedTimeout('zoom-penalty', () => {
             if (btn) btn.classList.remove('wrong');
             container.classList.remove('buzz-active');
 
@@ -3049,13 +3064,13 @@ const Game = (function() {
             _buzz.buzzedBy = null;
             _buzz.failedPlayers.clear();
 
-            if (_zoomTimeoutId) clearTimeout(_zoomTimeoutId);
+            clearManagedTimeout('zoom-effect-complete', _zoomTimeoutId);
             if (_buzz.effectComplete) {
                 _zoomTimeoutId = null;
             } else {
                 resumeZoomAnimation();
                 const remainingMs = Math.max(500, ZOOM_DURATION_MS - _zoomElapsedMs);
-                _zoomTimeoutId = setTimeout(() => handleZoomEffectComplete(), remainingMs);
+                _zoomTimeoutId = setManagedTimeout('zoom-effect-complete', () => handleZoomEffectComplete(), remainingMs);
                 _zoomStartTime = Date.now() - _zoomElapsedMs;
             }
             setGlobalInputLocked(false);
@@ -3124,7 +3139,7 @@ const Game = (function() {
 
     function startBuzzCountdown(player) {
         // Clear any existing countdown
-        if (_buzzCountdownId) clearTimeout(_buzzCountdownId);
+        clearManagedTimeout('buzz-countdown', _buzzCountdownId);
 
         // Update display immediately
         const countdownEl = document.getElementById(`buzz-countdown-${player}`);
@@ -3143,7 +3158,7 @@ const Game = (function() {
         }
 
         _buzzCountdownRemaining--;
-        _buzzCountdownId = setTimeout(() => startBuzzCountdown(player), 1000);
+        _buzzCountdownId = setManagedTimeout('buzz-countdown', () => startBuzzCountdown(player), 1000);
     }
 
     function handleBuzzTimeout(player) {
@@ -3154,7 +3169,7 @@ const Game = (function() {
 
     function clearBuzzCountdown() {
         if (_buzzCountdownId) {
-            clearTimeout(_buzzCountdownId);
+            clearManagedTimeout('buzz-countdown', _buzzCountdownId);
             _buzzCountdownId = null;
         }
         _buzzCountdownRemaining = BUZZ_ANSWER_SECONDS;
@@ -3163,8 +3178,9 @@ const Game = (function() {
     }
 
     function clearZoomState() {
-        if (_zoomTimeoutId) { clearTimeout(_zoomTimeoutId); _zoomTimeoutId = null; }
-        if (_penaltyTimerId) { clearTimeout(_penaltyTimerId); _penaltyTimerId = null; }
+        if (_zoomTimeoutId) { clearManagedTimeout('zoom-effect-complete', _zoomTimeoutId); _zoomTimeoutId = null; }
+        clearManagedTimeout('zoom-correct-finish', null);
+        if (_penaltyTimerId) { clearManagedTimeout('zoom-penalty', _penaltyTimerId); _penaltyTimerId = null; }
         clearBuzzCountdown();
         _buzz.phase = 'idle';
         _buzz.buzzedBy = null;
