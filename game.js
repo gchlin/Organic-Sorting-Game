@@ -13,7 +13,9 @@ const Game = (function() {
     let timerInterval = null;
     let gameActive = false;
     let timeLeft = 0;
-    const MAX_TIME = 60;
+    const MAX_TIME = (typeof ModeRules !== 'undefined' && ModeRules.get('speed'))
+        ? ModeRules.get('speed').durationSeconds
+        : 60;
 
     // 玩家狀態
     // isLocked: 答錯冷卻鎖定
@@ -133,7 +135,7 @@ const Game = (function() {
         guide: "判斷順序：① 有苯環嗎？②有 C=O 嗎—接 H 是醛、夾在中間是酮、配 -OH 是羧酸、配 -O-碳 是酯。③ 有 -OH 嗎—接苯環是酚、接飽和碳是醇；C-O-C 是醚。④ 有 N 是胺、有 F/Cl/Br/I 是鹵化物、有 C=C 是烯、C≡C 是炔；都沒有就是烷。"
     };
     let isDuelDesktop = false;
-    let _devQuickWin = true;       // ← true 開啟測試模式（答對 DEV_WIN_AFTER 題即結算）；` 鍵也可即時切換
+    let _devQuickWin = false;      // 開發測試捷徑；預設關閉，避免覆蓋正式規格
     const DEV_WIN_AFTER = 2;       // 測試模式：答對幾題就過關
     let _muted = false;
     let practiceWrongStreak = 0;
@@ -147,7 +149,9 @@ const Game = (function() {
     let practiceTutBtn = null;
     let practiceButtonRow = null;
 
-    const DUEL_WIN_TARGET = 8;
+    const DUEL_WIN_TARGET = (typeof ModeRules !== 'undefined' && ModeRules.get('duel'))
+        ? ModeRules.get('duel').winCorrectCount
+        : 5;
     const DUEL_READING_MS = 1500;
     const DUEL_LOCK_MS = 2000;
 
@@ -169,8 +173,11 @@ const Game = (function() {
     let _zoomTimeoutId = null;
     let _penaltyTimerId = null;
     let _buzzCountdownId = null;
-    let _buzzCountdownRemaining = 3;
-    const BUZZ_TIMEOUT_MS = 3000;
+    const BUZZ_ANSWER_SECONDS = (typeof ModeRules !== 'undefined' && ModeRules.get('duel'))
+        ? ModeRules.get('duel').answerOwnershipSeconds
+        : 5;
+    let _buzzCountdownRemaining = BUZZ_ANSWER_SECONDS;
+    const BUZZ_TIMEOUT_MS = BUZZ_ANSWER_SECONDS * 1000;
 
     // Confusable categories for generating wrong-answer options
     const CONFUSABLE_CATS = {
@@ -1028,7 +1035,7 @@ const Game = (function() {
     function showTimeBonus(bonus, referenceEl) {
         const pop = document.createElement('div');
         pop.className = 'time-bonus-pop';
-        pop.textContent = `+${bonus}s`;
+        pop.textContent = `${bonus > 0 ? '+' : ''}${bonus}s`;
         // 定位在答題區中央上方
         const rect = referenceEl
             ? referenceEl.getBoundingClientRect()
@@ -2347,7 +2354,8 @@ const Game = (function() {
             setPracticeCoachText(lines[Math.floor(Math.random() * lines.length)]);
         }
         if (currentMode === 'speed') {
-            const bonus = players[player].combo >= 2 ? (players[player].combo >= 3 ? 4 : 3) : 2;
+            const speedRules = (typeof ModeRules !== 'undefined' && ModeRules.get('speed')) ? ModeRules.get('speed') : null;
+            const bonus = speedRules ? speedRules.correctTimeDelta : 3;
             timeLeft = Math.min(timeLeft + bonus, MAX_TIME);
             showTimeBonus(bonus, UI.optsP1);
             const speedLines = ['⚡ 繼續！', '🔥 燃燒！', '💥 完美！', '✨ 加速！', '🚀 快！'];
@@ -2356,7 +2364,9 @@ const Game = (function() {
 
         players[player].score += (10 + players[player].combo * 2);
         players[player].combo++;
-        players[player].hp = Math.min(players[player].hp + 5, players[player].maxHp);
+        if (currentMode !== 'speed') {
+            players[player].hp = Math.min(players[player].hp + 5, players[player].maxHp);
+        }
         triggerComboAttack(player);
         updateStats(player);
 
@@ -2377,7 +2387,12 @@ const Game = (function() {
         showPracticeWrongHint();
 
         players[player].combo = 0;
-        if (currentMode !== 'duel') {
+        if (currentMode === 'speed') {
+            const speedRules = (typeof ModeRules !== 'undefined' && ModeRules.get('speed')) ? ModeRules.get('speed') : null;
+            const penalty = speedRules ? Math.abs(speedRules.wrongTimeDelta) : 3;
+            timeLeft = Math.max(timeLeft - penalty, 0);
+            showTimeBonus(-penalty, UI.optsP1);
+        } else if (currentMode !== 'duel') {
             players[player].hp -= 20;
         } else {
             duelArenaFizzle(player);
@@ -2409,7 +2424,11 @@ const Game = (function() {
 
         if (currentMode !== 'duel') {
             updateStats(player);
-            if (players[player].hp <= 0) endGame('lose');
+            if (currentMode === 'speed') {
+                if (timeLeft <= 0) endGame('lose');
+            } else if (players[player].hp <= 0) {
+                endGame('lose');
+            }
         }
     }
 
@@ -2820,7 +2839,7 @@ const Game = (function() {
         playSound('buzz');
 
         // Start 3-second countdown for buzz-in answering
-        _buzzCountdownRemaining = 3;
+        _buzzCountdownRemaining = BUZZ_ANSWER_SECONDS;
         startBuzzCountdown(player);
     }
 
@@ -2951,7 +2970,7 @@ const Game = (function() {
         const countdownDiv = document.createElement('div');
         countdownDiv.className = 'buzz-countdown countdown-tick';
         countdownDiv.id = `buzz-countdown-${player}`;
-        countdownDiv.textContent = '3';
+        countdownDiv.textContent = `${BUZZ_ANSWER_SECONDS}`;
         optsEl.appendChild(countdownDiv);
 
         options.forEach((opt, idx) => {
@@ -3014,7 +3033,7 @@ const Game = (function() {
             clearTimeout(_buzzCountdownId);
             _buzzCountdownId = null;
         }
-        _buzzCountdownRemaining = 3;
+        _buzzCountdownRemaining = BUZZ_ANSWER_SECONDS;
         // Remove countdown display
         document.querySelectorAll('.buzz-countdown').forEach(el => el.remove());
     }
