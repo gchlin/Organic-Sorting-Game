@@ -563,6 +563,10 @@
             buzz.classList.toggle('buzz-open', state.phase === 'buzzOpen');
             buzz.classList.toggle('buzz-owner-p1', state.phase === 'buzzed' && state.buzz && state.buzz.owner === 'p1');
             buzz.classList.toggle('buzz-owner-p2', state.phase === 'buzzed' && state.buzz && state.buzz.owner === 'p2');
+            // PvE: hide the P2 buzz button (AI owns p2; human shouldn't be able
+            // to steal it via mouse click). PvP: show both.
+            const p2Btn = document.getElementById('buzz-p2');
+            if (p2Btn) p2Btn.style.display = (isDuel && state.opponent === 'human') ? '' : 'none';
         }
 
         // Spin up / tear down the buzzed-phase rAF loop based on current phase.
@@ -668,6 +672,8 @@
                 cd.textContent = String(sec);
                 cd.classList.toggle('urgent', sec <= 2);
                 cd.classList.add('visible');
+                // P1/P2 對等：倒數顯示在當前 owner 那一側
+                cd.setAttribute('data-side', state.buzz.owner === 'p1' ? 'left' : 'right');
             }
             const handoff = document.getElementById('handoff-overlay');
             if (handoff) {

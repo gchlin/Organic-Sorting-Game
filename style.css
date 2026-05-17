@@ -3246,7 +3246,9 @@ body.input-locked .v2-buzz button { pointer-events: none; }
     font-style: italic;
 }
 
-/* --- Buzz countdown (buzzed phase, big integer seconds) --- */
+/* --- Buzz countdown (buzzed phase, big integer seconds) ---
+   Position swings to the side of the current buzz owner so P1 / P2 are
+   visually symmetric: left for P1, right for P2. */
 #buzz-countdown {
     position: fixed;
     top: 12vh;
@@ -3265,9 +3267,11 @@ body.input-locked .v2-buzz button { pointer-events: none; }
     z-index: 8000;
     pointer-events: none;
     box-shadow: 0 0 12px rgba(0,0,0,0.6);
-    transition: color 0.2s, border-color 0.2s, transform 0.2s;
+    transition: color 0.2s, border-color 0.2s, transform 0.2s, left 0.25s, right 0.25s;
 }
 #buzz-countdown.visible { display: flex; }
+#buzz-countdown[data-side="left"]  { left: 18px;  right: auto; }
+#buzz-countdown[data-side="right"] { right: 18px; left:  auto; }
 #buzz-countdown.urgent {
     color: #ff5a5a;
     border-color: #ff5a5a;
