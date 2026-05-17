@@ -320,6 +320,23 @@ const Save = (function () {
 
     function unlockStory(levelKey) { return addToSet('storyUnlocked', levelKey); }
 
+    // v2: unlock family story by family key → writes to unlockedStories (v2 field).
+    // No-op if already unlocked. Returns true if newly added.
+    function unlockStoryV2(familyKey) {
+        if (!familyKey) return false;
+        if (!Array.isArray(data.unlockedStories)) data.unlockedStories = [];
+        if (data.unlockedStories.includes(familyKey)) return false;
+        data.unlockedStories.push(familyKey);
+        persist();
+        return true;
+    }
+
+    // v2: check if family story is unlocked (reads unlockedStories v2 field).
+    function isStoryUnlockedV2(familyKey) {
+        if (!familyKey) return false;
+        return Array.isArray(data.unlockedStories) && data.unlockedStories.includes(familyKey);
+    }
+
     // 該關完成題庫：記 levelClears + 順帶解鎖該關劇情
     function markLevelClear(levelKey) {
         let changed = false;
@@ -861,6 +878,8 @@ const Save = (function () {
         getActiveWrongs, getWrongEntriesV2, getAllActiveWrongs, clearWrongLog,
         // asked-history v2
         recordAskedV2, getAskedHistory, isSubLevelCleared, clearAskedHistory,
+        // story v2
+        unlockStoryV2, isStoryUnlockedV2,
         readSettings, writeSettings
     };
 })();

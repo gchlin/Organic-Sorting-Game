@@ -1229,11 +1229,14 @@
             }
             if (Save.isSubLevelCleared && Save.isSubLevelCleared(state.family, state.difficulty)) {
                 if (Save.markSubLevelClear) Save.markSubLevelClear(state.family, state.difficulty);
+                // Explicitly unlock family story on sub-level clear (README §1438-1440).
+                if (Save.unlockStoryV2) Save.unlockStoryV2(state.family);
             }
             // dev shortcut also unlocks
             const s = Save.readSettings ? Save.readSettings() : {};
             if (s && s.devQuickWin && s.devQuickWin.enabled) {
                 if (Save.markSubLevelClear) Save.markSubLevelClear(state.family, state.difficulty);
+                if (Save.unlockStoryV2) Save.unlockStoryV2(state.family);
             }
         }
         // Stop AI if any
