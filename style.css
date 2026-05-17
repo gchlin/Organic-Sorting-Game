@@ -3428,3 +3428,79 @@ body.input-locked .v2-buzz button { pointer-events: none; }
 .v2-setting-btn.danger { border-color: var(--hp-red-bright); color: var(--hp-red-bright); }
 .v2-setting-btn.danger:hover { background: var(--hp-red-bright); color: white; }
 
+/* ============================================================
+   1) Scroll fix for v2 screens
+   Override the legacy body/html centering that clips tall v2 content.
+   The v2 init code adds .v2-active to both <html> and <body>.
+   ============================================================ */
+html.v2-active,
+body.v2-active {
+    height: auto;
+    overflow: auto;
+}
+body.v2-active {
+    display: block;
+}
+body.v2-active .screen .v2-back-btn {
+    position: sticky;
+    top: 8px;
+    z-index: 100;
+}
+
+/* ============================================================
+   2) Combo popup (spawned by _spawnComboPopup in game-v2.js)
+   ============================================================ */
+.combo-popup {
+    position: fixed;
+    top: 32%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    font-family: "Cinzel", "Georgia", serif;
+    font-weight: 900;
+    font-size: 3rem;
+    color: var(--hp-gold);
+    text-shadow: 0 0 12px var(--hp-gold-glow), 2px 2px 0 rgba(0,0,0,0.7);
+    z-index: 9500;
+    pointer-events: none;
+    white-space: nowrap;
+    animation: comboPopupAnim 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.combo-popup.side-left  { left: 25%; }
+.combo-popup.side-right { left: 75%; }
+.combo-popup.tier-good     { color: #6fe09c; }
+.combo-popup.tier-great    { color: #f5d76e; font-size: 3.5rem; }
+.combo-popup.tier-brilliant {
+    color: #ff8c69;
+    font-size: 4.2rem;
+    text-shadow: 0 0 16px #ff8c69, 0 0 28px #ff5a5a, 2px 2px 0 rgba(0,0,0,0.7);
+    animation: comboPopupAnim 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards,
+               comboBrilliantSpin 1.4s linear forwards;
+}
+@keyframes comboPopupAnim {
+    0%   { transform: translate(-50%, -50%) scale(0)   rotate(-8deg); opacity: 0; }
+    18%  { transform: translate(-50%, -50%) scale(1.5) rotate(4deg);  opacity: 1; }
+    35%  { transform: translate(-50%, -50%) scale(1)   rotate(0);     opacity: 1; }
+    70%  { transform: translate(-50%, -50%) scale(1)   rotate(0);     opacity: 1; }
+    100% { transform: translate(-50%, -120%) scale(0.85) rotate(0);   opacity: 0; }
+}
+@keyframes comboBrilliantSpin {
+    0%   { filter: hue-rotate(0deg)   brightness(1); }
+    50%  { filter: hue-rotate(40deg)  brightness(1.3); }
+    100% { filter: hue-rotate(0deg)   brightness(1); }
+}
+
+/* ============================================================
+   3) Duel sub-menu mode-toggle button (.v2-sub-mode-toggle)
+   ============================================================ */
+.v2-sub-list .v2-sub-mode-toggle {
+    background: rgba(60, 47, 42, 0.4);
+    border-style: dashed;
+    color: var(--hp-parchment-dark);
+    font-style: italic;
+}
+.v2-sub-list .v2-sub-mode-toggle:hover {
+    background: var(--hp-wood-dark);
+    color: var(--hp-parchment);
+    border-style: solid;
+}
+

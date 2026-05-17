@@ -364,6 +364,7 @@
     function render() {
         if (typeof document === 'undefined') return;
         document.body.classList.add('v2-active');
+        if (document.documentElement) document.documentElement.classList.add('v2-active');
 
         // Show only the active screen.
         const screens = document.querySelectorAll('#v2-root .screen');
@@ -404,10 +405,12 @@
     function renderMainMenu() { /* static markup; no per-state rendering */ }
 
     // Sub-menu kinds:
-    //   'difficulty'      { difficulty }            → family list, click starts practice
-    //   'duelDifficulty'  {}                        → 初/中/高 picker (duel tree top)
-    //   'duelFamily'      { difficulty }            → family list, click → duelOpponent
-    //   'duelOpponent'    { difficulty, family }    → PvP / PvE 易/中/難, click starts duel
+    //   'difficulty'           { difficulty }   → family list, click starts practice
+    //   'duelDifficulty'       {}               → 初/中/高 + "修改模式..." (mode is sticky)
+    //   'duelFamily'           { difficulty }   → family list, click starts duel using saved mode
+    //   'duelOpponentSetting'  {}               → PvP / PvE 易/中/難 picker, saves to
+    //                                             settings.duelOpponent then returns to
+    //                                             duelDifficulty. NOT in the start-game flow.
     function renderSubMenu() {
         const titleEl = document.getElementById('sub-menu-title');
         const listEl = document.getElementById('sub-menu-list');
@@ -451,7 +454,10 @@
                 listEl.appendChild(btn);
             }
         } else if (_subMenuContext.kind === 'duelDifficulty') {
-            titleEl.textContent = '⚔️ 對決 — 選擇難度';
+            const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
+            const currentOpp = settings.duelOpponent || 'aiMedium';
+            const oppLabel = { human: 'PvP（雙人）', aiEasy: 'PvE 易', aiMedium: 'PvE 中', aiHard: 'PvE 難' }[currentOpp] || currentOpp;
+            titleEl.textContent = '⚔️ 對決 — 選擇難度（目前對手：' + oppLabel + '）';
             const diffs = [
                 { key: 'beginner', label: '1. 初級' },
                 { key: 'intermediate', label: '2. 中級' },
@@ -467,35 +473,52 @@
                 });
                 listEl.appendChild(btn);
             }
+            // "修改對手模式" 放在底下，視覺上跟難度按鈕區分
+            const modeBtn = document.createElement('button');
+            modeBtn.className = 'v2-sub-mode-toggle';
+            modeBtn.textContent = '4. 修改對手模式...';
+            modeBtn.addEventListener('click', function () {
+                _subMenuContext = { kind: 'duelOpponentSetting' };
+                render();
+            });
+            listEl.appendChild(modeBtn);
         } else if (_subMenuContext.kind === 'duelFamily') {
             const diff = _subMenuContext.difficulty;
-            titleEl.textContent = '⚔️ ' + diffName(diff) + ' 對決 — 選擇主題子關';
+            const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
+            const opponent = settings.duelOpponent || 'aiMedium';
+            const oppLabel = { human: 'PvP', aiEasy: 'PvE 易', aiMedium: 'PvE 中', aiHard: 'PvE 難' }[opponent] || opponent;
+            titleEl.textContent = '⚔️ ' + diffName(diff) + ' 對決（' + oppLabel + '） — 選擇主題子關';
             const familyKeys = Object.keys(Families).filter(k => Families[k].difficulties.indexOf(diff) !== -1);
             for (let i = 0; i < familyKeys.length; i++) {
                 const fk = familyKeys[i];
                 const btn = appendFamilyButton(fk, diff, function () {
-                    _subMenuContext = { kind: 'duelOpponent', difficulty: diff, family: fk };
-                    render();
+                    // 直接用 settings 裡存的對手模式開始對決
+                    startMode({ mode: 'duel', family: fk, difficulty: diff, opponent: opponent });
                 });
                 btn.textContent = (i + 1) + '. ' + btn.textContent;
                 listEl.appendChild(btn);
             }
-        } else if (_subMenuContext.kind === 'duelOpponent') {
-            const diff = _subMenuContext.difficulty;
-            const fam = _subMenuContext.family;
-            titleEl.textContent = '⚔️ ' + diffName(diff) + ' · ' + Families[fam].nameZh + ' — 選對手';
+        } else if (_subMenuContext.kind === 'duelOpponentSetting') {
+            titleEl.textContent = '⚔️ 對決 — 選擇對手模式（會記住下次自動使用）';
             const opponents = [
                 { key: 'human', label: '1. PvP（雙人）' },
                 { key: 'aiEasy', label: '2. PvE 易' },
                 { key: 'aiMedium', label: '3. PvE 中' },
                 { key: 'aiHard', label: '4. PvE 難' },
             ];
+            const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
+            const current = settings.duelOpponent || 'aiMedium';
             for (let i = 0; i < opponents.length; i++) {
                 const op = opponents[i];
                 const btn = document.createElement('button');
-                btn.textContent = op.label;
+                btn.textContent = op.label + (op.key === current ? '  ✓' : '');
+                if (op.key === current) btn.classList.add('sub-cleared');
                 btn.addEventListener('click', function () {
-                    startMode({ mode: 'duel', family: fam, difficulty: diff, opponent: op.key });
+                    if (typeof Save !== 'undefined' && Save.writeSettings) {
+                        Save.writeSettings({ duelOpponent: op.key });
+                    }
+                    _subMenuContext = { kind: 'duelDifficulty' };
+                    render();
                 });
                 listEl.appendChild(btn);
             }
@@ -620,6 +643,7 @@
         }
 
         _updateFeedbackOverlay();
+        _checkComboPopup();
     }
 
     // ---- Audio feedback (Web Audio API beeps — no asset files needed) ----
@@ -776,6 +800,48 @@
         if (streak >= 5) return 'Great!';
         if (streak >= 3) return 'Good!';
         return '';
+    }
+    function _comboTier(label) {
+        if (label === 'Brilliant!') return 'brilliant';
+        if (label === 'Great!')     return 'great';
+        if (label === 'Good!')      return 'good';
+        return '';
+    }
+
+    // Combo popup: large floating text near the player when combo level crosses
+    // a threshold upward. Tracks previous combo per player so a sustained streak
+    // doesn't re-trigger every frame; resets to '' on cleanup/wrong/new question.
+    const _prevCombo = { p1: '', p2: '' };
+    function _spawnComboPopup(label, player) {
+        if (typeof document === 'undefined') return;
+        const tier = _comboTier(label);
+        if (!tier) return;
+        const el = document.createElement('div');
+        el.className = 'combo-popup tier-' + tier + ' side-' + (player === 'p1' ? 'left' : 'right');
+        el.textContent = label;
+        document.body.appendChild(el);
+        // Auto-remove after the CSS animation finishes (1.4s). Doubled timer so
+        // late removal doesn't clip the fade-out.
+        setTimeout(function () { if (el && el.parentNode) el.parentNode.removeChild(el); }, 1600);
+    }
+    function _checkComboPopup() {
+        if (!state || !state.players) return;
+        ['p1', 'p2'].forEach(function (p) {
+            const player = state.players[p];
+            if (!player) return;
+            const newLabel = _comboLevel(player.correctStreak || 0);
+            // Only animate on upward crossing (Good→Great→Brilliant); avoid
+            // re-firing when streak holds steady or resets back to 0.
+            if (newLabel && newLabel !== _prevCombo[p]) {
+                const prevTier = _comboTier(_prevCombo[p]);
+                const newTier = _comboTier(newLabel);
+                const tierOrder = { good: 1, great: 2, brilliant: 3 };
+                if ((tierOrder[newTier] || 0) > (tierOrder[prevTier] || 0)) {
+                    _spawnComboPopup(newLabel, p);
+                }
+            }
+            _prevCombo[p] = newLabel;
+        });
     }
 
     function renderSettleScreen() {
@@ -1248,12 +1314,8 @@
                     if (aiController) { try { aiController.stop(); } catch (err) {} aiController = null; }
                     // 在 duel 子樹裡先逐層退回，全部退完才回主選單
                     if (_currentScreen === 'sub-menu' && _subMenuContext) {
-                        if (_subMenuContext.kind === 'duelOpponent') {
-                            _subMenuContext = { kind: 'duelFamily', difficulty: _subMenuContext.difficulty };
-                            render();
-                            break;
-                        }
-                        if (_subMenuContext.kind === 'duelFamily') {
+                        if (_subMenuContext.kind === 'duelOpponentSetting'
+                         || _subMenuContext.kind === 'duelFamily') {
                             _subMenuContext = { kind: 'duelDifficulty' };
                             render();
                             break;
@@ -1314,11 +1376,8 @@
             if (_currentScreen !== 'main-menu' && _currentScreen !== 'game' && (e.code === 'Escape' || e.code === 'KeyM')) {
                 // Step-back through the duel sub-menu tree before bailing to main.
                 if (_currentScreen === 'sub-menu' && _subMenuContext) {
-                    if (_subMenuContext.kind === 'duelOpponent') {
-                        _subMenuContext = { kind: 'duelFamily', difficulty: _subMenuContext.difficulty };
-                        render(); e.preventDefault(); return;
-                    }
-                    if (_subMenuContext.kind === 'duelFamily') {
+                    if (_subMenuContext.kind === 'duelOpponentSetting'
+                     || _subMenuContext.kind === 'duelFamily') {
                         _subMenuContext = { kind: 'duelDifficulty' };
                         render(); e.preventDefault(); return;
                     }
@@ -1471,6 +1530,7 @@
     function init() {
         if (typeof document === 'undefined') return;
         document.body.classList.add('v2-active');
+        if (document.documentElement) document.documentElement.classList.add('v2-active');
 
         state = GameState.createStateV2();
         if (typeof InputController !== 'undefined' && InputController.initV2) {

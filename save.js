@@ -75,7 +75,10 @@ const Save = (function () {
                 showIndicator: true
             },
             devShowFps: false,
-            devLogActions: false
+            devLogActions: false,
+            // 對決對手模式，全域 sticky：玩家通常設定一次就不變。
+            // 'human' = PvP；'aiEasy'/'aiMedium'/'aiHard' = PvE 各難度。
+            duelOpponent: 'aiMedium'
         };
     }
 
