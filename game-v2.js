@@ -530,11 +530,14 @@
         const imgEl = document.getElementById('game-image');
         if (!imgEl) return;
         if (state && state.dynamic && state.dynamic.variant === 'zoom' && state.mode === 'duel') {
-            const dur = (typeof DynamicVariants !== 'undefined' && DynamicVariants.zoom && DynamicVariants.zoom.durationMs) || 8000;
+            const v = (typeof DynamicVariants !== 'undefined' && DynamicVariants.zoom) || {};
+            const dur = v.durationMs || 8000;
+            const initialScale = v.initialScale || 5;
+            const finalScale = v.finalScale || 1;
             const t = state.dynamic.completeStateReached
                 ? 1
                 : Math.min(1, Math.max(0, (state.dynamic.elapsedMs || 0) / dur));
-            const scale = 2.5 - (1.5 * t);
+            const scale = initialScale - (initialScale - finalScale) * t;
             imgEl.style.transform = 'scale(' + scale + ')';
         } else {
             imgEl.style.transform = '';

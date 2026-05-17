@@ -246,7 +246,9 @@ const DynamicVariants = {
         completeState: 'fullStructureVisible',
         pauseOnBuzz: true,
         revealRequiresCompleteState: true,
-        durationMs: 8000, // 從頭播到 completeState 的時間
+        durationMs: 8000,   // 從頭播到 completeState 的時間
+        initialScale: 5,    // 初始放大倍率（5x → 大概只能看到 1–2 個元素符號）
+        finalScale: 1,      // 結束尺寸
     },
     // effect2: { ... }  // 未來新增；不改 reducer，只在這裡加一筆
 };

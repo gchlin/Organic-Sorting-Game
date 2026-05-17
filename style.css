@@ -2925,14 +2925,35 @@ body.v2-active .v2-root { display: block; }
 #screen-game.mode-duel-pve #buzz-p2 { display: none; }
 
 .v2-opp-label { color: var(--hp-gold); font-size: 0.9rem; }
+/* Viewport-fit game screen: HUD + image + options + buzz all fit without scroll.
+   Image-frame flexes to take remaining space; options/buzz reserved at bottom. */
+#screen-game.is-active {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    max-height: 100vh;
+    padding: 12px;
+    box-sizing: border-box;
+    gap: 10px;
+    overflow: hidden;
+}
+#screen-game #game-hud,
+#screen-game #game-options,
+#screen-game #game-buzz,
+#screen-game #game-hint-bubble,
+#screen-game #dev-quickwin-banner {
+    flex: 0 0 auto;
+}
 .v2-image-frame {
     background: var(--hp-parchment);
     border: 2px solid var(--hp-gold);
     border-radius: 8px;
-    padding: 16px;
-    margin: 0 auto 16px;
+    padding: 12px;
+    margin: 0 auto;
+    width: 100%;
     max-width: 600px;
-    min-height: 200px;
+    min-height: 0;       /* allow shrink in flex column */
+    flex: 1 1 auto;      /* take remaining vertical space */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2941,28 +2962,22 @@ body.v2-active .v2-root { display: block; }
 }
 #game-image {
     max-width: 100%;
-    max-height: 300px;
+    max-height: 100%;
     object-fit: contain;
     transform-origin: center;
 }
-/* Dynamic variant: zoom — inline transform is set by JS via onTick(elapsedMs),
-   so we don't define keyframes here. Static fallback while no JS tick (initial frame): */
-#game-image.dyn-zoom { transform: scale(2.5); }
+/* Dynamic variant: zoom — JS sets inline transform via onTick(elapsedMs).
+   Static fallback only for no-JS state: */
+#game-image.dyn-zoom { transform: scale(5); }
 #game-image.dyn-complete { transform: scale(1); }
 
-/* Landscape phone: keep image small enough that options + buzz remain in viewport. */
+/* Landscape phone: similar layout but tighter margins. */
 @media (orientation: landscape) and (max-height: 520px) {
-    .v2-image-frame {
-        max-height: 40vh;
-        min-height: 100px;
-        padding: 8px;
-        margin-bottom: 8px;
-    }
-    #game-image { max-height: 36vh; }
-    #screen-game { padding: 8px; }
+    #screen-game.is-active { padding: 6px; gap: 6px; }
+    .v2-image-frame { padding: 6px; }
     .v2-options { gap: 6px; max-width: 80vw; }
-    .option-btn { padding: 10px; font-size: 0.95rem; }
-    .v2-buzz button { padding: 10px; font-size: 0.95rem; }
+    .option-btn { padding: 8px; font-size: 0.9rem; }
+    .v2-buzz button { padding: 8px; font-size: 0.9rem; }
 }
 
 .v2-options {
