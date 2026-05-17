@@ -172,8 +172,11 @@ const ModeRulesV2 = {
 
     'duel.buzzOpen.BUZZ': (s, a) => s.buzz.eligible.has(a.player)
         ? { nextPhase: 'buzzed',
-            stateDiff: { 'buzz.owner': a.player },
-            effects: [{ type: 'anim', name: 'pauseDynamic' },
+            // buzz.timerStartedAt lets the render layer compute the integer
+            // countdown shown to the player (5 → 1). Read-only for the reducer.
+            stateDiff: { 'buzz.owner': a.player, 'buzz.timerStartedAt': Date.now() },
+            effects: [{ type: 'sound', name: 'buzz' },
+                      { type: 'anim', name: 'pauseDynamic' },
                       { type: 'render', target: 'showOptionsTo', player: a.player },
                       { type: 'timer', ms: 5000, onTimeout: { type: 'ANSWER_TIMEOUT', player: a.player } }] }
         : { nextPhase: 'buzzOpen', stateDiff: {}, effects: [] },  // ignore (same-race)
@@ -240,9 +243,13 @@ const ModeRulesV2 = {
                      effects: [{ type: 'anim', name: 'resumeDynamic' }] };
         }
         const other = s.buzz.owner === 'p1' ? 'p2' : 'p1';
+        // _isHandoff is read by render to show the "⚡ 輪到 P2" overlay briefly.
         return { nextPhase: 'buzzed',
-                 stateDiff: { 'buzz.owner': other, 'buzz.eligible': new Set([other]) },
-                 effects: [{ type: 'anim', name: 'lockoutLoser' },
+                 stateDiff: { 'buzz.owner': other, 'buzz.eligible': new Set([other]),
+                              'buzz.timerStartedAt': Date.now(),
+                              'buzz._isHandoff': true },
+                 effects: [{ type: 'sound', name: 'buzz' },
+                           { type: 'anim', name: 'lockoutLoser' },
                            { type: 'render', target: 'showOptionsTo', player: other },
                            { type: 'timer', ms: 5000, onTimeout: { type: 'ANSWER_TIMEOUT', player: other } }] };
     },

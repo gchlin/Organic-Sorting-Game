@@ -173,7 +173,9 @@ const GameState = (function () {
                 phase: 'idle',
                 owner: null,
                 eligible: new Set(['p1', 'p2']),
-                timerId: null
+                timerId: null,
+                timerStartedAt: 0,   // when the current 5s answer timer started (ms epoch)
+                _isHandoff: false    // true on the frame ownership switches to the other player
             },
             dynamic: {
                 variant: null,

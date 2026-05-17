@@ -353,6 +353,9 @@
         if (img) img.classList.remove('dyn-zoom', 'dyn-playing', 'dyn-paused', 'dyn-completing', 'dyn-complete');
         const fb = document.getElementById('feedback-overlay');
         if (fb) { fb.classList.remove('show-correct', 'show-wrong'); fb.textContent = ''; }
+        // Stop buzz countdown + clear handoff overlay
+        _hideBuzzedUI();
+        if (state && state.buzz) { state.buzz.timerStartedAt = 0; state.buzz._isHandoff = false; }
     }
 
     // -----------------------------------------------------------------------
@@ -562,6 +565,13 @@
             buzz.classList.toggle('buzz-owner-p2', state.phase === 'buzzed' && state.buzz && state.buzz.owner === 'p2');
         }
 
+        // Spin up / tear down the buzzed-phase rAF loop based on current phase.
+        if (state.phase === 'buzzed') {
+            _startBuzzedTickLoop();
+        } else {
+            _hideBuzzedUI();
+        }
+
         _updateFeedbackOverlay();
     }
 
@@ -608,8 +618,10 @@
                 note(196, 'triangle', 0,   200, 0.12);
                 note(147, 'triangle', 200, 300, 0.12);
             } else if (name === 'buzz') {
-                // Sharp ding (E6)
-                note(1319, 'square', 0, 80, 0.06);
+                // Game-show style two-note buzz (A5 → D6) — louder than other beeps
+                // so it cuts through and clearly marks "someone grabbed the buzzer".
+                note(880, 'square', 0,  110, 0.14);
+                note(1175, 'square', 70, 160, 0.12);
             }
         } catch (e) { /* fail silent */ }
     }
@@ -632,6 +644,52 @@
         } else {
             el.textContent = '';
         }
+    }
+
+    // ---- Buzz countdown + handoff overlay (rAF loop) --------------------
+    // render() only fires on dispatch, so a per-second countdown would tick
+    // jerkily. We run a lightweight rAF loop while phase===buzzed that updates
+    // #buzz-countdown (5→1, big red number) and fades #handoff-overlay.
+    // Loop self-terminates when phase leaves 'buzzed'.
+    let _buzzedTickRafId = null;
+    function _startBuzzedTickLoop() {
+        if (_buzzedTickRafId !== null) return;
+        function tick() {
+            if (!state || state.phase !== 'buzzed' || !state.buzz || !state.buzz.timerStartedAt) {
+                _buzzedTickRafId = null;
+                _hideBuzzedUI();
+                return;
+            }
+            const elapsed = Date.now() - state.buzz.timerStartedAt;
+            const remaining = Math.max(0, 5000 - elapsed);
+            const sec = Math.ceil(remaining / 1000);
+            const cd = document.getElementById('buzz-countdown');
+            if (cd) {
+                cd.textContent = String(sec);
+                cd.classList.toggle('urgent', sec <= 2);
+                cd.classList.add('visible');
+            }
+            const handoff = document.getElementById('handoff-overlay');
+            if (handoff) {
+                if (state.buzz._isHandoff && elapsed < 1000) {
+                    handoff.textContent = '⚡ 輪到 ' + (state.buzz.owner === 'p1' ? 'P1' : 'P2');
+                    handoff.style.opacity = String(Math.max(0, 1 - elapsed / 800));
+                    handoff.classList.add('visible');
+                } else {
+                    handoff.classList.remove('visible');
+                    handoff.style.opacity = '0';
+                    if (state.buzz._isHandoff) state.buzz._isHandoff = false;
+                }
+            }
+            _buzzedTickRafId = requestAnimationFrame(tick);
+        }
+        _buzzedTickRafId = requestAnimationFrame(tick);
+    }
+    function _hideBuzzedUI() {
+        const cd = document.getElementById('buzz-countdown');
+        if (cd) { cd.classList.remove('visible', 'urgent'); cd.textContent = ''; }
+        const handoff = document.getElementById('handoff-overlay');
+        if (handoff) { handoff.classList.remove('visible'); handoff.style.opacity = '0'; handoff.textContent = ''; }
     }
 
     // Update inline transform on #game-image based on state.dynamic.elapsedMs.
