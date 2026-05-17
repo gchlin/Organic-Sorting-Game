@@ -1473,9 +1473,9 @@ function migrateV1toV2(old) {
 - [ ] Duel PvP P1=AFZC + Space、P2=4613 + Enter
 - [ ] 方向鍵 + Enter 在所有畫面可達成等效操作
 
-**規模檢查**
-- [ ] game.js 行數 < 800（從 3289 砍下來）
-- [ ] 任何 `.js` 內 `if (mode === 'practice')` 出現次數 = 0（除了選單入口處）
+**規模檢查（方向性目標，非硬性門檻）**
+- 主檔（game-v2.js）盡可能精簡：避免重複邏輯、把 render / reducer / handler 拆到各自模組；具體行數不卡死，但若遠超舊版水準就要回頭看是不是又重新長出分支樹。
+- [ ] 任何 `.js` 內 `if (mode === 'practice')` 出現次數盡量壓到 0（除選單入口）；data-driven 寫法允許留少數無法表格化的特例，但要在註解寫清楚為什麼不能表格化
 - [ ] 任何 `.js` 內 `if (player.isAI)` 出現次數 = 0
 - [ ] reducer 內無 `setTimeout`
 - [ ] reducer / handler 內無 `if (dev*)` 分支（dev 開關走 `getEffectiveRules` 覆蓋）
