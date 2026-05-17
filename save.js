@@ -16,10 +16,19 @@
 //   Save.get()                    // 取得當前存檔物件（唯讀心態，要改請走上面的方法）
 //   Save.exportText() / Save.importText(str) / Save.reset()
 //   Save.isStoryUnlocked("level3") / Save.isLevelCleared("level3") / Save.knows("ethanol")
+//
+// v2 API (schema version 2):
+//   Save.migrateV1toV2(old)                            // pure function; returns new-format object
+//   Save.markSubLevelClear(family, difficulty)          // returns newly-unlocked badge IDs
+//   Save.recordSubLevelRound(family, difficulty, acc)   // returns newly-unlocked badge IDs
+//   Save.markTutorialSeenV2(family, difficulty)
+//   Save.isTutorialSeenV2(family, difficulty)
+//   Save.recordMoleculeAnsweredV2(compoundKey, difficulty)
+//   Save.readSettings() / Save.writeSettings(partial)
 
 const Save = (function () {
     const STORAGE_KEY = 'organicSortingHat.save';
-    const CURRENT_VERSION = 1;
+    const CURRENT_VERSION = 2;
 
     // 勳章門檻 —— ★ 草稿，待 §5 定案後調整 ★
     // id 對應 UI 圖示 / 名稱（之後再做圖鑑頁時補）。emoji 占位。
@@ -31,39 +40,196 @@ const Save = (function () {
         { id: 'correct_1000', needCorrect: 1000, emoji: '🏆', label: '有機大師' }
     ];
 
+    // Mapping from old level keys to new family keys
+    const LEVEL_TO_FAMILY = {
+        level1: 'hydrocarbon',
+        level2: 'oxygen',
+        level3: 'oxygen',
+        level4: 'oxygen',
+        level5: 'nitrogenHalide',
+        level6: 'mixed',
+        levelShell: 'shell',
+        level99: 'englishChallenge'
+    };
+
+    // Families that have a storyKey (null means no story to unlock)
+    const FAMILY_STORY_KEYS = {
+        hydrocarbon: 'hydrocarbon',
+        oxygen: 'oxygen',
+        nitrogenHalide: 'nitrogenHalide',
+        mixed: 'mixed',
+        shell: 'shell',
+        englishChallenge: null
+    };
+
+    function defaultSettings() {
+        return {
+            devQuickWin: {
+                enabled: true,
+                winAfter: 2,
+                appliesTo: ['practice', 'duel'],
+                showIndicator: true
+            },
+            devShowFps: false,
+            devLogActions: false
+        };
+    }
+
+    function defaultFamilyDifficultyEntry() {
+        return { completedAll: false, lastAccuracy: null };
+    }
+
     function defaultSave() {
         return {
             version: CURRENT_VERSION,
             totalCorrect: 0,        // 累積答對題數（非比率、非最佳；Duel 不計入）
-            badges: [],             // 已解鎖勳章 id
-            seenMolecules: [],      // 圖鑑·分類：已認得的分子 key
+            badges: [],             // 已解鎖勳章 id（含 family-difficulty-completed/mastery）
+            seenMolecules: [],      // 圖鑑·分類：已認得的分子 key（legacy v1）
             knownProperties: [],    // 圖鑑·性質用途：已解鎖的分子 key
             memes: [],              // 圖鑑·迷因梗圖：已解鎖編號
             wrongQueue: {},         // 錯題：{ molKey: 還沒攻克的次數 }
-            storyUnlocked: [],      // 已解鎖劇情的關卡 ["level1", …]
-            levelClears: {},        // 各關是否完成題庫 { "level1": true, … }
+            storyUnlocked: [],      // 已解鎖劇情的關卡 ["level1", …]（legacy v1）
+            levelClears: {},        // 各關是否完成題庫 { "level1": true, … }（legacy v1）
             practiceStats: {},      // { levelKey: { answered: [], lastRate, bestRate, lastCorrect, lastTotal } }
             bestScores: {},         // { "speed_level3": 120, "duel_level6": 80, … }
             tutorialSeen: false,    // 全域新手導覽是否已看過（首次進站自動跳出）
-            levelTutorialsSeen: []  // 已看過「本關分類帽教學」的關卡 ["level1", …]（第一次進關自動跳出）
+            levelTutorialsSeen: [], // 已看過「本關分類帽教學」的關卡（legacy v1）
+            // --- v2 fields ---
+            familyProgress: {},     // { [familyKey]: { [difficulty]: { completedAll, lastAccuracy } } }
+            tutorialsSeen: [],      // ['hydrocarbon-beginner', 'oxygen-intermediate', …]
+            moleculeSeen: {},       // { [compoundKey]: { beginner: bool, intermediate: bool, advanced: bool } }
+            unlockedStories: [],    // family keys; e.g. ['hydrocarbon', 'oxygen']
+            settings: defaultSettings()
         };
     }
 
-    // 把任意（可能舊版 / 殘缺）的物件補成最新結構
-    function migrate(obj) {
-        const base = defaultSave();
-        if (!obj || typeof obj !== 'object') return base;
-        const out = base;
-        for (const k of Object.keys(base)) {
-            if (k === 'version') continue;
-            if (obj[k] !== undefined && obj[k] !== null) {
-                // 型別大致對得上才採用，避免壞資料污染
-                if (Array.isArray(base[k]) && Array.isArray(obj[k])) out[k] = obj[k].slice();
-                else if (typeof base[k] === 'object' && typeof obj[k] === 'object' && !Array.isArray(obj[k])) out[k] = Object.assign({}, obj[k]);
-                else if (typeof base[k] === typeof obj[k]) out[k] = obj[k];
+    // --- Migration: v1 → v2 ---
+    // Pure function: takes old-format object, returns new-format object.
+    function migrateV1toV2(old) {
+        if (!old || typeof old !== 'object') old = {};
+
+        const out = defaultSave();
+
+        // Preserve scalar fields
+        if (typeof old.totalCorrect === 'number') out.totalCorrect = old.totalCorrect;
+        // Support both old key names found in the wild
+        if (typeof old.correctTotal === 'number' && out.totalCorrect === 0) out.totalCorrect = old.correctTotal;
+
+        // Preserve array fields
+        if (Array.isArray(old.badges)) out.badges = old.badges.slice();
+        if (Array.isArray(old.seenMolecules)) out.seenMolecules = old.seenMolecules.slice();
+        if (Array.isArray(old.knownProperties)) out.knownProperties = old.knownProperties.slice();
+        if (Array.isArray(old.memes)) out.memes = old.memes.slice();
+        if (Array.isArray(old.levelTutorialsSeen)) out.levelTutorialsSeen = old.levelTutorialsSeen.slice();
+
+        // Preserve object fields
+        if (old.wrongQueue && typeof old.wrongQueue === 'object' && !Array.isArray(old.wrongQueue)) {
+            out.wrongQueue = Object.assign({}, old.wrongQueue);
+        }
+        if (old.levelClears && typeof old.levelClears === 'object' && !Array.isArray(old.levelClears)) {
+            out.levelClears = Object.assign({}, old.levelClears);
+        }
+        if (old.practiceStats && typeof old.practiceStats === 'object' && !Array.isArray(old.practiceStats)) {
+            out.practiceStats = Object.assign({}, old.practiceStats);
+        }
+        if (old.bestScores && typeof old.bestScores === 'object' && !Array.isArray(old.bestScores)) {
+            out.bestScores = Object.assign({}, old.bestScores);
+        }
+
+        if (typeof old.tutorialSeen === 'boolean') out.tutorialSeen = old.tutorialSeen;
+
+        // Map levelsCleared array → familyProgress
+        // Old format had levelsCleared as array of level keys OR levelClears as object
+        const clearedLevels = Array.isArray(old.levelsCleared) ? old.levelsCleared : [];
+        // Also handle levelClears object
+        if (old.levelClears && typeof old.levelClears === 'object') {
+            for (const lk of Object.keys(old.levelClears)) {
+                if (old.levelClears[lk] && !clearedLevels.includes(lk)) {
+                    clearedLevels.push(lk);
+                }
             }
         }
-        out.version = CURRENT_VERSION;
+
+        for (const levelKey of clearedLevels) {
+            const family = LEVEL_TO_FAMILY[levelKey];
+            if (!family) continue;
+            const difficulty = (levelKey === 'level99') ? 'advanced' : 'intermediate';
+            if (!out.familyProgress[family]) out.familyProgress[family] = {};
+            if (!out.familyProgress[family][difficulty]) {
+                out.familyProgress[family][difficulty] = defaultFamilyDifficultyEntry();
+            }
+            out.familyProgress[family][difficulty].completedAll = true;
+        }
+
+        // Map levelTutorialsSeen → tutorialsSeen
+        const oldLevelTuts = Array.isArray(old.levelTutorialsSeen) ? old.levelTutorialsSeen : [];
+        const tutSet = new Set();
+        for (const levelKey of oldLevelTuts) {
+            const family = LEVEL_TO_FAMILY[levelKey];
+            if (!family) continue;
+            const difficulty = (levelKey === 'level99') ? 'advanced' : 'intermediate';
+            tutSet.add(family + '-' + difficulty);
+        }
+        out.tutorialsSeen = Array.from(tutSet);
+
+        // Map seenMolecules → moleculeSeen (intermediate=true; old version only had intermediate)
+        const oldSeen = Array.isArray(old.seenMolecules) ? old.seenMolecules : [];
+        for (const compoundKey of oldSeen) {
+            if (!out.moleculeSeen[compoundKey]) {
+                out.moleculeSeen[compoundKey] = { beginner: false, intermediate: false, advanced: false };
+            }
+            out.moleculeSeen[compoundKey].intermediate = true;
+        }
+
+        // Map unlockedStories (old: level keys OR family keys) → new family keys
+        const oldStories = Array.isArray(old.unlockedStories) ? old.unlockedStories
+                         : Array.isArray(old.storyUnlocked) ? old.storyUnlocked
+                         : [];
+        const storySet = new Set();
+        for (const key of oldStories) {
+            // Check if it's a level key
+            if (LEVEL_TO_FAMILY[key]) {
+                storySet.add(LEVEL_TO_FAMILY[key]);
+            } else {
+                // Might already be a family key
+                storySet.add(key);
+            }
+        }
+        out.unlockedStories = Array.from(storySet);
+
+        // Settings: start from defaults (old data had none)
+        out.settings = defaultSettings();
+
+        out.version = 2;
+        return out;
+    }
+
+    // --- Legacy v1 migrate (field-fill for missing keys) ---
+    function migrate(obj) {
+        if (!obj || typeof obj !== 'object') return defaultSave();
+        // If version is not 2, run v1→v2 migration
+        if (!obj.version || obj.version !== 2) {
+            return migrateV1toV2(obj);
+        }
+        // Version 2: fill missing v2 fields with defaults
+        const base = defaultSave();
+        const out = Object.assign({}, base, obj);
+        // Ensure nested defaults for settings
+        if (!out.settings || typeof out.settings !== 'object') {
+            out.settings = defaultSettings();
+        } else {
+            out.settings = Object.assign({}, defaultSettings(), out.settings);
+            if (!out.settings.devQuickWin || typeof out.settings.devQuickWin !== 'object') {
+                out.settings.devQuickWin = defaultSettings().devQuickWin;
+            } else {
+                out.settings.devQuickWin = Object.assign({}, defaultSettings().devQuickWin, out.settings.devQuickWin);
+            }
+        }
+        if (!out.familyProgress || typeof out.familyProgress !== 'object') out.familyProgress = {};
+        if (!out.moleculeSeen || typeof out.moleculeSeen !== 'object') out.moleculeSeen = {};
+        if (!Array.isArray(out.tutorialsSeen)) out.tutorialsSeen = [];
+        if (!Array.isArray(out.unlockedStories)) out.unlockedStories = [];
+        out.version = 2;
         return out;
     }
 
@@ -80,7 +246,9 @@ const Save = (function () {
 
     function load() {
         try {
-            const raw = localStorage.getItem(STORAGE_KEY);
+            const raw = localStorage.getItem(STORAGE_KEY)
+                     || localStorage.getItem('organicSortingHat')  // legacy key fallback
+                     || localStorage.getItem('organicSortingHat:v1'); // legacy key fallback
             data = raw ? migrate(JSON.parse(raw)) : defaultSave();
         } catch (e) {
             console.warn('[Save] 讀取存檔失敗，改用全新存檔：', e);
@@ -213,6 +381,112 @@ const Save = (function () {
     function markLevelTutorialSeen(levelKey) { return addToSet('levelTutorialsSeen', levelKey); }
     function isLevelTutorialSeen(levelKey) { return data.levelTutorialsSeen.includes(levelKey); }
 
+    // =======================================================================
+    // v2 API
+    // =======================================================================
+
+    // Ensure familyProgress[family][difficulty] entry exists
+    function ensureFamilyDifficulty(family, difficulty) {
+        if (!data.familyProgress[family]) data.familyProgress[family] = {};
+        if (!data.familyProgress[family][difficulty]) {
+            data.familyProgress[family][difficulty] = defaultFamilyDifficultyEntry();
+        }
+        return data.familyProgress[family][difficulty];
+    }
+
+    // markSubLevelClear(family, difficulty)
+    // Sets familyProgress[family][difficulty].completedAll = true.
+    // If family has storyKey non-null, adds to unlockedStories.
+    // Returns array of newly unlocked badge IDs.
+    function markSubLevelClear(family, difficulty) {
+        const entry = ensureFamilyDifficulty(family, difficulty);
+        const newlyUnlocked = [];
+        const badgeId = family + '-' + difficulty + '-completed';
+        if (!entry.completedAll) {
+            entry.completedAll = true;
+            if (!data.badges.includes(badgeId)) {
+                data.badges.push(badgeId);
+                newlyUnlocked.push(badgeId);
+            }
+        }
+        // Unlock story if family has one
+        const storyKey = (family in FAMILY_STORY_KEYS) ? FAMILY_STORY_KEYS[family] : family;
+        if (storyKey && !data.unlockedStories.includes(storyKey)) {
+            data.unlockedStories.push(storyKey);
+        }
+        persist();
+        return newlyUnlocked;
+    }
+
+    // recordSubLevelRound(family, difficulty, accuracy)
+    // Updates familyProgress[family][difficulty].lastAccuracy.
+    // If accuracy >= 0.80, returns ['<family>-<difficulty>-mastery'] if newly unlocked.
+    function recordSubLevelRound(family, difficulty, accuracy) {
+        const entry = ensureFamilyDifficulty(family, difficulty);
+        entry.lastAccuracy = accuracy;
+        const newlyUnlocked = [];
+        if (typeof accuracy === 'number' && accuracy >= 0.80) {
+            const badgeId = family + '-' + difficulty + '-mastery';
+            if (!data.badges.includes(badgeId)) {
+                data.badges.push(badgeId);
+                newlyUnlocked.push(badgeId);
+            }
+        }
+        persist();
+        return newlyUnlocked;
+    }
+
+    // markTutorialSeenV2(family, difficulty) / isTutorialSeenV2(family, difficulty)
+    // Keyed by 'family-difficulty'
+    function markTutorialSeenV2(family, difficulty) {
+        const key = family + '-' + difficulty;
+        if (!data.tutorialsSeen.includes(key)) {
+            data.tutorialsSeen.push(key);
+            persist();
+        }
+    }
+
+    function isTutorialSeenV2(family, difficulty) {
+        return data.tutorialsSeen.includes(family + '-' + difficulty);
+    }
+
+    // recordMoleculeAnsweredV2(compoundKey, difficulty)
+    // Sets moleculeSeen[compoundKey][difficulty] = true
+    function recordMoleculeAnsweredV2(compoundKey, difficulty) {
+        if (!data.moleculeSeen[compoundKey]) {
+            data.moleculeSeen[compoundKey] = { beginner: false, intermediate: false, advanced: false };
+        }
+        if (!data.moleculeSeen[compoundKey][difficulty]) {
+            data.moleculeSeen[compoundKey][difficulty] = true;
+            persist();
+        }
+    }
+
+    // readSettings() / writeSettings(partial)
+    // Expose settings sub-object; writeSettings deep-merges and persists.
+    function readSettings() {
+        if (!data.settings || typeof data.settings !== 'object') {
+            data.settings = defaultSettings();
+        }
+        return data.settings;
+    }
+
+    function writeSettings(partial) {
+        if (!partial || typeof partial !== 'object') return;
+        if (!data.settings || typeof data.settings !== 'object') {
+            data.settings = defaultSettings();
+        }
+        // Deep-merge devQuickWin sub-object if present
+        for (const key of Object.keys(partial)) {
+            if (key === 'devQuickWin' && partial[key] && typeof partial[key] === 'object') {
+                data.settings.devQuickWin = Object.assign({}, data.settings.devQuickWin || {}, partial[key]);
+            } else {
+                data.settings[key] = partial[key];
+            }
+        }
+        persist();
+    }
+
     // 載入一次（模組初始化）
     load();
 
@@ -225,6 +499,13 @@ const Save = (function () {
         unlockedBadges, allBadgeDefs, wrongList,
         markTutorialSeen, isTutorialSeen,
         markLevelTutorialSeen, isLevelTutorialSeen,
-        exportText, importText, reset
+        exportText, importText, reset,
+        // v2 API
+        migrateV1toV2,
+        markSubLevelClear,
+        recordSubLevelRound,
+        markTutorialSeenV2, isTutorialSeenV2,
+        recordMoleculeAnsweredV2,
+        readSettings, writeSettings
     };
 })();
