@@ -18,7 +18,7 @@
     --hp-wood-dark: #3b2e2a;       /* 深色木紋 (按鈕背景) */
     --hp-wood-light: #5c4a42;
 
-    --font-serif: "Georgia", "Times New Roman", serif; /* 古老襯線體 */
+    --font-serif: "Cinzel", "Georgia", "Times New Roman", serif; /* 古老襯線體 — landscape 風格按鈕字體 */
 
     /* 遊戲參數 */
     --hp-height: 24px; 
@@ -546,6 +546,12 @@ body.duel-mode .wizard-avatar {
     padding: 0 38px;
     width: 100%;
 }
+
+/* [USED: globally hidden] key-hint badges intentionally suppressed everywhere
+   (was useful on desktop but cluttered the touch UI; keep CSS for potential opt-in). */
+.key-hint,
+.button-hotkey,
+.keyboard-help { display: none !important; }
 
 .key-hint {
     position: absolute;
@@ -2832,6 +2838,24 @@ body.v2-active .v2-root { display: block; }
 }
 .modal .modal-button-row button:hover { background: var(--hp-gold); color: var(--hp-bg-dark); }
 
+/* [USED: tutorial modal] cream parchment background so dark text is readable */
+#modal-tutorial .modal-content {
+    background: var(--hp-parchment);
+    color: #2c2416;
+    border-color: var(--hp-gold);
+}
+#modal-tutorial .modal-content h2 { color: #7f0909; }
+#modal-tutorial .tutorial-text { color: #2c2416; }
+#modal-tutorial .modal-button-row button {
+    background: #ede2c8;
+    color: #2c2416;
+    border-color: var(--hp-wood-dark);
+}
+#modal-tutorial .modal-button-row button:hover {
+    background: var(--hp-gold);
+    color: #2c2416;
+}
+
 /* --- Main menu --- */
 .v2-menu-header { text-align: center; margin-bottom: 32px; }
 .v2-title {
@@ -3573,19 +3597,47 @@ body.v2-active .screen .v2-back-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-end;
-    padding-bottom: 60px;
+    justify-content: center;
+    padding: 24px 16px 60px;
     background: radial-gradient(ellipse at center, #1e1e2e 0%, #0f0f18 100%);
     cursor: pointer;
+    gap: 16px;
+}
+/* [USED: story player] hat + box layout — portrait: stacked (hat on top);
+   landscape: side-by-side (hat on left). Two-orientation responsive. */
+.v2-story-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(10px, 2vh, 22px);
+    width: 100%;
+    max-width: 900px;
+}
+@media (orientation: landscape) and (min-width: 720px) {
+    .v2-story-stage {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+    }
+}
+#story-hat {
+    width: clamp(90px, 18vh, 160px);
+    height: clamp(100px, 20vh, 178px);
+    flex-shrink: 0;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,.5));
 }
 .v2-story-box {
     width: min(680px, 92vw);
-    background: rgba(15, 12, 8, 0.92);
+    background: var(--hp-parchment);
     border: 2px solid var(--hp-gold);
     border-radius: 8px;
     padding: 24px 28px;
     min-height: 120px;
+    color: #2c2416;
 }
+.v2-story-box .v2-story-who { color: #7f0909; }
+.v2-story-box .v2-story-text { color: #2c2416; }
 .v2-story-who {
     font-size: 0.85rem;
     color: var(--hp-gold);

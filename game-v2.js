@@ -58,6 +58,7 @@
     let _tutorialState = null;  // { pages, idx, onDone, key }
     let _storyState = null;     // { lines, idx, playerName, onDone }
     let _wrongChosenMap = {};   // { compoundKey: chosenWrongAnswerKey } — per round
+    let _codexTab = 'levels';   // 'levels' | 'badges' | 'molecules' | 'story'
 
     function dispatch(action) {
         _pendingDispatch.push(action);
@@ -999,6 +1000,26 @@
         return '';
     }
 
+    // Collect compound keys belonging to a family, based on imageFilter.
+    function _famCompoundKeys(fam) {
+        const filter = fam.imageFilter || {};
+        const out = [];
+        for (let i = 0; i < QuestionImages.length; i++) {
+            const img = QuestionImages[i];
+            const ck = img.compoundKey;
+            let inc = false;
+            if (filter.type === 'all') inc = true;
+            else if (filter.type === 'byCategory') {
+                const e = AnswerBank[ck];
+                inc = e && filter.categories && filter.categories.includes(e.category);
+            } else if (filter.type === 'byCompoundKeys') {
+                inc = filter.keys && filter.keys.includes(ck);
+            }
+            if (inc) out.push({ ck: ck, src: img.src });
+        }
+        return out;
+    }
+
     function renderCodexScreen() {
         const root = document.getElementById('codex-content');
         if (!root) return;
@@ -1007,266 +1028,188 @@
             return;
         }
 
-        const frag = document.createDocumentFragment();
+        const save = (typeof Save !== 'undefined' && Save.get) ? Save.get() : {};
+        const unlockedBadges = save.badges || [];
+        const unlockedMols = save.unlockedMols || [];
+        const famKeys = Object.keys(Families);
 
-        // --- Family overview cards ---
-        const famOverview = document.createElement('div');
-        famOverview.className = 'codex-family-overview';
-        for (const fKey of Object.keys(Families)) {
-            const fam = Families[fKey];
-            const unlockedBadges = (typeof Save !== 'undefined' && Save.get)
-                ? (Save.get().badges || []) : [];
-
-            // Count unlocked mols for this family
-            const fFilter = fam.imageFilter || {};
-            let famMolKeys = [];
-            for (let i = 0; i < QuestionImages.length; i++) {
-                const img = QuestionImages[i];
-                const ck = img.compoundKey;
-                let inc = false;
-                if (fFilter.type === 'all') inc = true;
-                else if (fFilter.type === 'byCategory') {
-                    const e = AnswerBank[ck];
-                    inc = e && fFilter.categories && fFilter.categories.includes(e.category);
-                } else if (fFilter.type === 'byCompoundKeys') {
-                    inc = fFilter.keys && fFilter.keys.includes(ck);
-                }
-                if (inc) famMolKeys.push(ck);
-            }
-            const totalMols = famMolKeys.length;
-            const unlockedMolsList = (typeof Save !== 'undefined' && Save.get)
-                ? (Save.get().unlockedMols || []) : [];
-            const unlockedCount = famMolKeys.filter(function (ck) {
-                return unlockedMolsList.includes(ck);
-            }).length;
-
-            // Collect badges for this family
-            const famBadges = [];
+        // ---- Tab nav ----
+        // Compute counts for each tab badge.
+        let levelsCleared = 0, levelsTotal = 0;
+        let molUnlockedTotal = 0, molTotalAll = 0;
+        let storyUnlocked = 0, storyTotal = 0;
+        for (const fk of famKeys) {
+            const fam = Families[fk];
             for (const diff of (fam.difficulties || [])) {
-                const completedId = fKey + '-' + diff + '-completed';
-                const masteryId   = fKey + '-' + diff + '-mastery';
-                if (unlockedBadges.includes(completedId)) famBadges.push({ id: completedId, icon: '🥉', label: diff + ' 通關' });
-                if (unlockedBadges.includes(masteryId))   famBadges.push({ id: masteryId,   icon: '🏆', label: diff + ' 精通' });
+                levelsTotal++;
+                if (unlockedBadges.includes(fk + '-' + diff + '-completed')) levelsCleared++;
             }
-
-            const fc = document.createElement('div');
-            fc.className = 'codex-family-card';
-
-            const fcName = document.createElement('div');
-            fcName.className = 'codex-family-card-name';
-            fcName.textContent = fam.nameZh || fKey;
-            fc.appendChild(fcName);
-
-            const fcProgress = document.createElement('div');
-            fcProgress.className = 'codex-family-card-progress';
-            fcProgress.textContent = '解鎖 ' + unlockedCount + ' / ' + totalMols;
-            fc.appendChild(fcProgress);
-
-            if (famBadges.length > 0) {
-                const fcBadges = document.createElement('div');
-                fcBadges.className = 'codex-family-card-badges';
-                for (const b of famBadges) {
-                    const sp = document.createElement('span');
-                    sp.className = 'codex-family-badge';
-                    sp.title = b.label;
-                    sp.textContent = b.icon;
-                    fcBadges.appendChild(sp);
-                }
-                fc.appendChild(fcBadges);
+            const mks = _famCompoundKeys(fam);
+            molTotalAll += mks.length;
+            molUnlockedTotal += mks.filter(m => unlockedMols.includes(m.ck)).length;
+            if (fam.storyKey) {
+                storyTotal++;
+                if (typeof Save !== 'undefined' && Save.isStoryUnlockedV2 && Save.isStoryUnlockedV2(fam.storyKey)) storyUnlocked++;
             }
-
-            famOverview.appendChild(fc);
         }
-        frag.appendChild(famOverview);
+        const allDefs = (typeof Save !== 'undefined' && Save.allBadgeDefs) ? Save.allBadgeDefs() : [];
+        const badgesUnlocked = allDefs.filter(d => unlockedBadges.includes(d.id)).length;
 
-        // --- Family sections: each family → molecules grid ---
-        for (const fKey of Object.keys(Families)) {
-            const fam = Families[fKey];
-            const filter = fam.imageFilter || {};
+        const TABS = [
+            { key: 'levels',    label: '闖關進度', count: levelsCleared + '/' + levelsTotal },
+            { key: 'badges',    label: '勳章',     count: badgesUnlocked + '/' + allDefs.length },
+            { key: 'molecules', label: '分子',     count: molUnlockedTotal + '/' + molTotalAll },
+            { key: 'story',     label: '劇情',     count: storyUnlocked + '/' + storyTotal },
+        ];
 
-            // Collect compoundKeys for this family
-            const famKeys = [];
-            for (let i = 0; i < QuestionImages.length; i++) {
-                const img = QuestionImages[i];
-                const ck = img.compoundKey;
-                let include = false;
-                if (filter.type === 'all') {
-                    include = true;
-                } else if (filter.type === 'byCategory') {
-                    const entry = AnswerBank[ck];
-                    include = entry && filter.categories && filter.categories.includes(entry.category);
-                } else if (filter.type === 'byCompoundKeys') {
-                    include = filter.keys && filter.keys.includes(ck);
-                }
-                if (include) famKeys.push({ ck: ck, src: img.src });
-            }
+        function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-            const section = document.createElement('div');
-            section.className = 'codex-family-section';
-
-            const heading = document.createElement('h3');
-            heading.textContent = fam.nameZh || fKey;
-            section.appendChild(heading);
-
-            const grid = document.createElement('div');
-            grid.className = 'codex-grid';
-
-            for (const item of famKeys) {
-                const unlocked = (typeof Save !== 'undefined' && Save.isMolUnlocked)
-                    ? Save.isMolUnlocked(item.ck) : false;
-                const abEntry = AnswerBank[item.ck];
-                const nameZh = (abEntry && abEntry.content) ? abEntry.content : item.ck;
-
-                const card = document.createElement('div');
-                card.className = 'codex-mol-card' + (unlocked ? '' : ' locked');
-                card.id = 'codex-mol-' + item.ck;
-
-                if (unlocked) {
-                    const img = document.createElement('img');
-                    img.className = 'codex-mol-img';
-                    img.src = item.src;
-                    img.alt = nameZh;
-                    img.loading = 'lazy';
-                    card.appendChild(img);
-
-                    const label = document.createElement('div');
-                    label.className = 'codex-mol-name';
-                    label.textContent = nameZh;
-                    card.appendChild(label);
-
-                    // English key as sub-label (no separate formula field in data.js)
-                    const enLabel = document.createElement('div');
-                    enLabel.className = 'codex-mol-en';
-                    enLabel.textContent = item.ck.replace(/_/g, '-');
-                    card.appendChild(enLabel);
-
-                    // Difficulty stamps: check moleculeSeen for beginner/intermediate/advanced
-                    const seen = (typeof Save !== 'undefined' && Save.get)
-                        ? (Save.get().moleculeSeen || {}) : {};
-                    const molSeen = seen[item.ck] || {};
-                    const stamps = document.createElement('div');
-                    stamps.className = 'codex-mol-stamps';
-                    const DIFF_LABELS = { beginner: '初', intermediate: '中', advanced: '高' };
-                    for (const d of ['beginner', 'intermediate', 'advanced']) {
-                        const s = document.createElement('span');
-                        s.className = 'codex-diff-stamp' + (molSeen[d] ? ' seen' : '');
-                        s.textContent = DIFF_LABELS[d];
-                        stamps.appendChild(s);
-                    }
-                    card.appendChild(stamps);
-
-                    // CompoundFacts snippet
-                    const fact = (typeof CompoundFacts !== 'undefined') ? CompoundFacts[item.ck] : null;
-                    if (fact) {
-                        const factEl = document.createElement('div');
-                        factEl.className = 'codex-mol-fact';
-                        factEl.textContent = fact;
-                        card.appendChild(factEl);
-                    }
-                } else {
-                    const ph = document.createElement('div');
-                    ph.className = 'codex-mol-img placeholder';
-                    ph.textContent = '?';
-                    card.appendChild(ph);
-
-                    const label = document.createElement('div');
-                    label.className = 'codex-mol-name';
-                    label.textContent = '???';
-                    card.appendChild(label);
-                }
-
-                grid.appendChild(card);
-            }
-            section.appendChild(grid);
-            frag.appendChild(section);
+        let html = '<nav class="codex-tabs" role="tablist">';
+        for (const t of TABS) {
+            const active = (t.key === _codexTab) ? ' active' : '';
+            html += '<button type="button" class="tab' + active + '" data-codex-tab="' + t.key + '">'
+                  + esc(t.label) + ' <span class="count">' + esc(t.count) + '</span></button>';
         }
+        html += '</nav>';
 
-        // --- Story status section ---
-        const storySection = document.createElement('div');
-        storySection.className = 'codex-story-status-section';
-        const storyHeading = document.createElement('h3');
-        storyHeading.textContent = '家族劇情解鎖狀態';
-        storySection.appendChild(storyHeading);
+        html += '<div class="codex-content">';
 
-        for (const fKey of Object.keys(Families)) {
-            const fam = Families[fKey];
-            if (!fam.storyKey) continue; // englishChallenge has no story
-            const unlocked = (typeof Save !== 'undefined' && Save.isStoryUnlockedV2)
-                ? Save.isStoryUnlockedV2(fam.storyKey)
-                : false;
-            const row = document.createElement('div');
-            row.className = 'codex-story-row' + (unlocked ? '' : ' locked-story');
-            const badge = document.createElement('span');
-            badge.className = 'story-badge';
-            badge.textContent = unlocked ? '📖' : '🔒';
-            const nameSpan = document.createElement('span');
-            nameSpan.textContent = fam.nameZh || fKey;
-            row.appendChild(badge);
-            row.appendChild(nameSpan);
-            if (unlocked) {
-                row.style.cursor = 'pointer';
-                row.title = '點擊播放劇情';
-                (function (sk) {
-                    row.addEventListener('click', function () {
-                        _openStory(sk, function () { goToScreen('codex'); });
-                    });
-                })(fam.storyKey);
+        // ---- Panel: levels (one card per family-difficulty) ----
+        let levelsHTML = '<div class="codex-level-grid">';
+        const FAM_VARIANT = { mixed: 'boss', englishChallenge: 'genius' };
+        let lvIdx = 0;
+        for (const fk of famKeys) {
+            const fam = Families[fk];
+            const variant = FAM_VARIANT[fk] || '';
+            for (const diff of (fam.difficulties || [])) {
+                lvIdx++;
+                const completedId = fk + '-' + diff + '-completed';
+                const masteryId = fk + '-' + diff + '-mastery';
+                const cleared = unlockedBadges.includes(completedId);
+                const mastered = unlockedBadges.includes(masteryId);
+                const locked = !cleared && (fam.lockedUntil && !unlockedBadges.includes(fam.lockedUntil));
+                const cls = ['codex-level-card', variant, cleared ? 'cleared' : '', locked ? 'locked' : '', mastered ? 'mastered' : ''].filter(Boolean).join(' ');
+                const DIFF_LABEL = { beginner: '初', intermediate: '中', advanced: '高' };
+                const stateText = mastered ? '★ 精通' : cleared ? '已通關' : locked ? '🔒 未解鎖' : '尚未通關';
+                levelsHTML += '<div class="' + cls + '">'
+                    + '<div class="codex-level-head">'
+                      + '<span class="codex-level-tag">L' + lvIdx + ' · ' + esc(DIFF_LABEL[diff] || diff) + '</span>'
+                      + '<span class="codex-level-state">' + esc(stateText) + '</span>'
+                    + '</div>'
+                    + '<h3>' + esc(fam.nameZh || fk) + '</h3>'
+                    + '<p>' + esc(fam.descZh || '') + '</p>'
+                  + '</div>';
             }
-            storySection.appendChild(row);
         }
-        frag.appendChild(storySection);
+        levelsHTML += '</div>';
+        html += '<section class="codex-panel' + (_codexTab === 'levels' ? ' active' : '') + '" data-codex-panel="levels">' + levelsHTML + '</section>';
 
-        // --- Global achievements section ---
-        const achSection = document.createElement('div');
-        achSection.className = 'codex-achievements-section';
-        const achHeading = document.createElement('h3');
-        achHeading.textContent = '全域勳章';
-        achSection.appendChild(achHeading);
-
-        const allDefs = (typeof Save !== 'undefined' && Save.allBadgeDefs)
-            ? Save.allBadgeDefs() : [];
-        const unlockedIds = (typeof Save !== 'undefined' && Save.get)
-            ? (Save.get().badges || []) : [];
-
+        // ---- Panel: badges ----
+        let badgesHTML = '<div class="codex-badge-grid">';
         if (allDefs.length === 0) {
-            const empty = document.createElement('p');
-            empty.className = 'codex-ach-empty';
-            empty.textContent = '（暫無勳章定義）';
-            achSection.appendChild(empty);
+            badgesHTML += '<p class="codex-ach-empty">（暫無勳章定義）</p>';
         } else {
-            const grid = document.createElement('div');
-            grid.className = 'codex-ach-grid';
             for (const def of allDefs) {
-                const isUnlocked = unlockedIds.includes(def.id);
-                const item = document.createElement('div');
-                item.className = 'codex-ach-item' + (isUnlocked ? '' : ' locked');
-                const icon = document.createElement('div');
-                icon.className = 'codex-ach-icon';
-                icon.textContent = def.emoji || '🏅';
-                item.appendChild(icon);
-                const name = document.createElement('div');
-                name.className = 'codex-ach-name';
-                name.textContent = isUnlocked ? (def.label || def.id) : '???';
-                item.appendChild(name);
-                if (isUnlocked && def.needCorrect) {
-                    const desc = document.createElement('div');
-                    desc.className = 'codex-ach-desc';
-                    desc.textContent = '累積答對 ' + def.needCorrect + ' 題';
-                    item.appendChild(desc);
-                } else if (!isUnlocked && def.needCorrect) {
-                    const hint = document.createElement('div');
-                    hint.className = 'codex-ach-desc locked-hint';
-                    hint.textContent = '累積答對 ' + def.needCorrect + ' 題解鎖';
-                    item.appendChild(hint);
+                const u = unlockedBadges.includes(def.id);
+                const cls = 'codex-badge-card ' + (u ? 'unlocked' : 'locked');
+                const name = u ? (def.label || def.id) : '???';
+                const cond = def.needCorrect
+                    ? ('累積答對 ' + def.needCorrect + ' 題' + (u ? '' : '解鎖'))
+                    : (def.descZh || def.condition || '');
+                let progress = '';
+                if (!u && def.needCorrect) {
+                    const cur = save.correctTotal || 0;
+                    const pct = Math.min(100, Math.round((cur / def.needCorrect) * 100));
+                    progress = '<div class="codex-badge-progress"><div class="fill" style="width:' + pct + '%"></div></div>';
                 }
-                grid.appendChild(item);
+                badgesHTML += '<div class="' + cls + '">'
+                    + '<div class="codex-badge-icon">' + esc(def.emoji || '🏅') + '</div>'
+                    + '<div class="codex-badge-name">' + esc(name) + '</div>'
+                    + '<div class="codex-badge-cond">' + esc(cond) + '</div>'
+                    + progress
+                  + '</div>';
             }
-            achSection.appendChild(grid);
         }
-        frag.appendChild(achSection);
+        badgesHTML += '</div>';
+        html += '<section class="codex-panel' + (_codexTab === 'badges' ? ' active' : '') + '" data-codex-panel="badges">' + badgesHTML + '</section>';
 
-        root.innerHTML = '';
-        root.appendChild(frag);
+        // ---- Panel: molecules (per-family sections) ----
+        let molHTML = '';
+        let famIdx = 0;
+        for (const fk of famKeys) {
+            const fam = Families[fk];
+            const items = _famCompoundKeys(fam);
+            if (items.length === 0) continue;
+            famIdx++;
+            const unlockedHere = items.filter(it => unlockedMols.includes(it.ck)).length;
+            molHTML += '<div class="codex-molecule-section">'
+                + '<h3 class="codex-section-title">'
+                  + '<span class="codex-level-tag">L' + famIdx + '</span> '
+                  + esc(fam.nameZh || fk)
+                  + ' <span class="codex-section-count">' + unlockedHere + '/' + items.length + '</span>'
+                + '</h3>'
+                + '<div class="codex-mol-grid">';
+            for (const it of items) {
+                const u = (typeof Save !== 'undefined' && Save.isMolUnlocked) ? Save.isMolUnlocked(it.ck) : unlockedMols.includes(it.ck);
+                const ab = AnswerBank[it.ck];
+                const nameZh = (ab && ab.content) ? ab.content : it.ck;
+                if (u) {
+                    molHTML += '<button type="button" class="codex-mol-card" data-mol="' + esc(it.ck) + '">'
+                        + '<img class="codex-mol-img" src="' + esc(it.src) + '" alt="' + esc(nameZh) + '" loading="lazy">'
+                        + '<div class="codex-mol-name">' + esc(nameZh) + '</div>'
+                      + '</button>';
+                } else {
+                    molHTML += '<div class="codex-mol-card locked">'
+                        + '<div class="codex-mol-img placeholder"></div>'
+                        + '<div class="codex-mol-name">???</div>'
+                      + '</div>';
+                }
+            }
+            molHTML += '</div></div>';
+        }
+        html += '<section class="codex-panel' + (_codexTab === 'molecules' ? ' active' : '') + '" data-codex-panel="molecules">' + molHTML + '</section>';
+
+        // ---- Panel: story ----
+        let storyHTML = '<div class="codex-story-grid">';
+        let chIdx = 0;
+        for (const fk of famKeys) {
+            const fam = Families[fk];
+            if (!fam.storyKey) continue;
+            chIdx++;
+            const u = (typeof Save !== 'undefined' && Save.isStoryUnlockedV2) ? Save.isStoryUnlockedV2(fam.storyKey) : false;
+            const cls = 'codex-story-card' + (u ? '' : ' locked');
+            storyHTML += '<div class="' + cls + '" data-story-key="' + esc(fam.storyKey) + '">'
+                + '<div class="ch-header">'
+                  + '<span class="ch-num">CH.' + chIdx + '</span>'
+                  + '<h3 class="ch-title">' + esc(fam.nameZh || fk) + '</h3>'
+                + '</div>'
+                + '<p class="ch-preview">' + esc(u ? (fam.storyTeaser || '點擊播放劇情') : '通關後解鎖') + '</p>'
+                + '<div class="ch-meta"><span>🎩 分類帽</span><span>' + (u ? '已解鎖' : '未解鎖') + '</span></div>'
+              + '</div>';
+        }
+        storyHTML += '</div>';
+        html += '<section class="codex-panel' + (_codexTab === 'story' ? ' active' : '') + '" data-codex-panel="story">' + storyHTML + '</section>';
+
+        html += '</div>'; // close .codex-content
+        root.innerHTML = html;
+
+        // Wire tab clicks (no re-render needed — just toggle .active).
+        root.querySelectorAll('[data-codex-tab]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const k = btn.getAttribute('data-codex-tab');
+                _codexTab = k;
+                root.querySelectorAll('[data-codex-tab]').forEach(b => b.classList.toggle('active', b === btn));
+                root.querySelectorAll('[data-codex-panel]').forEach(p => p.classList.toggle('active', p.getAttribute('data-codex-panel') === k));
+            });
+        });
+
+        // Wire story-card clicks for unlocked entries.
+        root.querySelectorAll('.codex-story-card:not(.locked)').forEach(card => {
+            card.addEventListener('click', () => {
+                const sk = card.getAttribute('data-story-key');
+                if (sk) _openStory(sk, function () { goToScreen('codex'); });
+            });
+        });
     }
 
     function renderWrongBookScreen() {
@@ -1417,6 +1360,15 @@
         const raw = line.text || '';
         const name = _storyState.playerName || '';
         textEl.textContent = name ? raw.replace(/\{name\}/g, name) : raw.replace(/\{name\}/g, '你');
+
+        // Drive the sorting-hat character. hat lines use their author-given expr;
+        // wiz lines (no other speaker exists) keep the hat present but neutral.
+        const hatEl = document.getElementById('story-hat');
+        if (hatEl) {
+            ensureHatChar(hatEl);
+            const expr = (line.who === 'hat') ? (line.expr || 'neutral') : 'neutral';
+            setHatExpression(hatEl, expr);
+        }
     }
 
     // Advance to next family/difficulty after settle.
@@ -1500,9 +1452,44 @@
         modal.classList.add('is-open');
         const title = document.getElementById('modal-tutorial-title');
         const body = document.getElementById('modal-tutorial-body');
-        const page = _tutorialState.pages[_tutorialState.idx];
-        if (title) title.textContent = (page && page.title) || '教學';
-        if (body) body.textContent = (page && (page.text || page.body || page.content)) || '';
+        const page = _tutorialState.pages[_tutorialState.idx] || {};
+        if (title) title.textContent = page.title || '教學';
+        if (!body) return;
+
+        // Build slide: [hat + img(s)] on top, text below.
+        // page.img may be a string, array, or undefined.
+        const imgs = Array.isArray(page.img) ? page.img.slice()
+                   : (page.img ? [page.img] : []);
+        const expr = page.expr || 'neutral';
+        const text = page.text || page.body || page.content || '';
+
+        // Escape helper for src attribute (paths are author-controlled but be safe)
+        function attr(s) { return String(s).replace(/"/g, '&quot;'); }
+        function esc(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        let mediaHTML = '';
+        if (imgs.length > 0 || expr) {
+            const iconClass = imgs.length > 1 ? 'tutorial-icon multi' : 'tutorial-icon';
+            const imgHTML = imgs.map(src =>
+                '<img class="tutorial-img" src="' + attr(src) + '" alt="">'
+            ).join('');
+            mediaHTML =
+                '<div class="tutorial-slide-media">' +
+                    '<div id="tutorial-hat" class="hat-char ' + esc(expr) + '"></div>' +
+                    (imgs.length ? '<div class="' + iconClass + '">' + imgHTML + '</div>' : '') +
+                '</div>';
+        }
+        body.innerHTML =
+            '<div class="tutorial-slide">' +
+                mediaHTML +
+                '<p class="tutorial-text">' + esc(text) + '</p>' +
+            '</div>';
+
+        // Inject hat inner DOM so CSS face renders.
+        const hatEl = body.querySelector('#tutorial-hat');
+        ensureHatChar(hatEl);
     }
 
     function renderConfirmModal() {
@@ -2031,6 +2018,41 @@
     // -----------------------------------------------------------------------
     // 5. Init
     // -----------------------------------------------------------------------
+    // Sorting-Hat character: empty .hat-char divs in HTML need eye/brow/mouth
+    // children injected so the CSS face works. Ported from legacy/game.js.
+    const HAT_EXPRS = ['neutral', 'happy', 'sad', 'surprised', 'thinking', 'wink', 'annoyed', 'sleepy', 'sleep'];
+    const HAT_INNER =
+        '<div class="hat-img"></div>' +
+        '<div class="brow left"></div><div class="brow right"></div>' +
+        '<div class="eye left"><div class="pupil"></div></div>' +
+        '<div class="eye right"><div class="pupil"></div></div>' +
+        '<div class="mouth"></div>';
+    function ensureHatChar(el) {
+        if (el && !el.querySelector('.hat-img')) el.innerHTML = HAT_INNER;
+    }
+    function setHatExpression(el, expr) {
+        if (!el) return;
+        HAT_EXPRS.forEach(e => el.classList.remove(e));
+        el.classList.add(expr && HAT_EXPRS.indexOf(expr) >= 0 ? expr : 'neutral');
+    }
+    let _hatMouseBound = false;
+    function initHatChars() {
+        document.querySelectorAll('.hat-char').forEach(ensureHatChar);
+        if (_hatMouseBound) return;
+        _hatMouseBound = true;
+        document.addEventListener('mousemove', (ev) => {
+            document.querySelectorAll('.hat-char:not(.surprised):not(.sleepy) .eye').forEach(eye => {
+                const p = eye.querySelector('.pupil');
+                if (!p) return;
+                const r = eye.getBoundingClientRect();
+                if (!r.width) return;
+                const ang = Math.atan2(ev.clientY - (r.top + r.height / 2), ev.clientX - (r.left + r.width / 2));
+                const m = Math.max(2, r.width * 0.16);
+                p.style.transform = 'translate(' + (-50 + Math.cos(ang) * 18) + '%, ' + (-50 + Math.sin(ang) * 18) + '%)';
+            });
+        });
+    }
+
     function init() {
         if (typeof document === 'undefined') return;
         document.body.classList.add('v2-active');
@@ -2047,6 +2069,7 @@
         attachMenuListeners();
         attachSettingsListeners();
         attachGiveUpListeners();
+        initHatChars();
         render();
     }
 
