@@ -94,6 +94,7 @@ const Save = (function () {
 
     function defaultSettings() {
         return {
+            soundEnabled: true,     // 音效開關（玩家分頁 checkbox）
             devQuickWin: {
                 enabled: true,
                 winAfter: 2,

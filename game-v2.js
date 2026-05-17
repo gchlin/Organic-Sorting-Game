@@ -669,6 +669,8 @@
         } catch (e) { return null; }
     }
     function _beep(name) {
+        const soundSettings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
+        if (soundSettings.soundEnabled === false) return;
         const ctx = _getAudioCtx();
         if (!ctx) return;
         try {
@@ -1372,6 +1374,8 @@
 
     function renderSettingsScreen() {
         const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
+        // Player tab
+        _setChecked('settings-sound-enabled', settings.soundEnabled !== false); // default true
         _setChecked('settings-dev-quickwin-enabled', settings.devQuickWin && settings.devQuickWin.enabled);
         _setValue('settings-dev-quickwin-after', settings.devQuickWin && settings.devQuickWin.winAfter);
         _setChecked('settings-dev-quickwin-show-indicator', settings.devQuickWin && settings.devQuickWin.showIndicator);
@@ -1892,6 +1896,9 @@
 
     function attachSettingsListeners() {
         const map = [
+            ['settings-sound-enabled', 'checkbox', function (v) {
+                Save.writeSettings({ soundEnabled: v });
+            }],
             ['settings-dev-quickwin-enabled', 'checkbox', function (v) {
                 Save.writeSettings({ devQuickWin: { enabled: v } });
             }],
