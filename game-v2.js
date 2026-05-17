@@ -1167,6 +1167,55 @@
         }
         frag.appendChild(storySection);
 
+        // --- Global achievements section ---
+        const achSection = document.createElement('div');
+        achSection.className = 'codex-achievements-section';
+        const achHeading = document.createElement('h3');
+        achHeading.textContent = '全域勳章';
+        achSection.appendChild(achHeading);
+
+        const allDefs = (typeof Save !== 'undefined' && Save.allBadgeDefs)
+            ? Save.allBadgeDefs() : [];
+        const unlockedIds = (typeof Save !== 'undefined' && Save.get)
+            ? (Save.get().badges || []) : [];
+
+        if (allDefs.length === 0) {
+            const empty = document.createElement('p');
+            empty.className = 'codex-ach-empty';
+            empty.textContent = '（暫無勳章定義）';
+            achSection.appendChild(empty);
+        } else {
+            const grid = document.createElement('div');
+            grid.className = 'codex-ach-grid';
+            for (const def of allDefs) {
+                const isUnlocked = unlockedIds.includes(def.id);
+                const item = document.createElement('div');
+                item.className = 'codex-ach-item' + (isUnlocked ? '' : ' locked');
+                const icon = document.createElement('div');
+                icon.className = 'codex-ach-icon';
+                icon.textContent = def.emoji || '🏅';
+                item.appendChild(icon);
+                const name = document.createElement('div');
+                name.className = 'codex-ach-name';
+                name.textContent = isUnlocked ? (def.label || def.id) : '???';
+                item.appendChild(name);
+                if (isUnlocked && def.needCorrect) {
+                    const desc = document.createElement('div');
+                    desc.className = 'codex-ach-desc';
+                    desc.textContent = '累積答對 ' + def.needCorrect + ' 題';
+                    item.appendChild(desc);
+                } else if (!isUnlocked && def.needCorrect) {
+                    const hint = document.createElement('div');
+                    hint.className = 'codex-ach-desc locked-hint';
+                    hint.textContent = '累積答對 ' + def.needCorrect + ' 題解鎖';
+                    item.appendChild(hint);
+                }
+                grid.appendChild(item);
+            }
+            achSection.appendChild(grid);
+        }
+        frag.appendChild(achSection);
+
         root.innerHTML = '';
         root.appendChild(frag);
     }
