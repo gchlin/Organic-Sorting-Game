@@ -140,7 +140,9 @@ const ModeRulesV2 = {
             : { nextPhase: 'resolvingWrong',
                 stateDiff: { 'players.p1.wrongStreak': s.players.p1.wrongStreak + 1,
                              'players.p1.correctStreak': 0,
+                             'players.p1.wrongCount': (s.players.p1.wrongCount || 0) + 1,
                              'question.lastChosenWrongKey': a.key,
+                             'question.lastResolveReason': 'wrong',
                              'question.eliminatedWrongKeys': new Set([...s.question.eliminatedWrongKeys, a.key]) },
                 effects: [{ type: 'sound', name: 'wrong' },
                           { type: 'anim', name: 'markChosen', ms: 800 }] },
@@ -182,32 +184,46 @@ const ModeRulesV2 = {
         effects: [{ type: 'anim', name: 'freezeAtCompleteState' }],
     }),
 
+    // Effect order matters: timer.clear FIRST so the 5s answer-timer (still
+    // ticking from buzzOpen.BUZZ) is killed before anything else. Then sound,
+    // then a short anim — the anim's EFFECT_COMPLETE is what drives the next
+    // phase transition (resolvingCorrect/Wrong → revealing / next-player).
     'duel.buzzed.SUBMIT_ANSWER': (s, a) =>
         a.key === s.question.correctKey
             ? { nextPhase: 'resolvingCorrect',
                 stateDiff: { [`players.${a.player}.correctCount`]: s.players[a.player].correctCount + 1,
                              [`players.${a.player}.correctStreak`]: s.players[a.player].correctStreak + 1 },
-                effects: [{ type: 'sound', name: 'correct' }, { type: 'timer.clear' }] }
+                effects: [{ type: 'timer.clear' },
+                          { type: 'sound', name: 'correct' },
+                          { type: 'anim', name: 'correctHighlight', ms: 800 }] }
             : { nextPhase: 'resolvingWrong',
                 stateDiff: { 'question.eliminatedWrongKeys': new Set([...s.question.eliminatedWrongKeys, a.key]),
                              'question.failedPlayersThisCycle': new Set([...s.question.failedPlayersThisCycle, a.player]),
+                             'question.lastChosenWrongKey': a.key,
+                             'question.lastResolveReason': 'wrong',
+                             [`players.${a.player}.wrongCount`]: (s.players[a.player].wrongCount || 0) + 1,
                              [`players.${a.player}.correctStreak`]: 0 },
-                effects: [{ type: 'sound', name: 'wrong' }, { type: 'timer.clear' }] },
+                effects: [{ type: 'timer.clear' },
+                          { type: 'sound', name: 'wrong' },
+                          { type: 'anim', name: 'markChosen', ms: 800 }] },
 
     'duel.buzzed.ANSWER_TIMEOUT': (s, a) => ({
         nextPhase: 'resolvingWrong',
-        stateDiff: { 'question.failedPlayersThisCycle': new Set([...s.question.failedPlayersThisCycle, a.player]) },
-        // 不加入 eliminatedWrongKeys —— 逾時 ≠ 選錯
+        stateDiff: { 'question.failedPlayersThisCycle': new Set([...s.question.failedPlayersThisCycle, a.player]),
+                     'question.lastResolveReason': 'timeout' },
+        // 不加入 eliminatedWrongKeys、不設 lastChosenWrongKey —— 逾時 ≠ 選錯
         effects: [{ type: 'sound', name: 'timeout' }],
     }),
 
+    // Duel 答對：先放完 Dynamic 到 completeState（讓沒搶到的對手也看到完整結構），
+    // 再進 revealing 階段標出正解。winTarget 達到才直接進入結算（不再播完）。
     'duel.resolvingCorrect.EFFECT_COMPLETE': (s, _, dyn) =>
         s.players[s.buzz.owner].correctCount >= dyn.winTarget
             ? { nextPhase: 'settling',
                 stateDiff: { 'result.winner': s.buzz.owner },
                 effects: [{ type: 'render' }] }
-            : { nextPhase: 'cleanup', stateDiff: {},
-                effects: [{ type: 'cleanupAndDispatch', next: { type: 'LOAD_NEXT_QUESTION' } }] },
+            : { nextPhase: 'revealing', stateDiff: {},
+                effects: [{ type: 'anim', name: 'playDynamicToCompleteState' }] },
 
     'duel.resolvingWrong.EFFECT_COMPLETE': (s, _, dyn) => {
         const eliminated = s.question.eliminatedWrongKeys.size;
@@ -231,10 +247,20 @@ const ModeRulesV2 = {
                            { type: 'timer', ms: 5000, onTimeout: { type: 'ANSWER_TIMEOUT', player: other } }] };
     },
 
+    // Stage 1: Dynamic finished playing to completion. Now move to 'revealed' so
+    // the correct-reveal CSS class stays visible while a short anim runs. We
+    // can't both reveal AND cleanup from one handler — cleanupAndDispatch
+    // cancels every active effect (including the reveal anim) and transitions
+    // to the cleanup phase, which wipes the green highlight class immediately.
     'duel.revealing.EFFECT_COMPLETE': (s) => ({
+        nextPhase: 'revealed', stateDiff: {},
+        effects: [{ type: 'anim', name: 'revealCorrect', key: s.question.correctKey, ms: 1500 }],
+    }),
+
+    // Stage 2: reveal anim done → cleanup → next question.
+    'duel.revealed.EFFECT_COMPLETE': (s) => ({
         nextPhase: 'cleanup', stateDiff: {},
-        effects: [{ type: 'anim', name: 'revealCorrect', key: s.question.correctKey },
-                  { type: 'cleanupAndDispatch', next: { type: 'LOAD_NEXT_QUESTION' } }],
+        effects: [{ type: 'cleanupAndDispatch', next: { type: 'LOAD_NEXT_QUESTION' } }],
     }),
 
     'duel.cleanup.CLEANUP_DONE': (s) => ({ nextPhase: 'idle', stateDiff: {}, effects: [] }),

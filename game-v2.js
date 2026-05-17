@@ -116,18 +116,27 @@
         state.globalInputLocked = GameState.isInputLockedPhase(state.phase);
 
         // SUBMIT_ANSWER side effects — must happen BEFORE chained effects could shift state.
+        // NOTE: We intentionally do NOT auto-call markFixedV2 here. The 錯題本 keeps
+        // entries until the player explicitly deletes them (or uses "刪除已克服"
+        // bulk action). This matches the "鞋盒記憶法" spirit: a wrong card stays
+        // in the box even after one correct review — repeated correct reviews promote
+        // it to a higher box, and only the player decides when to retire it.
         if (action.type === 'SUBMIT_ANSWER' && preCompoundKey) {
             const wasCorrect = (action.key === preCorrectKey);
             if (state.mode === 'practice' && wasCorrect) {
                 if (typeof Save !== 'undefined') {
-                    if (Save.markFixedV2) Save.markFixedV2(state.family, state.difficulty, preCompoundKey);
                     if (Save.recordMoleculeAnsweredV2) Save.recordMoleculeAnsweredV2(preCompoundKey, state.difficulty);
                     if (Save.addCorrect) Save.addCorrect(1);
+                    // If this compound is in the wrong-book, count this correct
+                    // re-answer toward its mastery streak (Leitner-spirit promote).
+                    if (Save.promoteWrongV2) Save.promoteWrongV2(state.family, state.difficulty, preCompoundKey);
                 }
             } else if (state.mode === 'practice' && !wasCorrect) {
                 state.wrongInRound.add(preCompoundKey);
-                if (typeof Save !== 'undefined' && Save.recordWrongV2) {
-                    Save.recordWrongV2(state.family, state.difficulty, preCompoundKey);
+                if (typeof Save !== 'undefined') {
+                    if (Save.recordWrongV2) Save.recordWrongV2(state.family, state.difficulty, preCompoundKey);
+                    // A wrong answer also demotes (back to box 1) if already tracked.
+                    if (Save.demoteWrongV2) Save.demoteWrongV2(state.family, state.difficulty, preCompoundKey);
                 }
             }
         }
@@ -229,7 +238,12 @@
         }
 
         if (type === 'timer.clear') {
-            // No-op here: EffectManager.cancelAllEffects on cleanup already clears timers.
+            // Cancel every in-flight effect (including the 5s buzzed answer-timer)
+            // so its onTimeout / EFFECT_COMPLETE callbacks don't leak into the
+            // resolving phase. Without this, the leftover timer was driving phase
+            // transitions on a hardcoded 5-second beat regardless of anim length.
+            try { EffectManager.cancelAllEffects('timer.clear'); } catch (e) {}
+            if (state && state.effects && state.effects.activeIds) state.effects.activeIds.clear();
             return;
         }
 
@@ -359,12 +373,13 @@
         // Body phase classes (state → class)
         document.body.classList.remove(
             'phase-resolving-correct', 'phase-resolving-wrong',
-            'phase-revealing', 'phase-cleanup', 'input-locked'
+            'phase-revealing', 'phase-revealed', 'phase-cleanup', 'input-locked'
         );
         if (state) {
             if (state.phase === 'resolvingCorrect') document.body.classList.add('phase-resolving-correct');
             if (state.phase === 'resolvingWrong') document.body.classList.add('phase-resolving-wrong');
             if (state.phase === 'revealing') document.body.classList.add('phase-revealing');
+            if (state.phase === 'revealed') document.body.classList.add('phase-revealed');
             if (state.phase === 'cleanup') document.body.classList.add('phase-cleanup');
             if (state.globalInputLocked) document.body.classList.add('input-locked');
         }
@@ -400,7 +415,18 @@
             for (let i = 0; i < familyKeys.length; i++) {
                 const fk = familyKeys[i];
                 const btn = document.createElement('button');
-                btn.textContent = (i + 1) + '. ' + Families[fk].nameZh;
+                // Show how many questions exist + how many already answered to
+                // make progress visible. Helps players gauge "how close to clear".
+                let label = (i + 1) + '. ' + Families[fk].nameZh;
+                if (typeof QuestionEngine !== 'undefined' && QuestionEngine.getQuestionSet) {
+                    const totalQs = QuestionEngine.getQuestionSet(fk, diff).length;
+                    const askedSize = (typeof Save !== 'undefined' && Save.getAskedHistory)
+                        ? Save.getAskedHistory(fk, diff).size : 0;
+                    if (totalQs > 0) {
+                        label += '  （' + Math.min(askedSize, totalQs) + ' / ' + totalQs + ' 題）';
+                    }
+                }
+                btn.textContent = label;
                 if (typeof Save !== 'undefined' && Save.isSubLevelCleared && Save.isSubLevelCleared(fk, diff)) {
                     btn.classList.add('sub-cleared');
                 }
@@ -494,7 +520,7 @@
         if (optsContainer && state.question && state.question.options) {
             const showOptions = (state.mode === 'practice')
                 || (state.mode === 'duel'
-                    && (state.phase === 'buzzed' || state.phase === 'revealing'
+                    && (state.phase === 'buzzed' || state.phase === 'revealing' || state.phase === 'revealed'
                         || state.phase === 'resolvingCorrect' || state.phase === 'resolvingWrong'));
             optsContainer.style.visibility = showOptions ? 'visible' : 'hidden';
             const btns = optsContainer.querySelectorAll('.option-btn');
@@ -511,7 +537,8 @@
                     btns[i].classList.toggle('wrong-chosen',
                         opt.key === state.question.lastChosenWrongKey);
                     btns[i].classList.toggle('correct-reveal',
-                        state.phase === 'revealing' && opt.key === state.question.correctKey);
+                        (state.phase === 'revealing' || state.phase === 'revealed')
+                        && opt.key === state.question.correctKey);
                     // Also light up the correct option green while in resolvingCorrect (Practice + Duel)
                     btns[i].classList.toggle('correct-chosen',
                         state.phase === 'resolvingCorrect' && opt.key === state.question.correctKey);
@@ -587,7 +614,9 @@
         } catch (e) { /* fail silent */ }
     }
 
-    // Show/hide the big center "答對 / 答錯" overlay based on phase.
+    // Show/hide the big center "答對 / 答錯 / 逾時" overlay based on phase.
+    // For resolvingWrong, distinguish wrong-pick vs timeout using
+    // state.question.lastResolveReason (set by the reducer; 'wrong' | 'timeout').
     function _updateFeedbackOverlay() {
         const el = document.getElementById('feedback-overlay');
         if (!el) return;
@@ -597,9 +626,8 @@
             el.textContent = '✓ 答對';
             el.classList.add('show-correct');
         } else if (state.phase === 'resolvingWrong') {
-            // Distinguish a real wrong pick vs answer timeout (Duel only)
-            const isTimeout = state.question && !state.question.lastChosenWrongKey;
-            el.textContent = isTimeout ? '⏱ 逾時' : '✗ 答錯';
+            const reason = state.question && state.question.lastResolveReason;
+            el.textContent = (reason === 'timeout') ? '⏱ 逾時' : '✗ 答錯';
             el.classList.add('show-wrong');
         } else {
             el.textContent = '';
@@ -648,24 +676,44 @@
         } else {
             const cleared = (typeof Save !== 'undefined' && Save.isSubLevelCleared
                 && Save.isSubLevelCleared(state.family, state.difficulty));
-            const wrongsLeft = (typeof Save !== 'undefined' && Save.getActiveWrongs
-                ? Save.getActiveWrongs(state.family, state.difficulty).length
-                : 0);
-            if (state.queueSource === 'wrongOnly' && wrongsLeft === 0) {
-                titleEl.textContent = '🎉 已克服該組所有錯題';
+            if (state.queueSource === 'wrongOnly') {
+                // Celebrate when every entry in the bucket is now in box ≥4 (mastered).
+                let entries = [];
+                if (typeof Save !== 'undefined' && Save.getWrongEntriesV2) {
+                    entries = Save.getWrongEntriesV2(state.family, state.difficulty);
+                }
+                const allMastered = entries.length > 0 && entries.every(function (e) { return e.box >= 4; });
+                titleEl.textContent = allMastered ? '🎉 該組錯題全部進入「已克服」' : '🎯 錯題重練結算';
             } else {
                 titleEl.textContent = cleared ? '已通關該子關 🥉' : '本輪結算';
             }
         }
 
-        const acc = state.players.p1.totalAsked > 0
-            ? (state.players.p1.correctCount / state.players.p1.totalAsked) : null;
+        // Accuracy now uses correctCount / (correctCount + wrongCount).
+        // wrongCount counts wrong submissions, so even if you eventually got
+        // the same question right after a mistake, accuracy reflects that mistake.
+        const p1 = state.players.p1;
+        const totalSubmissions = (p1.correctCount || 0) + (p1.wrongCount || 0);
+        const acc = totalSubmissions > 0 ? (p1.correctCount / totalSubmissions) : null;
         statsEl.innerHTML = '';
-        _appendStat(statsEl, '答對', String(state.players.p1.correctCount || 0));
+        _appendStat(statsEl, '答對', String(p1.correctCount || 0));
+        if ((p1.wrongCount || 0) > 0) {
+            _appendStat(statsEl, '答錯', String(p1.wrongCount || 0));
+        }
         if (state.mode === 'duel') {
             _appendStat(statsEl, 'P2 答對', String(state.players.p2.correctCount || 0));
         }
         _appendStat(statsEl, '本輪正確率', acc !== null ? (Math.round(acc * 100) + '%') : '—');
+        // Practice: show progress against the sub-level's full question set.
+        if (state.mode === 'practice'
+            && typeof QuestionEngine !== 'undefined' && QuestionEngine.getQuestionSet
+            && typeof Save !== 'undefined' && Save.getAskedHistory) {
+            const total = QuestionEngine.getQuestionSet(state.family, state.difficulty).length;
+            const asked = Save.getAskedHistory(state.family, state.difficulty).size;
+            if (total > 0) {
+                _appendStat(statsEl, '子關進度', Math.min(asked, total) + ' / ' + total + ' 題');
+            }
+        }
 
         // Wrong review (Practice only)
         if (wrongReview && wrongCards) {
@@ -720,7 +768,7 @@
         if (keys.length === 0) {
             const empty = document.createElement('div');
             empty.className = 'v2-wrong-empty';
-            empty.textContent = '目前沒有未克服的錯題 ✨';
+            empty.textContent = '目前沒有錯題 ✨';
             root.appendChild(empty);
             return;
         }
@@ -730,23 +778,91 @@
             if (dashIdx === -1) continue;
             const family = key.slice(0, dashIdx);
             const difficulty = key.slice(dashIdx + 1);
-            const compounds = all[key];
             const fam = (typeof Families !== 'undefined') ? Families[family] : null;
             const diffName = { beginner: '初', intermediate: '中', advanced: '高' }[difficulty] || difficulty;
+
+            const entries = (Save.getWrongEntriesV2)
+                ? Save.getWrongEntriesV2(family, difficulty)
+                : all[key].map(function (ck) { return { compoundKey: ck, box: 1, correctStreak: 0 }; });
+            const masteredCount = entries.filter(function (e) { return e.box >= 4; }).length;
+            const struggleCount = entries.length - masteredCount;
+
             const block = document.createElement('div');
             block.className = 'v2-wrong-group';
-            block.innerHTML =
+
+            const header = document.createElement('div');
+            header.innerHTML =
                 '<h3>' + (fam ? fam.nameZh : family) + ' · ' + diffName + '</h3>' +
-                '<div>未克服 <span class="count">' + compounds.length + '</span> 題</div>';
+                '<div>共 <span class="count">' + entries.length + '</span> 題（still 練習中 ' + struggleCount
+                + '，已克服 ' + masteredCount + '）</div>';
+            block.appendChild(header);
+
+            // Cards
+            const cardWrap = document.createElement('div');
+            cardWrap.className = 'v2-wrong-cards';
+            for (let j = 0; j < entries.length; j++) {
+                const entry = entries[j];
+                const ck = entry.compoundKey;
+                const bank = (typeof AnswerBank !== 'undefined') ? AnswerBank[ck] : null;
+                const img = _findImageFor(ck);
+                const card = document.createElement('div');
+                card.className = 'v2-wrong-card box-' + entry.box;
+                if (entry.box >= 4) card.classList.add('mastered');
+                const boxDots = '●'.repeat(entry.box) + '○'.repeat(5 - entry.box);
+                card.innerHTML =
+                    '<img src="' + (img || '') + '" alt="">' +
+                    '<div class="name-zh">' + (bank ? bank.content : ck) + '</div>' +
+                    '<div class="box-indicator" title="鞋盒層級 ' + entry.box + '/5">' + boxDots + '</div>';
+                const del = document.createElement('button');
+                del.className = 'v2-wrong-delete';
+                del.textContent = '✕';
+                del.title = '從錯題本移除';
+                del.addEventListener('click', function () {
+                    if (Save.deleteWrongV2) {
+                        Save.deleteWrongV2(family, difficulty, ck);
+                        render();
+                    }
+                });
+                card.appendChild(del);
+                cardWrap.appendChild(card);
+            }
+            block.appendChild(cardWrap);
+
+            // Action buttons
+            const actions = document.createElement('div');
+            actions.className = 'v2-wrong-actions';
+
             const retrainBtn = document.createElement('button');
-            retrainBtn.textContent = '重練這組 (' + compounds.length + ' 題)';
+            retrainBtn.textContent = '重練這組 (' + entries.length + ' 題)';
             retrainBtn.addEventListener('click', function () {
                 startMode({
                     mode: 'practice', family: family, difficulty: difficulty,
                     opponent: 'human', queueSource: 'wrongOnly'
                 });
             });
-            block.appendChild(retrainBtn);
+            actions.appendChild(retrainBtn);
+
+            if (masteredCount > 0) {
+                const purgeBtn = document.createElement('button');
+                purgeBtn.textContent = '刪除已克服 (' + masteredCount + ' 題)';
+                purgeBtn.className = 'v2-wrong-purge';
+                purgeBtn.addEventListener('click', function () {
+                    _pendingConfirm = {
+                        text: '確定要刪除這組已克服的 ' + masteredCount + ' 題？',
+                        onYes: function () {
+                            if (Save.deleteMasteredWrongsV2) {
+                                Save.deleteMasteredWrongsV2(family, difficulty);
+                            }
+                            render();
+                        },
+                        onNo: function () {}
+                    };
+                    render();
+                });
+                actions.appendChild(purgeBtn);
+            }
+            block.appendChild(actions);
+
             root.appendChild(block);
         }
     }
@@ -895,6 +1011,7 @@
         });
         state.question.eliminatedWrongKeys = new Set();
         state.question.lastChosenWrongKey = null;
+        state.question.lastResolveReason = null;
         state.question.failedPlayersThisCycle = new Set();
         // Bookkeeping
         state.players.p1.totalAsked = (state.players.p1.totalAsked || 0) + 1;

@@ -130,11 +130,15 @@ const GameState = (function () {
     function createPlayerStateV2() {
         // NOTE: no `combo` field. comboLevel is derived from correctStreak by render
         // (see README "Combo / Streak 規格 → 狀態欄位（去除冗餘）").
+        // wrongCount counts WRONG submissions (not unique compounds) so settle's
+        // accuracy = correctCount / (correctCount + wrongCount) reflects mistakes
+        // even when the player eventually answered the same question correctly.
         return {
             score: 0,
             correctStreak: 0,
             wrongStreak: 0,
             correctCount: 0,
+            wrongCount: 0,
             totalAsked: 0,
             state: 'ready',
             isLocked: false
@@ -196,6 +200,7 @@ const GameState = (function () {
         return phase === 'resolvingCorrect'
             || phase === 'resolvingWrong'
             || phase === 'revealing'
+            || phase === 'revealed'
             || phase === 'cleanup';
     }
 

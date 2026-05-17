@@ -2748,12 +2748,14 @@ body.v2-active .v2-root { display: block; }
 .screen.is-active { display: block; }
 
 /* --- Modals --- */
+/* z-index 10000: must sit ABOVE #feedback-overlay (9999) so the confirm modal
+   doesn't get covered by mid-round resolve-correct/wrong feedback. */
 .modal {
     display: none;
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.7);
-    z-index: 1000;
+    z-index: 10000;
     align-items: center;
     justify-content: center;
 }
@@ -3243,6 +3245,48 @@ body.input-locked .v2-buzz button { pointer-events: none; }
     color: var(--hp-parchment-dark);
     font-style: italic;
 }
+
+/* --- Wrong-book Leitner-spirit additions --- */
+.v2-wrong-card {
+    position: relative;
+}
+.v2-wrong-card.box-1 { border-color: var(--hp-red-bright); }
+.v2-wrong-card.box-2 { border-color: #d99441; }
+.v2-wrong-card.box-3 { border-color: #d4af37; }
+.v2-wrong-card.box-4,
+.v2-wrong-card.box-5 { border-color: #6fe09c; }
+.v2-wrong-card.mastered { opacity: 0.85; }
+.v2-wrong-card .box-indicator {
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    color: var(--hp-gold);
+    margin-top: 4px;
+}
+.v2-wrong-card .v2-wrong-delete {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(0,0,0,0.55);
+    color: var(--hp-parchment);
+    border: 1px solid var(--hp-red-bright);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    line-height: 1;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.v2-wrong-card .v2-wrong-delete:hover { background: var(--hp-red-bright); }
+.v2-wrong-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+.v2-wrong-actions button { margin-top: 0; }
+.v2-wrong-actions .v2-wrong-purge { background: #2d5a3d; }
+.v2-wrong-actions .v2-wrong-purge:hover { background: #4a9166; }
 
 /* --- Settings screen --- */
 .v2-tabs {

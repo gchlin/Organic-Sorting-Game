@@ -493,6 +493,32 @@ const Save = (function () {
     // Effect manager calls these fire-and-forget; no return value contract.
     // =======================================================================
 
+    // ─────────────────────────────────────────────────────────────────────
+    // 鞋盒記憶法 (Leitner-spirit) data shape, alongside the legacy active/fixed
+    // arrays used by the v2 API.
+    //
+    //   wrongLog[family-difficulty] = {
+    //     active: [compoundKey, ...],        // legacy mirror; keeps existing UI working
+    //     fixed:  [compoundKey, ...],        // legacy "moved out" bucket — not auto-populated anymore
+    //     entries: {                         // per-card state (the boxes)
+    //       [compoundKey]: {
+    //         box: 1..5,                     // current box (1=just wrong, 5=mastered)
+    //         correctStreak: int,            // consecutive correct re-answers
+    //         firstSeenAt: ms-epoch,
+    //         lastWrongAt: ms-epoch,
+    //         lastCorrectAt: ms-epoch
+    //       }
+    //     },
+    //     lastUpdated: ms-epoch
+    //   }
+    //
+    // Box promotion: 1→2 needs 1 correct, 2→3 needs 1 correct, 3→4 needs 2 correct,
+    // 4→5 needs 2 correct. Any wrong answer demotes back to box 1.
+    // ─────────────────────────────────────────────────────────────────────
+
+    const PROMOTION_REQUIREMENT = { 1: 1, 2: 1, 3: 2, 4: 2 };
+    const MASTERED_BOX = 4; // box >= 4 counts as "已克服" for bulk delete
+
     function _wrongBucketKey(family, difficulty) {
         return family + '-' + difficulty;
     }
@@ -501,25 +527,43 @@ const Save = (function () {
         const key = _wrongBucketKey(family, difficulty);
         if (!data.wrongLog || typeof data.wrongLog !== 'object') data.wrongLog = {};
         if (!data.wrongLog[key] || typeof data.wrongLog[key] !== 'object') {
-            data.wrongLog[key] = { active: [], fixed: [], lastUpdated: 0 };
+            data.wrongLog[key] = { active: [], fixed: [], entries: {}, lastUpdated: 0 };
         }
         const bucket = data.wrongLog[key];
         if (!Array.isArray(bucket.active)) bucket.active = [];
         if (!Array.isArray(bucket.fixed)) bucket.fixed = [];
+        if (!bucket.entries || typeof bucket.entries !== 'object') bucket.entries = {};
         if (typeof bucket.lastUpdated !== 'number') bucket.lastUpdated = 0;
         return bucket;
+    }
+
+    function _ensureWrongEntry(bucket, compoundKey) {
+        if (!bucket.entries[compoundKey]) {
+            bucket.entries[compoundKey] = {
+                box: 1, correctStreak: 0,
+                firstSeenAt: Date.now(), lastWrongAt: 0, lastCorrectAt: 0
+            };
+        }
+        return bucket.entries[compoundKey];
     }
 
     function recordWrongV2(family, difficulty, compoundKey) {
         if (!family || !difficulty || !compoundKey) return;
         const bucket = _ensureWrongBucket(family, difficulty);
-        if (bucket.active.indexOf(compoundKey) !== -1) return;
-        if (bucket.fixed.indexOf(compoundKey) !== -1) return; // already overcome; ignore
-        bucket.active.push(compoundKey);
+        // Keep active list in sync (UI shows it).
+        if (bucket.active.indexOf(compoundKey) === -1) bucket.active.push(compoundKey);
+        // Don't lock out previously fixed compounds — they can re-enter.
+        const fixedIdx = bucket.fixed.indexOf(compoundKey);
+        if (fixedIdx !== -1) bucket.fixed.splice(fixedIdx, 1);
+        const entry = _ensureWrongEntry(bucket, compoundKey);
+        entry.lastWrongAt = Date.now();
         bucket.lastUpdated = Date.now();
         persist();
     }
 
+    // Legacy markFixedV2 — moves active → fixed. Kept for backwards-compat,
+    // but the data-driven flow no longer auto-calls it. Use deleteWrongV2
+    // (manual user action) or promoteWrongV2 (Leitner-spirit auto-promote) instead.
     function markFixedV2(family, difficulty, compoundKey) {
         if (!family || !difficulty || !compoundKey) return;
         const bucket = _ensureWrongBucket(family, difficulty);
@@ -531,12 +575,116 @@ const Save = (function () {
         persist();
     }
 
+    // promoteWrongV2: called on every correct answer in Practice. No-op if the
+    // compound was never wrong. Bumps correctStreak; promotes box when the
+    // threshold for the current box is met. Returns the new box (or null).
+    function promoteWrongV2(family, difficulty, compoundKey) {
+        if (!family || !difficulty || !compoundKey) return null;
+        const key = _wrongBucketKey(family, difficulty);
+        const bucket = data.wrongLog && data.wrongLog[key];
+        if (!bucket || !bucket.entries || !bucket.entries[compoundKey]) return null;
+        const entry = bucket.entries[compoundKey];
+        entry.correctStreak = (entry.correctStreak || 0) + 1;
+        entry.lastCorrectAt = Date.now();
+        const need = PROMOTION_REQUIREMENT[entry.box];
+        if (need && entry.correctStreak >= need && entry.box < 5) {
+            entry.box += 1;
+            entry.correctStreak = 0;
+        }
+        bucket.lastUpdated = Date.now();
+        persist();
+        return entry.box;
+    }
+
+    // demoteWrongV2: called on a wrong answer for a compound already in the book.
+    // Resets to box 1. No-op if not tracked.
+    function demoteWrongV2(family, difficulty, compoundKey) {
+        if (!family || !difficulty || !compoundKey) return;
+        const key = _wrongBucketKey(family, difficulty);
+        const bucket = data.wrongLog && data.wrongLog[key];
+        if (!bucket || !bucket.entries || !bucket.entries[compoundKey]) return;
+        const entry = bucket.entries[compoundKey];
+        entry.box = 1;
+        entry.correctStreak = 0;
+        entry.lastWrongAt = Date.now();
+        bucket.lastUpdated = Date.now();
+        persist();
+    }
+
+    // Manual delete: remove a single compound from the bucket entirely
+    // (active + entries). Caller is the wrong-book UI's per-card × button.
+    function deleteWrongV2(family, difficulty, compoundKey) {
+        if (!family || !difficulty || !compoundKey) return;
+        const key = _wrongBucketKey(family, difficulty);
+        const bucket = data.wrongLog && data.wrongLog[key];
+        if (!bucket) return;
+        const idx = bucket.active.indexOf(compoundKey);
+        if (idx !== -1) bucket.active.splice(idx, 1);
+        const fixedIdx = bucket.fixed.indexOf(compoundKey);
+        if (fixedIdx !== -1) bucket.fixed.splice(fixedIdx, 1);
+        if (bucket.entries) delete bucket.entries[compoundKey];
+        bucket.lastUpdated = Date.now();
+        persist();
+    }
+
+    // Delete all entries whose box >= MASTERED_BOX (default 4). Returns number deleted.
+    function deleteMasteredWrongsV2(family, difficulty) {
+        if (!family || !difficulty) return 0;
+        const key = _wrongBucketKey(family, difficulty);
+        const bucket = data.wrongLog && data.wrongLog[key];
+        if (!bucket || !bucket.entries) return 0;
+        let deleted = 0;
+        for (const ck of Object.keys(bucket.entries)) {
+            if (bucket.entries[ck].box >= MASTERED_BOX) {
+                deleteWrongV2(family, difficulty, ck);
+                deleted++;
+            }
+        }
+        return deleted;
+    }
+
     function getActiveWrongs(family, difficulty) {
         if (!family || !difficulty) return [];
         const key = _wrongBucketKey(family, difficulty);
         const bucket = data.wrongLog && data.wrongLog[key];
         if (!bucket || !Array.isArray(bucket.active)) return [];
         return bucket.active.slice();
+    }
+
+    // Returns [{ compoundKey, box, correctStreak, lastWrongAt, lastCorrectAt }, ...]
+    // sorted by box ASC (still-struggling cards first), then by lastWrongAt DESC.
+    function getWrongEntriesV2(family, difficulty) {
+        if (!family || !difficulty) return [];
+        const key = _wrongBucketKey(family, difficulty);
+        const bucket = data.wrongLog && data.wrongLog[key];
+        if (!bucket) return [];
+        const out = [];
+        // Prefer entries map; fall back to active[] for legacy bucket without entries.
+        if (bucket.entries && typeof bucket.entries === 'object') {
+            for (const ck of Object.keys(bucket.entries)) {
+                const e = bucket.entries[ck];
+                out.push({
+                    compoundKey: ck,
+                    box: e.box || 1,
+                    correctStreak: e.correctStreak || 0,
+                    lastWrongAt: e.lastWrongAt || 0,
+                    lastCorrectAt: e.lastCorrectAt || 0
+                });
+            }
+        }
+        // Include any active that aren't yet in entries (defensive: migration).
+        if (Array.isArray(bucket.active)) {
+            for (const ck of bucket.active) {
+                if (!out.find(x => x.compoundKey === ck)) {
+                    out.push({ compoundKey: ck, box: 1, correctStreak: 0, lastWrongAt: 0, lastCorrectAt: 0 });
+                }
+            }
+        }
+        out.sort(function (a, b) {
+            if (a.box !== b.box) return a.box - b.box;
+            return b.lastWrongAt - a.lastWrongAt;
+        });
+        return out;
     }
 
     function getAllActiveWrongs() {
@@ -703,8 +851,11 @@ const Save = (function () {
         recordSubLevelRound,
         markTutorialSeenV2, isTutorialSeenV2,
         recordMoleculeAnsweredV2,
-        // wrong-review v2
-        recordWrongV2, markFixedV2, getActiveWrongs, getAllActiveWrongs, clearWrongLog,
+        // wrong-review v2 (Leitner-spirit)
+        recordWrongV2, markFixedV2,
+        promoteWrongV2, demoteWrongV2,
+        deleteWrongV2, deleteMasteredWrongsV2,
+        getActiveWrongs, getWrongEntriesV2, getAllActiveWrongs, clearWrongLog,
         // asked-history v2
         recordAskedV2, getAskedHistory, isSubLevelCleared, clearAskedHistory,
         readSettings, writeSettings
