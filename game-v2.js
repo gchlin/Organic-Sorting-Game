@@ -758,8 +758,14 @@
             }
             const giveup = document.getElementById('btn-giveup');
             if (giveup) {
-                giveup.classList.add('visible');
-                giveup.setAttribute('data-side', side);
+                // PvE: don't let human give up on AI's behalf when AI owns buzz.
+                const ownerIsAI = state.opponent !== 'human' && state.buzz.owner === 'p2';
+                if (ownerIsAI) {
+                    giveup.classList.remove('visible');
+                } else {
+                    giveup.classList.add('visible');
+                    giveup.setAttribute('data-side', side);
+                }
             }
             const handoff = document.getElementById('handoff-overlay');
             if (handoff) {
@@ -1679,6 +1685,8 @@
     function _dispatchGiveUpIfBuzzed() {
         if (!state || state.mode !== 'duel' || state.phase !== 'buzzed') return false;
         if (!state.buzz || !state.buzz.owner) return false;
+        // PvE: human can't give up on AI's behalf.
+        if (state.opponent !== 'human' && state.buzz.owner === 'p2') return false;
         dispatch({ type: 'GIVE_UP', player: state.buzz.owner });
         return true;
     }
