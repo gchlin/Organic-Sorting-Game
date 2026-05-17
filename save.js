@@ -24,6 +24,10 @@
 //   Save.markTutorialSeenV2(family, difficulty)
 //   Save.isTutorialSeenV2(family, difficulty)
 //   Save.recordMoleculeAnsweredV2(compoundKey, difficulty)
+//   Save.recordAskedV2(family, difficulty, compoundKey)        // returns { newlyCleared }
+//   Save.getAskedHistory(family, difficulty)                   // returns Set<compoundKey>
+//   Save.isSubLevelCleared(family, difficulty)                 // boolean
+//   Save.clearAskedHistory(family?, difficulty?)               // scope-aware reset
 //   Save.readSettings() / Save.writeSettings(partial)
 
 const Save = (function () {
@@ -100,6 +104,7 @@ const Save = (function () {
             moleculeSeen: {},       // { [compoundKey]: { beginner: bool, intermediate: bool, advanced: bool } }
             unlockedStories: [],    // family keys; e.g. ['hydrocarbon', 'oxygen']
             wrongLog: {},           // { 'family-difficulty': { active: [], fixed: [], lastUpdated: 0 } }
+            askedHistory: {},       // { 'family-difficulty': [compoundKey, …] }  — set, stored as array
             settings: defaultSettings()
         };
     }
@@ -204,6 +209,11 @@ const Save = (function () {
         // Wrong-log starts empty in v2; v1 had nothing comparable
         out.wrongLog = {};
 
+        // Asked-history starts empty in v2; legacy saves effectively reset
+        // progress on upgrade. Acceptable because old `levelsCleared`
+        // already restored the family-completion badges via familyProgress.
+        out.askedHistory = {};
+
         out.version = 2;
         return out;
     }
@@ -234,6 +244,7 @@ const Save = (function () {
         if (!Array.isArray(out.tutorialsSeen)) out.tutorialsSeen = [];
         if (!Array.isArray(out.unlockedStories)) out.unlockedStories = [];
         if (!out.wrongLog || typeof out.wrongLog !== 'object') out.wrongLog = {};
+        if (!out.askedHistory || typeof out.askedHistory !== 'object') out.askedHistory = {};
         out.version = 2;
         return out;
     }
@@ -564,6 +575,90 @@ const Save = (function () {
         persist();
     }
 
+    // =======================================================================
+    // Asked-history v2
+    //
+    // Per README "通關、進度與存檔規則":
+    // - `askedHistory[family-difficulty]: Set<compoundKey>` tracks which
+    //   questions in a sub-level have been ASKED (regardless of result).
+    // - This is distinct from `moleculeSeen` (which tracks answered correctly,
+    //   for codex stamps). The Practice clear condition uses askedHistory.
+    // - Serialized as array; getAskedHistory(...) returns a fresh Set.
+    // - recordAskedV2 returns { newlyCleared: bool } so the caller can
+    //   trigger markSubLevelClear (badge + story unlock) on the transition.
+    // =======================================================================
+
+    function _askedBucketKey(family, difficulty) {
+        return family + '-' + difficulty;
+    }
+
+    function _ensureAskedBucket(family, difficulty) {
+        const key = _askedBucketKey(family, difficulty);
+        if (!data.askedHistory || typeof data.askedHistory !== 'object') data.askedHistory = {};
+        if (!Array.isArray(data.askedHistory[key])) data.askedHistory[key] = [];
+        return data.askedHistory[key];
+    }
+
+    function recordAskedV2(family, difficulty, compoundKey) {
+        if (!family || !difficulty || !compoundKey) return { newlyCleared: false };
+        const bucket = _ensureAskedBucket(family, difficulty);
+        const wasAlready = bucket.indexOf(compoundKey) !== -1;
+        if (!wasAlready) {
+            bucket.push(compoundKey);
+            persist();
+        }
+        // Detect the transition: this push made the bucket size equal the
+        // full question-set size for the first time.
+        let total = 0;
+        if (typeof QuestionEngine !== 'undefined' && typeof QuestionEngine.getQuestionSet === 'function') {
+            const set = QuestionEngine.getQuestionSet(family, difficulty);
+            total = Array.isArray(set) ? set.length : 0;
+        }
+        const newlyCleared = !wasAlready && total > 0 && bucket.length === total;
+        return { newlyCleared: newlyCleared };
+    }
+
+    function getAskedHistory(family, difficulty) {
+        if (!family || !difficulty) return new Set();
+        const key = _askedBucketKey(family, difficulty);
+        const arr = data.askedHistory && data.askedHistory[key];
+        return new Set(Array.isArray(arr) ? arr : []);
+    }
+
+    function isSubLevelCleared(family, difficulty) {
+        if (!family || !difficulty) return false;
+        if (typeof QuestionEngine === 'undefined' || typeof QuestionEngine.getQuestionSet !== 'function') return false;
+        const set = QuestionEngine.getQuestionSet(family, difficulty);
+        const total = Array.isArray(set) ? set.length : 0;
+        if (total <= 0) return false;
+        const asked = getAskedHistory(family, difficulty);
+        return asked.size === total;
+    }
+
+    function clearAskedHistory(family, difficulty) {
+        if (!data.askedHistory || typeof data.askedHistory !== 'object') {
+            data.askedHistory = {};
+            persist();
+            return;
+        }
+        if (!family) {
+            data.askedHistory = {};
+            persist();
+            return;
+        }
+        if (!difficulty) {
+            // Clear all difficulties of this family
+            for (const k of Object.keys(data.askedHistory)) {
+                if (k.indexOf(family + '-') === 0) delete data.askedHistory[k];
+            }
+            persist();
+            return;
+        }
+        const key = _askedBucketKey(family, difficulty);
+        delete data.askedHistory[key];
+        persist();
+    }
+
     // readSettings() / writeSettings(partial)
     // Expose settings sub-object; writeSettings deep-merges and persists.
     function readSettings() {
@@ -610,6 +705,8 @@ const Save = (function () {
         recordMoleculeAnsweredV2,
         // wrong-review v2
         recordWrongV2, markFixedV2, getActiveWrongs, getAllActiveWrongs, clearWrongLog,
+        // asked-history v2
+        recordAskedV2, getAskedHistory, isSubLevelCleared, clearAskedHistory,
         readSettings, writeSettings
     };
 })();
