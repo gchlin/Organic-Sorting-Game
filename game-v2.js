@@ -245,7 +245,7 @@
                 const durationMs = variantDef ? variantDef.durationMs : 8000;
                 EffectManager.runDynamicEffect(
                     { op: 'play', variant: effect.variant, durationMs: durationMs,
-                      onTick: function (ms) { if (state && state.dynamic) state.dynamic.elapsedMs = ms; },
+                      onTick: function (ms) { if (state && state.dynamic) { state.dynamic.elapsedMs = ms; _updateDynamicVisual(); } },
                       onCompleteStateReached: function () { dispatch({ type: 'DYNAMIC_COMPLETE' }); } },
                     function (completedId) { dispatch({ type: 'EFFECT_COMPLETE', effectId: completedId }); }
                 );
@@ -265,7 +265,7 @@
                 EffectManager.runDynamicEffect(
                     { op: 'resume', variant: variant, durationMs: durationMs,
                       startElapsedMs: state.dynamic.elapsedMs || 0,
-                      onTick: function (ms) { if (state && state.dynamic) state.dynamic.elapsedMs = ms; },
+                      onTick: function (ms) { if (state && state.dynamic) { state.dynamic.elapsedMs = ms; _updateDynamicVisual(); } },
                       onCompleteStateReached: function () { dispatch({ type: 'DYNAMIC_COMPLETE' }); } },
                     function (completedId) { dispatch({ type: 'EFFECT_COMPLETE', effectId: completedId }); }
                 );
@@ -279,7 +279,7 @@
                 EffectManager.runDynamicEffect(
                     { op: 'playToComplete', variant: variant, durationMs: durationMs,
                       startElapsedMs: state.dynamic.elapsedMs || 0,
-                      onTick: function (ms) { if (state && state.dynamic) state.dynamic.elapsedMs = ms; },
+                      onTick: function (ms) { if (state && state.dynamic) { state.dynamic.elapsedMs = ms; _updateDynamicVisual(); } },
                       onCompleteStateReached: function () {
                           if (state && state.dynamic) { state.dynamic.completeStateReached = true; state.dynamic.phase = 'completed'; }
                       } },
@@ -476,6 +476,7 @@
                 imgEl.classList.toggle('dyn-completing', state.dynamic.phase === 'playingToComplete');
                 imgEl.classList.toggle('dyn-complete', !!state.dynamic.completeStateReached);
             }
+            _updateDynamicVisual();
         }
 
         // Options: render only when phase indicates options should be visible.
@@ -520,6 +521,23 @@
             buzz.classList.toggle('buzz-open', state.phase === 'buzzOpen');
             buzz.classList.toggle('buzz-owner-p1', state.phase === 'buzzed' && state.buzz && state.buzz.owner === 'p1');
             buzz.classList.toggle('buzz-owner-p2', state.phase === 'buzzed' && state.buzz && state.buzz.owner === 'p2');
+        }
+    }
+
+    // Update inline transform on #game-image based on state.dynamic.elapsedMs.
+    // Called from render() AND from onTick callbacks (so animation is smooth between dispatches).
+    function _updateDynamicVisual() {
+        const imgEl = document.getElementById('game-image');
+        if (!imgEl) return;
+        if (state && state.dynamic && state.dynamic.variant === 'zoom' && state.mode === 'duel') {
+            const dur = (typeof DynamicVariants !== 'undefined' && DynamicVariants.zoom && DynamicVariants.zoom.durationMs) || 8000;
+            const t = state.dynamic.completeStateReached
+                ? 1
+                : Math.min(1, Math.max(0, (state.dynamic.elapsedMs || 0) / dur));
+            const scale = 2.5 - (1.5 * t);
+            imgEl.style.transform = 'scale(' + scale + ')';
+        } else {
+            imgEl.style.transform = '';
         }
     }
 

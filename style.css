@@ -2936,19 +2936,34 @@ body.v2-active .v2-root { display: block; }
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Contain the dyn-zoom scale so it doesn't physically cover options/buzz below. */
+    overflow: hidden;
 }
 #game-image {
     max-width: 100%;
     max-height: 300px;
     object-fit: contain;
-    transition: transform 0.4s ease-out, opacity 0.3s;
+    transform-origin: center;
 }
-/* Dynamic variants */
-#game-image.dyn-zoom { transform: scale(2.5); transform-origin: center; }
-#game-image.dyn-playing { /* animated by JS via transform */ }
-#game-image.dyn-paused { transition: none; }
-#game-image.dyn-completing { transform: scale(1); }
+/* Dynamic variant: zoom — inline transform is set by JS via onTick(elapsedMs),
+   so we don't define keyframes here. Static fallback while no JS tick (initial frame): */
+#game-image.dyn-zoom { transform: scale(2.5); }
 #game-image.dyn-complete { transform: scale(1); }
+
+/* Landscape phone: keep image small enough that options + buzz remain in viewport. */
+@media (orientation: landscape) and (max-height: 520px) {
+    .v2-image-frame {
+        max-height: 40vh;
+        min-height: 100px;
+        padding: 8px;
+        margin-bottom: 8px;
+    }
+    #game-image { max-height: 36vh; }
+    #screen-game { padding: 8px; }
+    .v2-options { gap: 6px; max-width: 80vw; }
+    .option-btn { padding: 10px; font-size: 0.95rem; }
+    .v2-buzz button { padding: 10px; font-size: 0.95rem; }
+}
 
 .v2-options {
     display: grid;
@@ -2956,6 +2971,11 @@ body.v2-active .v2-root { display: block; }
     gap: 12px;
     max-width: 600px;
     margin: 0 auto;
+    animation: v2-options-fade-in 0.4s ease-out;
+}
+@keyframes v2-options-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 .option-btn {
     padding: 16px;
