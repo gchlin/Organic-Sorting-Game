@@ -403,6 +403,11 @@
 
     function renderMainMenu() { /* static markup; no per-state rendering */ }
 
+    // Sub-menu kinds:
+    //   'difficulty'      { difficulty }            → family list, click starts practice
+    //   'duelDifficulty'  {}                        → 初/中/高 picker (duel tree top)
+    //   'duelFamily'      { difficulty }            → family list, click → duelOpponent
+    //   'duelOpponent'    { difficulty, family }    → PvP / PvE 易/中/難, click starts duel
     function renderSubMenu() {
         const titleEl = document.getElementById('sub-menu-title');
         const listEl = document.getElementById('sub-menu-list');
@@ -410,37 +415,75 @@
         listEl.innerHTML = '';
         if (!_subMenuContext) return;
 
+        const diffName = function (d) {
+            return { beginner: '初級', intermediate: '中級', advanced: '高級' }[d] || d;
+        };
+
+        function appendFamilyButton(fk, diff, onClick) {
+            const btn = document.createElement('button');
+            let label = Families[fk].nameZh;
+            if (typeof QuestionEngine !== 'undefined' && QuestionEngine.getQuestionSet) {
+                const totalQs = QuestionEngine.getQuestionSet(fk, diff).length;
+                const askedSize = (typeof Save !== 'undefined' && Save.getAskedHistory)
+                    ? Save.getAskedHistory(fk, diff).size : 0;
+                if (totalQs > 0) {
+                    label += '  （' + Math.min(askedSize, totalQs) + ' / ' + totalQs + ' 題）';
+                }
+            }
+            btn.textContent = label;
+            if (typeof Save !== 'undefined' && Save.isSubLevelCleared && Save.isSubLevelCleared(fk, diff)) {
+                btn.classList.add('sub-cleared');
+            }
+            btn.addEventListener('click', onClick);
+            return btn;
+        }
+
         if (_subMenuContext.kind === 'difficulty') {
             const diff = _subMenuContext.difficulty;
-            const diffName = { beginner: '初級', intermediate: '中級', advanced: '高級' }[diff] || diff;
-            titleEl.textContent = diffName + ' — 選擇主題子關';
+            titleEl.textContent = diffName(diff) + ' 練習 — 選擇主題子關';
             const familyKeys = Object.keys(Families).filter(k => Families[k].difficulties.indexOf(diff) !== -1);
             for (let i = 0; i < familyKeys.length; i++) {
                 const fk = familyKeys[i];
-                const btn = document.createElement('button');
-                // Show how many questions exist + how many already answered to
-                // make progress visible. Helps players gauge "how close to clear".
-                let label = (i + 1) + '. ' + Families[fk].nameZh;
-                if (typeof QuestionEngine !== 'undefined' && QuestionEngine.getQuestionSet) {
-                    const totalQs = QuestionEngine.getQuestionSet(fk, diff).length;
-                    const askedSize = (typeof Save !== 'undefined' && Save.getAskedHistory)
-                        ? Save.getAskedHistory(fk, diff).size : 0;
-                    if (totalQs > 0) {
-                        label += '  （' + Math.min(askedSize, totalQs) + ' / ' + totalQs + ' 題）';
-                    }
-                }
-                btn.textContent = label;
-                if (typeof Save !== 'undefined' && Save.isSubLevelCleared && Save.isSubLevelCleared(fk, diff)) {
-                    btn.classList.add('sub-cleared');
-                }
-                btn.addEventListener('click', function () {
+                const btn = appendFamilyButton(fk, diff, function () {
                     startMode({ mode: 'practice', family: fk, difficulty: diff, opponent: 'human' });
+                });
+                btn.textContent = (i + 1) + '. ' + btn.textContent;
+                listEl.appendChild(btn);
+            }
+        } else if (_subMenuContext.kind === 'duelDifficulty') {
+            titleEl.textContent = '⚔️ 對決 — 選擇難度';
+            const diffs = [
+                { key: 'beginner', label: '1. 初級' },
+                { key: 'intermediate', label: '2. 中級' },
+                { key: 'advanced', label: '3. 高級' }
+            ];
+            for (let i = 0; i < diffs.length; i++) {
+                const d = diffs[i];
+                const btn = document.createElement('button');
+                btn.textContent = d.label;
+                btn.addEventListener('click', function () {
+                    _subMenuContext = { kind: 'duelFamily', difficulty: d.key };
+                    render();
                 });
                 listEl.appendChild(btn);
             }
-        } else if (_subMenuContext.kind === 'duel') {
-            titleEl.textContent = 'Duel Dynamic — 選對手';
-            const duelDiff = _subMenuContext.difficulty || 'intermediate';
+        } else if (_subMenuContext.kind === 'duelFamily') {
+            const diff = _subMenuContext.difficulty;
+            titleEl.textContent = '⚔️ ' + diffName(diff) + ' 對決 — 選擇主題子關';
+            const familyKeys = Object.keys(Families).filter(k => Families[k].difficulties.indexOf(diff) !== -1);
+            for (let i = 0; i < familyKeys.length; i++) {
+                const fk = familyKeys[i];
+                const btn = appendFamilyButton(fk, diff, function () {
+                    _subMenuContext = { kind: 'duelOpponent', difficulty: diff, family: fk };
+                    render();
+                });
+                btn.textContent = (i + 1) + '. ' + btn.textContent;
+                listEl.appendChild(btn);
+            }
+        } else if (_subMenuContext.kind === 'duelOpponent') {
+            const diff = _subMenuContext.difficulty;
+            const fam = _subMenuContext.family;
+            titleEl.textContent = '⚔️ ' + diffName(diff) + ' · ' + Families[fam].nameZh + ' — 選對手';
             const opponents = [
                 { key: 'human', label: '1. PvP（雙人）' },
                 { key: 'aiEasy', label: '2. PvE 易' },
@@ -452,7 +495,7 @@
                 const btn = document.createElement('button');
                 btn.textContent = op.label;
                 btn.addEventListener('click', function () {
-                    startMode({ mode: 'duel', family: 'mixed', difficulty: duelDiff, opponent: op.key });
+                    startMode({ mode: 'duel', family: fam, difficulty: diff, opponent: op.key });
                 });
                 listEl.appendChild(btn);
             }
@@ -630,9 +673,9 @@
         } catch (e) { /* fail silent */ }
     }
 
-    // Show/hide the big center "答對 / 答錯 / 逾時" overlay based on phase.
-    // For resolvingWrong, distinguish wrong-pick vs timeout using
-    // state.question.lastResolveReason (set by the reducer; 'wrong' | 'timeout').
+    // Show/hide the big center "答對 / 答錯 / 逾時 / 放棄" overlay based on phase.
+    // For resolvingWrong, distinguish wrong-pick vs timeout vs give-up via
+    // state.question.lastResolveReason (set by the reducer).
     function _updateFeedbackOverlay() {
         const el = document.getElementById('feedback-overlay');
         if (!el) return;
@@ -643,7 +686,9 @@
             el.classList.add('show-correct');
         } else if (state.phase === 'resolvingWrong') {
             const reason = state.question && state.question.lastResolveReason;
-            el.textContent = (reason === 'timeout') ? '⏱ 逾時' : '✗ 答錯';
+            el.textContent = reason === 'timeout' ? '⏱ 逾時'
+                           : reason === 'giveup' ? '⊘ 放棄'
+                           : '✗ 答錯';
             el.classList.add('show-wrong');
         } else {
             el.textContent = '';
@@ -668,12 +713,18 @@
             const remaining = Math.max(0, 5000 - elapsed);
             const sec = Math.ceil(remaining / 1000);
             const cd = document.getElementById('buzz-countdown');
+            const side = state.buzz.owner === 'p1' ? 'left' : 'right';
             if (cd) {
                 cd.textContent = String(sec);
                 cd.classList.toggle('urgent', sec <= 2);
                 cd.classList.add('visible');
                 // P1/P2 對等：倒數顯示在當前 owner 那一側
-                cd.setAttribute('data-side', state.buzz.owner === 'p1' ? 'left' : 'right');
+                cd.setAttribute('data-side', side);
+            }
+            const giveup = document.getElementById('btn-giveup');
+            if (giveup) {
+                giveup.classList.add('visible');
+                giveup.setAttribute('data-side', side);
             }
             const handoff = document.getElementById('handoff-overlay');
             if (handoff) {
@@ -696,6 +747,8 @@
         if (cd) { cd.classList.remove('visible', 'urgent'); cd.textContent = ''; }
         const handoff = document.getElementById('handoff-overlay');
         if (handoff) { handoff.classList.remove('visible'); handoff.style.opacity = '0'; handoff.textContent = ''; }
+        const giveup = document.getElementById('btn-giveup');
+        if (giveup) giveup.classList.remove('visible');
     }
 
     // Update inline transform on #game-image based on state.dynamic.elapsedMs.
@@ -1130,6 +1183,29 @@
     // -----------------------------------------------------------------------
     // 4. Menu & Settings event wiring
     // -----------------------------------------------------------------------
+    // Give-up button + G key: forfeit the current answer slot in buzzed phase.
+    // Sends GIVE_UP with the buzz owner — same downstream as ANSWER_TIMEOUT,
+    // but instant (no need to wait the full 5s if you know you don't know).
+    function _dispatchGiveUpIfBuzzed() {
+        if (!state || state.mode !== 'duel' || state.phase !== 'buzzed') return false;
+        if (!state.buzz || !state.buzz.owner) return false;
+        dispatch({ type: 'GIVE_UP', player: state.buzz.owner });
+        return true;
+    }
+    function attachGiveUpListeners() {
+        const btn = document.getElementById('btn-giveup');
+        if (btn) {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                _dispatchGiveUpIfBuzzed();
+            });
+        }
+        document.addEventListener('keydown', function (e) {
+            if (e.code !== 'KeyG') return;
+            if (_dispatchGiveUpIfBuzzed()) e.preventDefault();
+        });
+    }
+
     function attachMenuListeners() {
         document.body.addEventListener('click', function (e) {
             const t = e.target.closest && e.target.closest('[data-action]');
@@ -1147,7 +1223,7 @@
                     }
                     break;
                 case 'enter-duel-menu':
-                    _subMenuContext = { kind: 'duel', difficulty: 'intermediate' };
+                    _subMenuContext = { kind: 'duelDifficulty' };
                     goToScreen('sub-menu');
                     break;
                 case 'enter-tutorial':
@@ -1170,6 +1246,19 @@
                 case 'back-to-main':
                 case 'back-to-menu':
                     if (aiController) { try { aiController.stop(); } catch (err) {} aiController = null; }
+                    // 在 duel 子樹裡先逐層退回，全部退完才回主選單
+                    if (_currentScreen === 'sub-menu' && _subMenuContext) {
+                        if (_subMenuContext.kind === 'duelOpponent') {
+                            _subMenuContext = { kind: 'duelFamily', difficulty: _subMenuContext.difficulty };
+                            render();
+                            break;
+                        }
+                        if (_subMenuContext.kind === 'duelFamily') {
+                            _subMenuContext = { kind: 'duelDifficulty' };
+                            render();
+                            break;
+                        }
+                    }
                     goToScreen('main-menu');
                     break;
                 case 'continue-practice':
@@ -1217,12 +1306,23 @@
                 if (e.code === 'Digit1' || e.code === 'Numpad1') { _enterDifficulty('beginner'); e.preventDefault(); return; }
                 if (e.code === 'Digit2' || e.code === 'Numpad2') { _enterDifficulty('intermediate'); e.preventDefault(); return; }
                 if (e.code === 'Digit3' || e.code === 'Numpad3') { _enterDifficulty('advanced'); e.preventDefault(); return; }
-                if (e.code === 'Digit4' || e.code === 'Numpad4') { _subMenuContext = { kind: 'duel', difficulty: 'intermediate' }; goToScreen('sub-menu'); e.preventDefault(); return; }
+                if (e.code === 'Digit4' || e.code === 'Numpad4') { _subMenuContext = { kind: 'duelDifficulty' }; goToScreen('sub-menu'); e.preventDefault(); return; }
                 if (e.code === 'KeyT') { _clickAction('enter-tutorial'); e.preventDefault(); return; }
                 if (e.code === 'KeyC') { goToScreen('codex'); e.preventDefault(); return; }
                 if (e.code === 'KeyW') { goToScreen('wrong-book'); e.preventDefault(); return; }
             }
             if (_currentScreen !== 'main-menu' && _currentScreen !== 'game' && (e.code === 'Escape' || e.code === 'KeyM')) {
+                // Step-back through the duel sub-menu tree before bailing to main.
+                if (_currentScreen === 'sub-menu' && _subMenuContext) {
+                    if (_subMenuContext.kind === 'duelOpponent') {
+                        _subMenuContext = { kind: 'duelFamily', difficulty: _subMenuContext.difficulty };
+                        render(); e.preventDefault(); return;
+                    }
+                    if (_subMenuContext.kind === 'duelFamily') {
+                        _subMenuContext = { kind: 'duelDifficulty' };
+                        render(); e.preventDefault(); return;
+                    }
+                }
                 goToScreen('main-menu');
                 e.preventDefault();
                 return;
@@ -1382,6 +1482,7 @@
 
         attachMenuListeners();
         attachSettingsListeners();
+        attachGiveUpListeners();
         render();
     }
 

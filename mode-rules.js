@@ -218,6 +218,18 @@ const ModeRulesV2 = {
         effects: [{ type: 'sound', name: 'timeout' }],
     }),
 
+    // 玩家主動放棄作答（按 G 或 ⊘ 按鈕）。語意同 ANSWER_TIMEOUT，但不浪費時間。
+    // 不增加 eliminatedWrongKeys（沒選錯），只標記 failedPlayersThisCycle。
+    // 需要明確的 anim 來驅動 EFFECT_COMPLETE（SUBMIT_ANSWER 一樣道理）。
+    'duel.buzzed.GIVE_UP': (s, a) => ({
+        nextPhase: 'resolvingWrong',
+        stateDiff: { 'question.failedPlayersThisCycle': new Set([...s.question.failedPlayersThisCycle, a.player]),
+                     'question.lastResolveReason': 'giveup' },
+        effects: [{ type: 'timer.clear' },
+                  { type: 'sound', name: 'timeout' },
+                  { type: 'anim', name: 'giveUp', ms: 300 }],
+    }),
+
     // Duel 答對：先放完 Dynamic 到 completeState（讓沒搶到的對手也看到完整結構），
     // 再進 revealing 階段標出正解。winTarget 達到才直接進入結算（不再播完）。
     'duel.resolvingCorrect.EFFECT_COMPLETE': (s, _, dyn) =>

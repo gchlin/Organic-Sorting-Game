@@ -438,7 +438,7 @@
                 </div>
                 <div class="v2-menu-section">
                     <h3 class="v2-section-title">雙人對決</h3>
-                    <button class="v2-menu-btn" data-action="enter-duel-menu">Duel Dynamic<span class="key-hint">4</span></button>
+                    <button class="v2-menu-btn" data-action="enter-duel-menu">對決 ⚔️<span class="key-hint">4</span></button>
                 </div>
                 <div class="v2-menu-section">
                     <h3 class="v2-section-title">其他</h3>
@@ -494,6 +494,9 @@
 
             <!-- 5 秒搶答倒數（buzzed phase 才顯示） -->
             <div id="buzz-countdown" aria-hidden="true"></div>
+
+            <!-- 放棄作答按鈕（buzzed phase 才顯示；位於倒數圓圈下方） -->
+            <button id="btn-giveup" type="button" aria-hidden="true">⊘ 放棄 (G)</button>
 
             <!-- 換手提示（A 答錯 → B 接手時短暫顯示） -->
             <div id="handoff-overlay" aria-hidden="true"></div>

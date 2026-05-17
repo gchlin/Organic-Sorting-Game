@@ -3272,6 +3272,32 @@ body.input-locked .v2-buzz button { pointer-events: none; }
 #buzz-countdown.visible { display: flex; }
 #buzz-countdown[data-side="left"]  { left: 18px;  right: auto; }
 #buzz-countdown[data-side="right"] { right: 18px; left:  auto; }
+
+/* 放棄作答按鈕：對齊倒數圓圈正下方，與倒數同側 */
+#btn-giveup {
+    position: fixed;
+    top: calc(12vh + 76px);
+    width: 88px;
+    padding: 6px 8px;
+    background: rgba(60, 47, 42, 0.85);
+    color: var(--hp-parchment);
+    border: 2px solid var(--hp-red-bright);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 8000;
+    display: none;
+    text-align: center;
+    transition: background 0.15s, transform 0.15s, left 0.25s, right 0.25s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+#btn-giveup.visible { display: block; }
+#btn-giveup:hover { background: var(--hp-red-bright); transform: scale(1.05); }
+#btn-giveup:active { transform: scale(0.96); }
+#btn-giveup[data-side="left"]  { left: 6px;  right: auto; }
+#btn-giveup[data-side="right"] { right: 6px; left:  auto; }
 #buzz-countdown.urgent {
     color: #ff5a5a;
     border-color: #ff5a5a;
