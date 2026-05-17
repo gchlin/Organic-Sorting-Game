@@ -56,6 +56,7 @@
     let _subMenuContext = null; // { kind: 'difficulty'|'duel', difficulty?, opponent? }
     let _pendingConfirm = null; // { onYes, onNo, text }
     let _tutorialState = null;  // { pages, idx, onDone, key }
+    let _storyState = null;     // { lines, idx, playerName, onDone }
 
     function dispatch(action) {
         _pendingDispatch.push(action);
@@ -398,6 +399,7 @@
             case 'codex': renderCodexScreen(); break;
             case 'wrong-book': renderWrongBookScreen(); break;
             case 'settings': renderSettingsScreen(); break;
+            case 'story': renderStoryScreen(); break;
         }
         renderTutorialModal();
         renderConfirmModal();
@@ -1035,6 +1037,15 @@
             nameSpan.textContent = fam.nameZh || fKey;
             row.appendChild(badge);
             row.appendChild(nameSpan);
+            if (unlocked) {
+                row.style.cursor = 'pointer';
+                row.title = '點擊播放劇情';
+                (function (sk) {
+                    row.addEventListener('click', function () {
+                        _openStory(sk, function () { goToScreen('codex'); });
+                    });
+                })(fam.storyKey);
+            }
             storySection.appendChild(row);
         }
         frag.appendChild(storySection);
@@ -1176,6 +1187,51 @@
     function _setValue(id, v) {
         const el = document.getElementById(id);
         if (el && typeof v !== 'undefined' && v !== null) el.value = String(v);
+    }
+
+    function renderStoryScreen() {
+        const whoEl  = document.getElementById('story-who');
+        const textEl = document.getElementById('story-text');
+        if (!whoEl || !textEl || !_storyState) return;
+        const line = _storyState.lines[_storyState.idx];
+        if (!line) return;
+        const WHO_LABEL = { hat: '🎩 分類帽', wiz: '🧙 魔法師' };
+        whoEl.textContent = WHO_LABEL[line.who] || line.who;
+        const raw = line.text || '';
+        const name = _storyState.playerName || '';
+        textEl.textContent = name ? raw.replace(/\{name\}/g, name) : raw.replace(/\{name\}/g, '你');
+    }
+
+    // Open story player. familyKey → looks up StoryScripts[familyKey].
+    // onDone() is called after the last line (or if story is empty).
+    function _openStory(familyKey, onDone) {
+        const scripts = (typeof StoryScripts !== 'undefined') ? StoryScripts : {};
+        const lines = scripts[familyKey];
+        if (!lines || lines.length === 0) {
+            if (typeof onDone === 'function') onDone();
+            return;
+        }
+        const saveData = (typeof Save !== 'undefined' && Save.get) ? Save.get() : {};
+        const playerName = saveData && saveData.playerName ? saveData.playerName : '';
+        _storyState = { lines: lines, idx: 0, playerName: playerName, onDone: onDone || null };
+        goToScreen('story');
+    }
+
+    function _advanceStory() {
+        if (!_storyState) return;
+        if (_storyState.idx < _storyState.lines.length - 1) {
+            _storyState.idx++;
+            render();
+        } else {
+            // Last line — end story
+            const cb = _storyState.onDone;
+            _storyState = null;
+            if (typeof cb === 'function') {
+                cb();
+            } else {
+                goToScreen('main-menu');
+            }
+        }
     }
 
     function renderTutorialModal() {
@@ -1443,10 +1499,36 @@
                     }
                     break;
                 case 'show-story':
+                    if (state && state.family) {
+                        const fam = (typeof Families !== 'undefined') ? Families[state.family] : null;
+                        const sKey = fam ? fam.storyKey : state.family;
+                        if (sKey) {
+                            const prevScreen = _currentScreen;
+                            _openStory(sKey, function () { goToScreen(prevScreen); });
+                        }
+                    }
+                    break;
                 case 'show-tutorial':
+                    if (state && state.family && state.difficulty) {
+                        const tutKey = state.family + '-' + state.difficulty;
+                        const tut = (typeof LevelTutorials !== 'undefined') ? LevelTutorials[tutKey] : null;
+                        const pages = (tut && Array.isArray(tut.pages)) ? tut.pages
+                                    : (tut && Array.isArray(tut)) ? tut : null;
+                        if (pages && pages.length > 0) {
+                            _tutorialState = {
+                                pages: pages, idx: 0, key: tutKey,
+                                family: state.family, difficulty: state.difficulty,
+                                onDone: function () { goToScreen('settle'); }
+                            };
+                            render();
+                        }
+                    }
+                    break;
                 case 'next-level':
-                    // Minimal: just go back to main menu for now.
-                    goToScreen('main-menu');
+                    _goNextLevel();
+                    break;
+                case 'story-advance':
+                    _advanceStory();
                     break;
                 case 'tutorial-prev':
                     if (_tutorialState && _tutorialState.idx > 0) { _tutorialState.idx--; render(); }
@@ -1474,6 +1556,14 @@
                     break;
             }
         });
+
+        // Story screen: click anywhere to advance
+        const storyScreen = document.getElementById('screen-story');
+        if (storyScreen) {
+            storyScreen.addEventListener('click', function () {
+                if (_currentScreen === 'story') _advanceStory();
+            });
+        }
 
         // Keyboard shortcuts for menu screens (game-screen input is handled by InputController)
         document.addEventListener('keydown', function (e) {
@@ -1518,6 +1608,10 @@
                 if (e.code === 'KeyN') { _clickAction('next-level'); e.preventDefault(); return; }
                 if (e.code === 'KeyS') { _clickAction('show-story'); e.preventDefault(); return; }
                 if (e.code === 'KeyT') { _clickAction('show-tutorial'); e.preventDefault(); return; }
+            }
+            if (_currentScreen === 'story') {
+                if (e.code === 'Space' || e.code === 'Enter') { _advanceStory(); e.preventDefault(); return; }
+                if (e.code === 'Escape') { _storyState = null; goToScreen('main-menu'); e.preventDefault(); return; }
             }
         });
     }
