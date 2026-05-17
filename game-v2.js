@@ -1202,6 +1202,48 @@
         textEl.textContent = name ? raw.replace(/\{name\}/g, name) : raw.replace(/\{name\}/g, '你');
     }
 
+    // Advance to next family/difficulty after settle.
+    // Order: iterate Families in declaration order, for each difficulty in
+    // [beginner, intermediate, advanced]; after the last → show "all done" alert.
+    // Duel mode: "再來一場" (same family+difficulty, same opponent).
+    function _goNextLevel() {
+        if (!state) { goToScreen('main-menu'); return; }
+        if (state.mode === 'duel') {
+            // Duel: rematch same settings
+            startMode({ mode: 'duel', family: state.family, difficulty: state.difficulty,
+                        opponent: state.opponent || 'human' });
+            return;
+        }
+        // Practice: find next family/difficulty in order
+        const DIFFICULTIES = ['beginner', 'intermediate', 'advanced'];
+        const famKeys = Object.keys(typeof Families !== 'undefined' ? Families : {});
+        // Build flat list of [family, difficulty] pairs valid for the family
+        const all = [];
+        for (const d of DIFFICULTIES) {
+            for (const fk of famKeys) {
+                if (Families[fk].difficulties && Families[fk].difficulties.indexOf(d) !== -1) {
+                    all.push({ family: fk, difficulty: d });
+                }
+            }
+        }
+        // Find current index
+        const curIdx = all.findIndex(function (item) {
+            return item.family === state.family && item.difficulty === state.difficulty;
+        });
+        if (curIdx !== -1 && curIdx + 1 < all.length) {
+            const next = all[curIdx + 1];
+            startMode({ mode: 'practice', family: next.family, difficulty: next.difficulty, opponent: 'human' });
+        } else {
+            // Already at the last level
+            _pendingConfirm = {
+                text: '恭喜！你已完成所有關卡。',
+                onYes: function () { goToScreen('main-menu'); },
+                onNo: null
+            };
+            render();
+        }
+    }
+
     // Open story player. familyKey → looks up StoryScripts[familyKey].
     // onDone() is called after the last line (or if story is empty).
     function _openStory(familyKey, onDone) {
