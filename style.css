@@ -1686,6 +1686,52 @@ body.countdown-active .hat-display {
 }
 
 /* ====================
+   圖鑑 v2 — family sections + grid
+   ==================== */
+.codex-family-section {
+    margin-bottom: clamp(18px, 3vh, 28px);
+}
+.codex-family-section h3 {
+    margin: 0 0 10px;
+    font-family: "Cinzel", serif;
+    font-size: clamp(0.95rem, 2.2vh, 1.15rem);
+    color: var(--hp-gold);
+    border-bottom: 1px solid rgba(212,175,55,.25);
+    padding-bottom: 5px;
+}
+.codex-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: clamp(7px, 1.2vh, 12px);
+}
+.codex-story-status-section {
+    margin-top: clamp(18px, 3vh, 28px);
+    border-top: 1px solid rgba(212,175,55,.2);
+    padding-top: 14px;
+}
+.codex-story-status-section h3 {
+    margin: 0 0 10px;
+    font-family: "Cinzel", serif;
+    font-size: clamp(0.9rem, 2vh, 1.05rem);
+    color: var(--hp-parchment);
+}
+.codex-story-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    color: var(--hp-parchment);
+    font-size: 0.92rem;
+}
+.codex-story-row .story-badge {
+    font-size: 1.1rem;
+}
+.codex-story-row.locked-story {
+    color: rgba(200,180,120,.45);
+}
+
+/* ====================
    設定 Modal (Settings)
    ==================== */
 

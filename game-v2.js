@@ -940,7 +940,107 @@
     function renderCodexScreen() {
         const root = document.getElementById('codex-content');
         if (!root) return;
-        root.innerHTML = '<p style="text-align:center;color:var(--hp-parchment-dark);">圖鑑顯示佔位 — 完整家族卡 / 分子卡渲染待 wave 5 補上。</p>';
+        if (typeof Families === 'undefined' || typeof QuestionImages === 'undefined' || typeof AnswerBank === 'undefined') {
+            root.innerHTML = '<p style="text-align:center;color:var(--hp-parchment-dark);">資料載入中…</p>';
+            return;
+        }
+
+        const frag = document.createDocumentFragment();
+
+        // --- Family sections: each family → molecules grid ---
+        for (const fKey of Object.keys(Families)) {
+            const fam = Families[fKey];
+            const filter = fam.imageFilter || {};
+
+            // Collect compoundKeys for this family
+            const famKeys = [];
+            for (let i = 0; i < QuestionImages.length; i++) {
+                const img = QuestionImages[i];
+                const ck = img.compoundKey;
+                let include = false;
+                if (filter.type === 'all') {
+                    include = true;
+                } else if (filter.type === 'byCategory') {
+                    const entry = AnswerBank[ck];
+                    include = entry && filter.categories && filter.categories.includes(entry.category);
+                } else if (filter.type === 'byCompoundKeys') {
+                    include = filter.keys && filter.keys.includes(ck);
+                }
+                if (include) famKeys.push({ ck: ck, src: img.src });
+            }
+
+            const section = document.createElement('div');
+            section.className = 'codex-family-section';
+
+            const heading = document.createElement('h3');
+            heading.textContent = fam.nameZh || fKey;
+            section.appendChild(heading);
+
+            const grid = document.createElement('div');
+            grid.className = 'codex-grid';
+
+            for (const item of famKeys) {
+                const unlocked = (typeof Save !== 'undefined' && Save.isMolUnlocked)
+                    ? Save.isMolUnlocked(item.ck) : false;
+                const abEntry = AnswerBank[item.ck];
+                const nameZh = (abEntry && abEntry.content) ? abEntry.content : item.ck;
+
+                const card = document.createElement('div');
+                card.className = 'codex-mol-card' + (unlocked ? '' : ' locked');
+
+                if (unlocked) {
+                    const img = document.createElement('img');
+                    img.className = 'codex-mol-img';
+                    img.src = item.src;
+                    img.alt = nameZh;
+                    img.loading = 'lazy';
+                    card.appendChild(img);
+                } else {
+                    const ph = document.createElement('div');
+                    ph.className = 'codex-mol-img placeholder';
+                    ph.textContent = '?';
+                    card.appendChild(ph);
+                }
+
+                const label = document.createElement('div');
+                label.className = 'codex-mol-name';
+                label.textContent = unlocked ? nameZh : '???';
+                card.appendChild(label);
+
+                grid.appendChild(card);
+            }
+            section.appendChild(grid);
+            frag.appendChild(section);
+        }
+
+        // --- Story status section ---
+        const storySection = document.createElement('div');
+        storySection.className = 'codex-story-status-section';
+        const storyHeading = document.createElement('h3');
+        storyHeading.textContent = '家族劇情解鎖狀態';
+        storySection.appendChild(storyHeading);
+
+        for (const fKey of Object.keys(Families)) {
+            const fam = Families[fKey];
+            if (!fam.storyKey) continue; // englishChallenge has no story
+            const unlocked = (typeof Save !== 'undefined' && Save.isStoryUnlockedV2)
+                ? Save.isStoryUnlockedV2(fam.storyKey)
+                : false;
+            const row = document.createElement('div');
+            row.className = 'codex-story-row' + (unlocked ? '' : ' locked-story');
+            const badge = document.createElement('span');
+            badge.className = 'story-badge';
+            badge.textContent = unlocked ? '📖' : '🔒';
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = fam.nameZh || fKey;
+            row.appendChild(badge);
+            row.appendChild(nameSpan);
+            storySection.appendChild(row);
+        }
+        frag.appendChild(storySection);
+
+        root.innerHTML = '';
+        root.appendChild(frag);
     }
 
     function renderWrongBookScreen() {
