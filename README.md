@@ -729,6 +729,104 @@ Cleanup 之後可能接：
 
 跨家族的成就（例：累積答對 100 題、Practice 全家族完成…）放在「勳章」分頁，不放在家族卡上。維持 `save.js` 既有的 `BADGE_DEFS` 概念。
 
+## 錯題回顧 / 錯題本
+
+讓玩家看到自己錯過什麼、可以針對性重練。**Duel 不計入**（Duel 不做教學回饋）。
+
+### 兩個出現位置
+
+| 位置 | 觸發 | 內容 |
+|---|---|---|
+| **Practice 結算頁的「本輪錯題」區** | phase=settling 時自動顯示 | 本輪 `state.wrongInRound` 內的分子卡片清單；每張顯示題圖縮圖 + 中文名 + 玩家當時選錯的答案（若有，逾時無此欄）+「看圖鑑」按鈕跳到分子小卡 |
+| **主選單「錯題本」入口** | 主選單 `W` 鍵或點按 | 跨輪累計的未克服錯題，依「家族 × 難度」分組顯示；每組有「重練這組」按鈕，按下後進 Practice 並只用該組錯題當題庫 |
+
+### 狀態與存檔
+
+**Reducer 層（本輪短暫）**：
+
+- `state.wrongInRound: Set<compoundKey>` — 已存在於 game-state V2，reducer 在答錯 / 逾時時 `add(compoundKey)`；答對該題時不從 `wrongInRound` 移除（本輪錯過就是錯過，「克服」是跨輪概念）。
+
+**Save 層（跨輪持久化）— 擴充 v2 schema**：
+
+```js
+// 加進 save.js v2 schema：
+wrongLog: {
+  // 依「家族 × 難度」分桶
+  [`${family}-${difficulty}`]: {
+    active: string[],   // 尚未克服的 compoundKey 清單（去重、保序）
+    fixed:  string[],   // 後續答對過的 compoundKey 清單（從 active 移到 fixed）
+    lastUpdated: number // timestamp
+  }
+}
+```
+
+**規則層的兩個 effect / action（reducer 不直接寫 save，dispatch 由 effect-manager 推）**：
+
+- Practice 答錯或逾時時，reducer 在 stateDiff 加 `state.wrongInRound.add(compoundKey)`，並 push effect `{ type:'saveWrong', family, difficulty, compoundKey }`。effect-manager 將該分子加進 `wrongLog[family-difficulty].active`（若不在 active 中且不在 fixed 中）。
+- Practice 答對時，reducer push effect `{ type:'fixWrong', family, difficulty, compoundKey }`。effect-manager 如果該分子在 active，把它從 active 移到 fixed。
+- 這兩個 effect 跟 sound/anim 並列，效果完成不需要回 EFFECT_COMPLETE（save 是 fire-and-forget）。
+
+### Save API（補在 wave 4 已 commit 的 save.js v2 之上，game.js 重寫時補上）
+
+```js
+Save.recordWrongV2(family, difficulty, compoundKey)
+Save.markFixedV2(family, difficulty, compoundKey)
+Save.getActiveWrongs(family, difficulty) → string[]      // 給「重練這組」用
+Save.getAllActiveWrongs() → { [family-difficulty]: string[] }   // 給「錯題本」總覽用
+Save.clearWrongLog(family?, difficulty?) → void          // 重置該組或全部（設定頁用）
+```
+
+### 「重練錯題」流程
+
+主選單 → 錯題本 → 點某組「重練這組」按鈕 →
+- dispatch `START_MODE(practice, family, difficulty, opponent: 'human', queueSource: 'wrongOnly')`
+- reducer 在 idle 時，依 `queueSource === 'wrongOnly'` 用 `Save.getActiveWrongs(family, difficulty)` 篩 `getQuestionSet(family, difficulty)` → 限縮 queue。
+- 跟一般 Practice 完全一樣的反應 / 結算流程；答對的會從 active 移到 fixed。
+- 若該組全部克服 → 結算頁顯示「🎉 已克服該組所有錯題」+「回主選單」按鈕。
+
+### UI 結構增補
+
+加進「螢幕清單」（接在圖鑑後）：
+
+| 螢幕 | 觸發 | 退出 |
+|---|---|---|
+| 錯題本（主畫面） | 主選單 `W` | Esc → 主選單 |
+| 錯題本（單組詳細 / 重練前確認） | 點某組 | Esc 或「重練這組」 |
+| Practice 結算頁的「本輪錯題」區 | 結算頁的子區塊，不獨立螢幕 | 與結算頁一起退出 |
+
+加進「各遊戲螢幕 render 要讀的 state」：
+
+| 螢幕 | 來源 state | 主要元素 |
+|---|---|---|
+| 結算（Practice） | 既有 + `state.wrongInRound`, `state.family`, `state.difficulty` | 本輪錯題卡片清單；每張卡：題圖、中文名、選錯選項文字（若有）、「看圖鑑」按鈕 |
+| 錯題本（總覽） | `Save.getAllActiveWrongs()`, `Families`, `Difficulties` | 依 family-difficulty 分組；每組顯示組名 + active 題數 + 「重練這組」按鈕 |
+| 錯題本（單組詳細） | `Save.getActiveWrongs(family,difficulty)`, `AnswerBank`, `QuestionImages` | 該組未克服的分子卡片網格；每張卡：題圖、中文名、英文名、「看圖鑑」按鈕；底部「重練這組（N 題）」 |
+
+### 輸入規格增補
+
+主選單第一階段加：
+
+| 鍵 | 動作 |
+|---|---|
+| `W` | 進入錯題本 |
+
+（不衝突：當前主選單已用 `1`–`4` 選關 / Duel、`T`/`C`/`H` 教學/圖鑑/分類總表。）
+
+### 驗收清單增補
+
+```
+**錯題本與錯題回顧**
+- [ ] Practice 答錯一題 → 結算頁本輪錯題區顯示該分子卡
+- [ ] Practice 答對 → 不在本輪錯題區
+- [ ] Practice 答錯後跨輪 → 錯題本「該家族-該難度」組出現該分子
+- [ ] Practice 答對曾錯過的分子 → 錯題本該組少一個（移到 fixed）
+- [ ] 主選單按 W → 錯題本主畫面；按 Esc 返回
+- [ ] 點某組「重練這組」→ 進入 Practice，題庫只含該組 active 分子
+- [ ] 重練該組全部答對 → 結算頁顯示「已克服」
+- [ ] Duel 答錯 → 不影響錯題本（Duel 不教學）
+- [ ] 設定頁可重置某組或全部錯題本
+```
+
 ## 模式參數
 
 以下數字是目前新規格，重構時應落實到 `mode-rules.js`，不要沿用舊程式中的歷史值。Speed 相關參數已全部移除（模式取消）。
