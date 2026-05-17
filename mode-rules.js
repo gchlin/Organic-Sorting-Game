@@ -210,6 +210,12 @@ const ModeRulesV2 = {
                           { type: 'sound', name: 'wrong' },
                           { type: 'anim', name: 'markChosen', ms: 800 }] },
 
+    // Band-aid: Dynamic 的暫停實作偶爾還是會送出 EFFECT_COMPLETE（pause 後底層
+    // setTimeout 漏網 / effectId blacklist 未生效）。在 buzzed 期間直接吸收掉，
+    // 不換 phase、不發 effect，等 SUBMIT_ANSWER / ANSWER_TIMEOUT / GIVE_UP 推進。
+    // TODO: 找出真正漏網的 effect 並修 effect-manager 的暫停/取消邏輯。
+    'duel.buzzed.EFFECT_COMPLETE': (s) => ({ nextPhase: s.phase, stateDiff: {}, effects: [] }),
+
     'duel.buzzed.ANSWER_TIMEOUT': (s, a) => ({
         nextPhase: 'resolvingWrong',
         stateDiff: { 'question.failedPlayersThisCycle': new Set([...s.question.failedPlayersThisCycle, a.player]),
