@@ -694,6 +694,12 @@ Cleanup 之後可能接：
 - Practice 是唯一會解鎖劇情、影響圖鑑與徽章的模式。
 - Practice 每輪 10 題；本輪答對率需記錄，並在圖鑑中可查看，但不作為通關門檻。
 - Practice 通關條件是「該子關（家族 × 難度）題庫中的所有題目都至少作答過一次」；通關後解鎖該子關的「完成徽章」與該家族的劇情（劇情以家族為單位，跨難度共享）。**`devQuickWin.enabled = true` 時，達 `devQuickWin.winAfter`（預設 2）也算結算 + 通關**（見「設定與開發者選項」段）。
+- **「作答過一次」追蹤要跨輪持久化**，靠 `Save.askedHistory[family-difficulty]: Set<compoundKey>`，而不是只看本輪 `state.seenInRound`。每次 `LOAD_NEXT_QUESTION` 把 `state.question.current.compoundKey` 推進 askedHistory。通關判定為 `askedHistory.size === QuestionEngine.getQuestionSet(family, difficulty).length`。
+- **`moleculeSeen` vs `askedHistory` 的分工**：
+  - `moleculeSeen[compoundKey][difficulty]`：玩家**答對過**該分子（圖鑑分子小卡的「初/中/高 ✓」小印章用這個）。
+  - `askedHistory[family-difficulty]`：該分子在該子關**被問過**（不論對錯；家族卡的「完成 🥉」徽章與通關條件用這個）。
+  - 兩者獨立。一張卡可以有「中 ✓」（答對過）但沒有「家族卡完成徽章」（還沒問完所有題）。
+- **派題優先順序**（`question-engine.buildRoundQueueV2` 用 `seenSet` 推導）：未在 askedHistory 中的優先 → 本輪錯題其次 → 全題庫補滿到 10 題。一輪 10 題未必全是「未出題」，但**新題會優先被抽**，確保有限輪數內可通關。
 - Practice 結算後，玩家可選擇繼續練習：題池包含尚未出現的題目，並加入本輪答錯題目。
 - Practice 的單次答對率、題庫完成度、各分子答對紀錄需記錄，並在圖鑑中可查看。
 - Duel Dynamic（含 PvE / PvP）答對不計入總答對數、不解鎖圖鑑、不解鎖劇情、不解鎖徽章。
@@ -1291,6 +1297,24 @@ ai.stop();    // 離開 Duel 時呼叫
 | `seenMolecules: Set<compoundKey>` | `moleculeSeen: { [compoundKey]: { beginner: bool, intermediate: bool, advanced: bool } }` | 分子小卡需要分難度印章 |
 | `unlockedStories` | `unlockedStories: ['hydrocarbon', …]` | key 改用 family |
 | `badges` | 同名保留，但內容加入家族卡的徽章 ID | 例：`hydrocarbon-intermediate-completed` |
+
+**askedHistory 新欄位（v2 必有）**：
+
+```js
+askedHistory: {
+  [`${family}-${difficulty}`]: string[]   // compoundKey 集合，序列化為 array；讀回時轉 Set
+}
+```
+
+每次 `LOAD_NEXT_QUESTION` 確定要出的題後，effect 把 `compoundKey` push 進對應 bucket（去重）。`isSubLevelCleared(family, difficulty)` = `askedHistory[family-difficulty].length === QuestionEngine.getQuestionSet(family, difficulty).length`。
+
+Save API：
+- `Save.recordAskedV2(family, difficulty, compoundKey)`：加進 askedHistory（去重）；若加完後達通關門檻，回傳 newlyCleared:true 讓 caller 解鎖徽章與劇情。
+- `Save.getAskedHistory(family, difficulty) → Set<compoundKey>`
+- `Save.isSubLevelCleared(family, difficulty) → boolean`
+- `Save.clearAskedHistory(family?, difficulty?)`：開發者選項用，重置進度。
+
+migrateV1toV2 應加 `askedHistory: {}`（舊版沒這個欄位；舊存檔升上來等於「重置進度」可接受，因為舊 `levelsCleared` 已透過 familyProgress 補上完成徽章）。
 
 **Migration 函式**（必做，否則老玩家進站直接掛）：
 

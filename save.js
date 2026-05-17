@@ -99,6 +99,7 @@ const Save = (function () {
             tutorialsSeen: [],      // ['hydrocarbon-beginner', 'oxygen-intermediate', …]
             moleculeSeen: {},       // { [compoundKey]: { beginner: bool, intermediate: bool, advanced: bool } }
             unlockedStories: [],    // family keys; e.g. ['hydrocarbon', 'oxygen']
+            wrongLog: {},           // { 'family-difficulty': { active: [], fixed: [], lastUpdated: 0 } }
             settings: defaultSettings()
         };
     }
@@ -200,6 +201,9 @@ const Save = (function () {
         // Settings: start from defaults (old data had none)
         out.settings = defaultSettings();
 
+        // Wrong-log starts empty in v2; v1 had nothing comparable
+        out.wrongLog = {};
+
         out.version = 2;
         return out;
     }
@@ -229,6 +233,7 @@ const Save = (function () {
         if (!out.moleculeSeen || typeof out.moleculeSeen !== 'object') out.moleculeSeen = {};
         if (!Array.isArray(out.tutorialsSeen)) out.tutorialsSeen = [];
         if (!Array.isArray(out.unlockedStories)) out.unlockedStories = [];
+        if (!out.wrongLog || typeof out.wrongLog !== 'object') out.wrongLog = {};
         out.version = 2;
         return out;
     }
@@ -462,6 +467,103 @@ const Save = (function () {
         }
     }
 
+    // =======================================================================
+    // Wrong-review v2 (錯題本 / 錯題回顧)
+    //
+    // Per README "錯題回顧 / 錯題本":
+    // - wrongLog is bucketed by `${family}-${difficulty}`.
+    //   { active: string[], fixed: string[], lastUpdated: number }
+    // - recordWrongV2: add a compoundKey to active if not already in active/fixed.
+    //   (If it's already fixed → it stays fixed; player has overcome it once.)
+    // - markFixedV2: if compoundKey is in active, move it to fixed.
+    //   (No-op if not in active.)
+    // - clearWrongLog: scope-aware reset (family+difficulty / family / all).
+    //
+    // Effect manager calls these fire-and-forget; no return value contract.
+    // =======================================================================
+
+    function _wrongBucketKey(family, difficulty) {
+        return family + '-' + difficulty;
+    }
+
+    function _ensureWrongBucket(family, difficulty) {
+        const key = _wrongBucketKey(family, difficulty);
+        if (!data.wrongLog || typeof data.wrongLog !== 'object') data.wrongLog = {};
+        if (!data.wrongLog[key] || typeof data.wrongLog[key] !== 'object') {
+            data.wrongLog[key] = { active: [], fixed: [], lastUpdated: 0 };
+        }
+        const bucket = data.wrongLog[key];
+        if (!Array.isArray(bucket.active)) bucket.active = [];
+        if (!Array.isArray(bucket.fixed)) bucket.fixed = [];
+        if (typeof bucket.lastUpdated !== 'number') bucket.lastUpdated = 0;
+        return bucket;
+    }
+
+    function recordWrongV2(family, difficulty, compoundKey) {
+        if (!family || !difficulty || !compoundKey) return;
+        const bucket = _ensureWrongBucket(family, difficulty);
+        if (bucket.active.indexOf(compoundKey) !== -1) return;
+        if (bucket.fixed.indexOf(compoundKey) !== -1) return; // already overcome; ignore
+        bucket.active.push(compoundKey);
+        bucket.lastUpdated = Date.now();
+        persist();
+    }
+
+    function markFixedV2(family, difficulty, compoundKey) {
+        if (!family || !difficulty || !compoundKey) return;
+        const bucket = _ensureWrongBucket(family, difficulty);
+        const idx = bucket.active.indexOf(compoundKey);
+        if (idx === -1) return;
+        bucket.active.splice(idx, 1);
+        if (bucket.fixed.indexOf(compoundKey) === -1) bucket.fixed.push(compoundKey);
+        bucket.lastUpdated = Date.now();
+        persist();
+    }
+
+    function getActiveWrongs(family, difficulty) {
+        if (!family || !difficulty) return [];
+        const key = _wrongBucketKey(family, difficulty);
+        const bucket = data.wrongLog && data.wrongLog[key];
+        if (!bucket || !Array.isArray(bucket.active)) return [];
+        return bucket.active.slice();
+    }
+
+    function getAllActiveWrongs() {
+        const out = {};
+        if (!data.wrongLog || typeof data.wrongLog !== 'object') return out;
+        for (const k of Object.keys(data.wrongLog)) {
+            const bucket = data.wrongLog[k];
+            if (bucket && Array.isArray(bucket.active) && bucket.active.length > 0) {
+                out[k] = bucket.active.slice();
+            }
+        }
+        return out;
+    }
+
+    function clearWrongLog(family, difficulty) {
+        if (!data.wrongLog || typeof data.wrongLog !== 'object') {
+            data.wrongLog = {};
+            persist();
+            return;
+        }
+        if (!family) {
+            data.wrongLog = {};
+            persist();
+            return;
+        }
+        if (!difficulty) {
+            // Clear all difficulties of this family
+            for (const k of Object.keys(data.wrongLog)) {
+                if (k.indexOf(family + '-') === 0) delete data.wrongLog[k];
+            }
+            persist();
+            return;
+        }
+        const key = _wrongBucketKey(family, difficulty);
+        delete data.wrongLog[key];
+        persist();
+    }
+
     // readSettings() / writeSettings(partial)
     // Expose settings sub-object; writeSettings deep-merges and persists.
     function readSettings() {
@@ -506,6 +608,8 @@ const Save = (function () {
         recordSubLevelRound,
         markTutorialSeenV2, isTutorialSeenV2,
         recordMoleculeAnsweredV2,
+        // wrong-review v2
+        recordWrongV2, markFixedV2, getActiveWrongs, getAllActiveWrongs, clearWrongLog,
         readSettings, writeSettings
     };
 })();
