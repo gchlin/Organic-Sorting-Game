@@ -515,9 +515,9 @@ stateDiagram-v2
 
 - 立即標示正確選項。
 - 播放答對音效一次。
-- 更新分數、時間、combo、進度或答對數。
-- 效果結束後才進入下一題或結算。
-- 下一題開始前必須清除正確高亮與所有暫態動畫。
+- 更新 `correctCount`、`correctStreak`、`round.score`（comboLevel 由 render 從 `correctStreak` 算，不存進 state）。
+- 效果結束後才進入下一題或結算（透過 `EFFECT_COMPLETE` 觸發；見不變式 I-4）。
+- 下一題開始前必須清除正確高亮與所有暫態動畫（透過 cleanup phase + effect-manager blacklist；見 I-3 / I-7）。
 
 ### 答錯效果規格
 
