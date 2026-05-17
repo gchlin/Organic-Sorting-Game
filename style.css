@@ -3016,7 +3016,8 @@ body.v2-active .v2-root { display: block; }
     color: white;
     animation: v2-flash-red 0.4s ease-out;
 }
-.option-btn.correct-reveal {
+.option-btn.correct-reveal,
+.option-btn.correct-chosen {
     background: var(--hp-green-bright);
     border-color: var(--hp-green-bright);
     color: white;
@@ -3029,6 +3030,44 @@ body.v2-active .v2-root { display: block; }
 @keyframes v2-pulse-green {
     0%, 100% { background: var(--hp-green-bright); }
     50% { background: #5fd084; }
+}
+
+/* Big overlay feedback during resolving phases — makes correctness obvious. */
+#feedback-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.6);
+    font-size: 6rem;
+    font-weight: bold;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s, transform 0.25s ease-out;
+    text-shadow: 0 0 16px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.5);
+}
+#feedback-overlay.show-correct {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    color: #6fe09c;
+    animation: v2-feedback-pop 0.5s ease-out;
+}
+#feedback-overlay.show-wrong {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    color: #ff5a5a;
+    animation: v2-feedback-shake 0.4s ease-out;
+}
+@keyframes v2-feedback-pop {
+    0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+@keyframes v2-feedback-shake {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    25% { transform: translate(-52%, -50%) scale(1); }
+    50% { transform: translate(-48%, -50%) scale(1); }
+    75% { transform: translate(-52%, -50%) scale(1); }
 }
 
 .v2-buzz {

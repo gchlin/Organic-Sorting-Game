@@ -233,6 +233,13 @@
             return;
         }
 
+        if (type === 'sound') {
+            // Play synthesized beep immediately. Doesn't block phase advancement
+            // (anim effect emits the EFFECT_COMPLETE that drives the next phase).
+            _beep(effect.name);
+            return;
+        }
+
         // Translate the reducer's named anim effects into dynamic-state updates +
         // EffectManager dynamic ticks (I-5). Anim/sound that aren't dynamic-related
         // still complete via the generic path below.
@@ -318,11 +325,11 @@
     }
 
     function clearTransientUI() {
-        // Per state→class table: clear all .eliminated/.wrong-chosen/.correct-reveal on options;
-        // hide hint bubble; remove buzz-owner-* classes from #game-buzz.
+        // Per state→class table: clear all .eliminated/.wrong-chosen/.correct-reveal/.correct-chosen on options;
+        // hide hint bubble; remove buzz-owner-* classes from #game-buzz; clear feedback overlay.
         const opts = document.querySelectorAll('#game-options .option-btn');
         for (let i = 0; i < opts.length; i++) {
-            opts[i].classList.remove('eliminated', 'wrong-chosen', 'correct-reveal');
+            opts[i].classList.remove('eliminated', 'wrong-chosen', 'correct-reveal', 'correct-chosen');
         }
         const buzz = document.getElementById('game-buzz');
         if (buzz) buzz.classList.remove('buzz-open', 'buzz-owner-p1', 'buzz-owner-p2');
@@ -330,6 +337,8 @@
         if (hint) { hint.classList.remove('visible'); hint.textContent = ''; }
         const img = document.getElementById('game-image');
         if (img) img.classList.remove('dyn-zoom', 'dyn-playing', 'dyn-paused', 'dyn-completing', 'dyn-complete');
+        const fb = document.getElementById('feedback-overlay');
+        if (fb) { fb.classList.remove('show-correct', 'show-wrong'); fb.textContent = ''; }
     }
 
     // -----------------------------------------------------------------------
@@ -503,6 +512,9 @@
                         opt.key === state.question.lastChosenWrongKey);
                     btns[i].classList.toggle('correct-reveal',
                         state.phase === 'revealing' && opt.key === state.question.correctKey);
+                    // Also light up the correct option green while in resolvingCorrect (Practice + Duel)
+                    btns[i].classList.toggle('correct-chosen',
+                        state.phase === 'resolvingCorrect' && opt.key === state.question.correctKey);
                 } else {
                     btns[i].setAttribute('data-option-key', '');
                     btns[i].textContent = '';
@@ -521,6 +533,76 @@
             buzz.classList.toggle('buzz-open', state.phase === 'buzzOpen');
             buzz.classList.toggle('buzz-owner-p1', state.phase === 'buzzed' && state.buzz && state.buzz.owner === 'p1');
             buzz.classList.toggle('buzz-owner-p2', state.phase === 'buzzed' && state.buzz && state.buzz.owner === 'p2');
+        }
+
+        _updateFeedbackOverlay();
+    }
+
+    // ---- Audio feedback (Web Audio API beeps — no asset files needed) ----
+    // First call creates AudioContext. Modern browsers require a user gesture
+    // before audio plays; the menu click that started the game counts.
+    let _audioCtx = null;
+    function _getAudioCtx() {
+        if (_audioCtx) return _audioCtx;
+        try {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return null;
+            _audioCtx = new Ctx();
+            return _audioCtx;
+        } catch (e) { return null; }
+    }
+    function _beep(name) {
+        const ctx = _getAudioCtx();
+        if (!ctx) return;
+        try {
+            const t0 = ctx.currentTime;
+            function note(freq, type, startMs, durMs, peakGain) {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = type || 'sine';
+                osc.frequency.value = freq;
+                const start = t0 + startMs / 1000;
+                const stop = start + durMs / 1000;
+                gain.gain.setValueAtTime(0.0001, start);
+                gain.gain.exponentialRampToValueAtTime(peakGain || 0.12, start + 0.01);
+                gain.gain.exponentialRampToValueAtTime(0.0001, stop);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(start); osc.stop(stop);
+            }
+            if (name === 'correct') {
+                // Pleasant two-note ding (C5 → G5)
+                note(523, 'sine', 0,  150, 0.12);
+                note(784, 'sine', 80, 280, 0.10);
+            } else if (name === 'wrong') {
+                // Harsh low buzz (A2 sawtooth)
+                note(110, 'sawtooth', 0, 350, 0.15);
+            } else if (name === 'timeout') {
+                // Falling tone (G3 → D3)
+                note(196, 'triangle', 0,   200, 0.12);
+                note(147, 'triangle', 200, 300, 0.12);
+            } else if (name === 'buzz') {
+                // Sharp ding (E6)
+                note(1319, 'square', 0, 80, 0.06);
+            }
+        } catch (e) { /* fail silent */ }
+    }
+
+    // Show/hide the big center "答對 / 答錯" overlay based on phase.
+    function _updateFeedbackOverlay() {
+        const el = document.getElementById('feedback-overlay');
+        if (!el) return;
+        el.classList.remove('show-correct', 'show-wrong');
+        if (!state) { el.textContent = ''; return; }
+        if (state.phase === 'resolvingCorrect') {
+            el.textContent = '✓ 答對';
+            el.classList.add('show-correct');
+        } else if (state.phase === 'resolvingWrong') {
+            // Distinguish a real wrong pick vs answer timeout (Duel only)
+            const isTimeout = state.question && !state.question.lastChosenWrongKey;
+            el.textContent = isTimeout ? '⏱ 逾時' : '✗ 答錯';
+            el.classList.add('show-wrong');
+        } else {
+            el.textContent = '';
         }
     }
 
