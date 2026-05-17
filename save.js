@@ -66,6 +66,32 @@ const Save = (function () {
         englishChallenge: null
     };
 
+    // PvE AI default parameters — mirrors AIController.DEFAULT_PARAMS.
+    // Stored under settings.pveAI so the settings UI and AIController both
+    // read from the same persisted object.
+    function defaultPveAI() {
+        return {
+            easy: {
+                buzzWindowMin:    0.85,
+                buzzWindowMax:    0.95,
+                answerThinkMin:   1500,
+                answerThinkMax:   3000
+            },
+            medium: {
+                buzzWindowMin:    0.75,
+                buzzWindowMax:    0.90,
+                answerThinkMin:   1200,
+                answerThinkMax:   2500
+            },
+            hard: {
+                buzzWindowMin:    0.70,
+                buzzWindowMax:    0.85,
+                answerThinkMin:   1000,
+                answerThinkMax:   2000
+            }
+        };
+    }
+
     function defaultSettings() {
         return {
             devQuickWin: {
@@ -78,7 +104,9 @@ const Save = (function () {
             devLogActions: false,
             // 對決對手模式，全域 sticky：玩家通常設定一次就不變。
             // 'human' = PvP；'aiEasy'/'aiMedium'/'aiHard' = PvE 各難度。
-            duelOpponent: 'aiMedium'
+            duelOpponent: 'aiMedium',
+            // PvE AI 參數（buzz window + think time per difficulty）
+            pveAI: defaultPveAI()
         };
     }
 
@@ -244,6 +272,19 @@ const Save = (function () {
                 out.settings.devQuickWin = defaultSettings().devQuickWin;
             } else {
                 out.settings.devQuickWin = Object.assign({}, defaultSettings().devQuickWin, out.settings.devQuickWin);
+            }
+            // Fill missing pveAI sub-object (added in this wave)
+            if (!out.settings.pveAI || typeof out.settings.pveAI !== 'object') {
+                out.settings.pveAI = defaultPveAI();
+            } else {
+                const defPve = defaultPveAI();
+                for (const diff of ['easy', 'medium', 'hard']) {
+                    if (!out.settings.pveAI[diff] || typeof out.settings.pveAI[diff] !== 'object') {
+                        out.settings.pveAI[diff] = defPve[diff];
+                    } else {
+                        out.settings.pveAI[diff] = Object.assign({}, defPve[diff], out.settings.pveAI[diff]);
+                    }
+                }
             }
         }
         if (!out.familyProgress || typeof out.familyProgress !== 'object') out.familyProgress = {};
@@ -863,10 +904,21 @@ const Save = (function () {
         if (!data.settings || typeof data.settings !== 'object') {
             data.settings = defaultSettings();
         }
-        // Deep-merge devQuickWin sub-object if present
+        // Deep-merge sub-objects (devQuickWin, pveAI and its per-difficulty children)
         for (const key of Object.keys(partial)) {
             if (key === 'devQuickWin' && partial[key] && typeof partial[key] === 'object') {
                 data.settings.devQuickWin = Object.assign({}, data.settings.devQuickWin || {}, partial[key]);
+            } else if (key === 'pveAI' && partial[key] && typeof partial[key] === 'object') {
+                if (!data.settings.pveAI || typeof data.settings.pveAI !== 'object') {
+                    data.settings.pveAI = defaultPveAI();
+                }
+                for (const diff of Object.keys(partial[key])) {
+                    if (partial[key][diff] && typeof partial[key][diff] === 'object') {
+                        data.settings.pveAI[diff] = Object.assign({}, data.settings.pveAI[diff] || {}, partial[key][diff]);
+                    } else {
+                        data.settings.pveAI[diff] = partial[key][diff];
+                    }
+                }
             } else {
                 data.settings[key] = partial[key];
             }

@@ -208,6 +208,12 @@
       "showIndicator": true
     },
     "devShowFps": false,
-    "devLogActions": false
+    "devLogActions": false,
+    "duelOpponent": "aiMedium",
+    "pveAI": {
+      "easy":   { "buzzWindowMin": 0.85, "buzzWindowMax": 0.95, "answerThinkMin": 1500, "answerThinkMax": 3000 },
+      "medium": { "buzzWindowMin": 0.75, "buzzWindowMax": 0.90, "answerThinkMin": 1200, "answerThinkMax": 2500 },
+      "hard":   { "buzzWindowMin": 0.70, "buzzWindowMax": 0.85, "answerThinkMin": 1000, "answerThinkMax": 2000 }
+    }
   }
 }
