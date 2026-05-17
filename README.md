@@ -164,7 +164,7 @@ mode handler 決定 action 是否有效。例如：
 - **Duel Dynamic 對手類型**：
   - **PvP**：兩位人類玩家，輸入規格見「輸入規格」段。
   - **PvE**：玩家對電腦 AI。AI 是純前端 JavaScript（無外部 API、無網路請求），透過跟人類完全一樣的 action 介面送 `BUZZ` 與 `SUBMIT_ANSWER`，不允許直接讀寫 state 或 DOM。AI 規則邏輯與 PvP 完全相同，**只有輸入來源不同**；不得讓 AI 享有任何規則上的特權或繞過。
-  - AI 難度只影響兩個參數：搶答反應時間（buzz reaction time）與作答正確率（accuracy）。詳細數值見「模式參數」段。
+  - AI 難度影響三個參數：**buzz window**（效果播放進度的哪個比例區間才搶答）、**think time**（搶到作答權後的隨機思考時長範圍）、**accuracy**（作答正確率）。詳細預設值見「模式參數」段；可在設定畫面即時調整。
 
 ### 進入關卡的步驟（純序列、無分支）
 
@@ -850,9 +850,10 @@ Save.clearWrongLog(family?, difficulty?) → void          // 重置該組或全
 | Duel 預設題庫難度 | 中級（中文化合物名）；可允許玩家進入 Duel 時挑難度 |
 | Dynamic 干擾變體 | effect 1 = zoom（現有）；effect 2 待定（未來新增）。新增變體只動 `mode-rules.js`，不改 reducer |
 | Dynamic 干擾動作結束後 | 題目停止在可觀察狀態，繼續等待搶答，不自動揭示答案 |
-| AI Easy | buzz 反應 ~2.5s ± 0.5s，作答正確率 ~60% |
-| AI Medium | buzz 反應 ~1.5s ± 0.5s，作答正確率 ~80% |
-| AI Hard | buzz 反應 ~0.7s ± 0.3s，作答正確率 ~95% |
+| AI Easy | buzz window 85–95%（效果播放進度比例）；思考時間 1500–3000 ms；作答正確率 ~60% |
+| AI Medium | buzz window 75–90%；思考時間 1200–2500 ms；作答正確率 ~80% |
+| AI Hard | buzz window 70–85%；思考時間 1000–2000 ms；作答正確率 ~95% |
+| AI 行為模型 | 三參數：**buzz window**（在效果播放進度的哪個區間隨機搶答）、**think time**（搶到作答權後等多久送出答案）、**accuracy**（答對機率）。參數可在設定 → 開發者 → PvE AI 參數即時調整，不需重啟遊戲。 |
 | AI 規則 | 純前端 JS（無外部 API、無網路請求）；只透過 action 介面送 `BUZZ` 與 `SUBMIT_ANSWER`；不得讀寫 state 或 DOM；不得享有任何規則特權 |
 
 ## 設定與開發者選項
