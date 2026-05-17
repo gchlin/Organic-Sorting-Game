@@ -226,3 +226,16 @@ const LevelTutorials = {
   ]
 
 };
+
+// === Family-difficulty-keyed aliases (v2 migration) ===
+// Beginner and intermediate share the same slides initially; can fork later.
+LevelTutorials['hydrocarbon-beginner']        = LevelTutorials.level1 || [];
+LevelTutorials['hydrocarbon-intermediate']    = LevelTutorials.level1 || [];
+LevelTutorials['oxygen-beginner']             = LevelTutorials.level2 || LevelTutorials.level3 || LevelTutorials.level4 || [];
+LevelTutorials['oxygen-intermediate']         = LevelTutorials.level2 || LevelTutorials.level3 || LevelTutorials.level4 || [];
+LevelTutorials['nitrogenHalide-beginner']     = LevelTutorials.level5 || [];
+LevelTutorials['nitrogenHalide-intermediate'] = LevelTutorials.level5 || [];
+LevelTutorials['mixed-beginner']              = LevelTutorials.level6 || [];
+LevelTutorials['mixed-intermediate']          = LevelTutorials.level6 || [];
+LevelTutorials['shell-intermediate']          = LevelTutorials.levelShell || [];
+LevelTutorials['englishChallenge-advanced']   = LevelTutorials.level99 || [];

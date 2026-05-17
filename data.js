@@ -4,105 +4,136 @@
 // 包含具體的化合物名稱(中文) 以及 Level 99 需要的英文類別名稱
 const AnswerBank = {
     // --- Level 1~6: 化合物中文名稱 ---
-    "methane": { type: "text", content: "甲烷", category: "alkane" },
-    "ethane": { type: "text", content: "乙烷", category: "alkane" },
-    "propane": { type: "text", content: "丙烷", category: "alkane" },
-    "butane": { type: "text", content: "丁烷", category: "alkane" },
-    "isobutane": { type: "text", content: "異丁烷", category: "alkane" },
-    "cyclohexane": { type: "text", content: "環己烷", category: "alkane" },
-    "cyclopropane": { type: "text", content: "環丙烷", category: "alkane" },
-    "ethene": { type: "text", content: "乙烯", category: "alkene" },
-    "propene": { type: "text", content: "丙烯", category: "alkene" },
-    "1-butene": { type: "text", content: "1-丁烯", category: "alkene" },
-    "2-butene": { type: "text", content: "2-丁烯", category: "alkene" },
-    "1,3-butadiene": { type: "text", content: "1,3-丁二烯", category: "alkene" },
-    "cyclohexene": { type: "text", content: "環己烯", category: "alkene" },
-    "ethyne": { type: "text", content: "乙炔", category: "alkyne" },
-    "propyne": { type: "text", content: "丙炔", category: "alkyne" },
-    "1-butyne": { type: "text", content: "1-丁炔", category: "alkyne" },
-    "2-butyne": { type: "text", content: "2-丁炔", category: "alkyne" },
-    "methanol": { type: "text", content: "甲醇", category: "alcohol" },
-    "ethanol": { type: "text", content: "乙醇", category: "alcohol" },
-    "propanol": { type: "text", content: "丙醇", category: "alcohol" },
-    "isopropanol": { type: "text", content: "2-丙醇", category: "alcohol" },
-    "tert-butanol": { type: "text", content: "第三丁醇", category: "alcohol" },
-    "ethylene_glycol": { type: "text", content: "乙二醇", category: "alcohol" },
-    "glycerol": { type: "text", content: "丙三醇（甘油）", category: "alcohol" },
-    "cyclohexanol": { type: "text", content: "環己醇", category: "alcohol" },
-    "formaldehyde": { type: "text", content: "甲醛", category: "aldehyde" },
-    "acetaldehyde": { type: "text", content: "乙醛", category: "aldehyde" },
-    "propanal": { type: "text", content: "丙醛", category: "aldehyde" },
-    "butanal": { type: "text", content: "丁醛", category: "aldehyde" },
-    "acetone": { type: "text", content: "丙酮", category: "ketone" },
-    "butanone": { type: "text", content: "丁酮", category: "ketone" },
-    "2-pentanone": { type: "text", content: "2-戊酮", category: "ketone" },
-    "3-pentanone": { type: "text", content: "3-戊酮", category: "ketone" },
-    "cyclohexanone": { type: "text", content: "環己酮", category: "ketone" },
-    "acetophenone": { type: "text", content: "苯乙酮", category: "ketone" },
-    "formic_acid": { type: "text", content: "甲酸", category: "carboxylic" },
-    "acetic_acid": { type: "text", content: "乙酸", category: "carboxylic" },
-    "propionic_acid": { type: "text", content: "丙酸", category: "carboxylic" },
-    "butyric_acid": { type: "text", content: "丁酸", category: "carboxylic" },
-    "oxalic_acid": { type: "text", content: "草酸", category: "carboxylic" },
-    "methyl_formate": { type: "text", content: "甲酸甲酯", category: "ester" },
-    "ethyl_acetate": { type: "text", content: "乙酸乙酯", category: "ester" },
-    "methyl_acetate": { type: "text", content: "乙酸甲酯", category: "ester" },
-    "isoamyl_acetate": { type: "text", content: "乙酸異戊酯", category: "ester" },
-    "ethyl_butyrate": { type: "text", content: "丁酸乙酯", category: "ester" },
-    "methyl_benzoate": { type: "text", content: "苯甲酸甲酯", category: "ester" },
-    "dimethyl_ether": { type: "text", content: "二甲醚", category: "ether" },
-    "diethyl_ether": { type: "text", content: "二乙醚", category: "ether" },
-    "ethyl_methyl_ether": { type: "text", content: "甲乙醚", category: "ether" },
-    "ethylene_oxide": { type: "text", content: "環氧乙烷", category: "ether" },
-    "anisole": { type: "text", content: "苯甲醚", category: "ether" },
-    "methylamine": { type: "text", content: "甲胺", category: "amine" },
-    "ethylamine": { type: "text", content: "乙胺", category: "amine" },
-    "dimethylamine": { type: "text", content: "二甲胺", category: "amine" },
-    "trimethylamine": { type: "text", content: "三甲胺", category: "amine" },
-    "ethylenediamine": { type: "text", content: "乙二胺", category: "amine" },
-    "benzene": { type: "text", content: "苯", category: "aromatic" },
-    "toluene": { type: "text", content: "甲苯", category: "aromatic" },
-    "styrene": { type: "text", content: "苯乙烯", category: "aromatic" },
-    "o-xylene": { type: "text", content: "鄰-二甲苯", category: "aromatic" },
-    "m-xylene": { type: "text", content: "間-二甲苯", category: "aromatic" },
-    "p-xylene": { type: "text", content: "對-二甲苯", category: "aromatic" },
-    "ethylbenzene": { type: "text", content: "乙苯", category: "aromatic" },
-    "naphthalene": { type: "text", content: "萘", category: "aromatic" },
-    "chloromethane": { type: "text", content: "氯甲烷", category: "halide" },
-    "bromoethane": { type: "text", content: "溴乙烷", category: "halide" },
-    "chlorobenzene": { type: "text", content: "氯苯", category: "halide" },
-    "dichloromethane": { type: "text", content: "二氯甲烷", category: "halide" },
-    "chloroform": { type: "text", content: "三氯甲烷（氯仿）", category: "halide" },
-    "iodomethane": { type: "text", content: "碘甲烷", category: "halide" },
-    "vinyl_chloride": { type: "text", content: "氯乙烯", category: "halide" },
+    "methane": { type: "compound", content: "甲烷", category: "alkane" },
+    "ethane": { type: "compound", content: "乙烷", category: "alkane" },
+    "propane": { type: "compound", content: "丙烷", category: "alkane" },
+    "butane": { type: "compound", content: "丁烷", category: "alkane" },
+    "isobutane": { type: "compound", content: "異丁烷", category: "alkane" },
+    "cyclohexane": { type: "compound", content: "環己烷", category: "alkane" },
+    "cyclopropane": { type: "compound", content: "環丙烷", category: "alkane" },
+    "ethene": { type: "compound", content: "乙烯", category: "alkene" },
+    "propene": { type: "compound", content: "丙烯", category: "alkene" },
+    "1-butene": { type: "compound", content: "1-丁烯", category: "alkene" },
+    "2-butene": { type: "compound", content: "2-丁烯", category: "alkene" },
+    "1,3-butadiene": { type: "compound", content: "1,3-丁二烯", category: "alkene" },
+    "cyclohexene": { type: "compound", content: "環己烯", category: "alkene" },
+    "ethyne": { type: "compound", content: "乙炔", category: "alkyne" },
+    "propyne": { type: "compound", content: "丙炔", category: "alkyne" },
+    "1-butyne": { type: "compound", content: "1-丁炔", category: "alkyne" },
+    "2-butyne": { type: "compound", content: "2-丁炔", category: "alkyne" },
+    "methanol": { type: "compound", content: "甲醇", category: "alcohol" },
+    "ethanol": { type: "compound", content: "乙醇", category: "alcohol" },
+    "propanol": { type: "compound", content: "丙醇", category: "alcohol" },
+    "isopropanol": { type: "compound", content: "2-丙醇", category: "alcohol" },
+    "tert-butanol": { type: "compound", content: "第三丁醇", category: "alcohol" },
+    "ethylene_glycol": { type: "compound", content: "乙二醇", category: "alcohol" },
+    "glycerol": { type: "compound", content: "丙三醇（甘油）", category: "alcohol" },
+    "cyclohexanol": { type: "compound", content: "環己醇", category: "alcohol" },
+    "formaldehyde": { type: "compound", content: "甲醛", category: "aldehyde" },
+    "acetaldehyde": { type: "compound", content: "乙醛", category: "aldehyde" },
+    "propanal": { type: "compound", content: "丙醛", category: "aldehyde" },
+    "butanal": { type: "compound", content: "丁醛", category: "aldehyde" },
+    "acetone": { type: "compound", content: "丙酮", category: "ketone" },
+    "butanone": { type: "compound", content: "丁酮", category: "ketone" },
+    "2-pentanone": { type: "compound", content: "2-戊酮", category: "ketone" },
+    "3-pentanone": { type: "compound", content: "3-戊酮", category: "ketone" },
+    "cyclohexanone": { type: "compound", content: "環己酮", category: "ketone" },
+    "acetophenone": { type: "compound", content: "苯乙酮", category: "ketone" },
+    "formic_acid": { type: "compound", content: "甲酸", category: "carboxylic" },
+    "acetic_acid": { type: "compound", content: "乙酸", category: "carboxylic" },
+    "propionic_acid": { type: "compound", content: "丙酸", category: "carboxylic" },
+    "butyric_acid": { type: "compound", content: "丁酸", category: "carboxylic" },
+    "oxalic_acid": { type: "compound", content: "草酸", category: "carboxylic" },
+    "methyl_formate": { type: "compound", content: "甲酸甲酯", category: "ester" },
+    "ethyl_acetate": { type: "compound", content: "乙酸乙酯", category: "ester" },
+    "methyl_acetate": { type: "compound", content: "乙酸甲酯", category: "ester" },
+    "isoamyl_acetate": { type: "compound", content: "乙酸異戊酯", category: "ester" },
+    "ethyl_butyrate": { type: "compound", content: "丁酸乙酯", category: "ester" },
+    "methyl_benzoate": { type: "compound", content: "苯甲酸甲酯", category: "ester" },
+    "dimethyl_ether": { type: "compound", content: "二甲醚", category: "ether" },
+    "diethyl_ether": { type: "compound", content: "二乙醚", category: "ether" },
+    "ethyl_methyl_ether": { type: "compound", content: "甲乙醚", category: "ether" },
+    "ethylene_oxide": { type: "compound", content: "環氧乙烷", category: "ether" },
+    "anisole": { type: "compound", content: "苯甲醚", category: "ether" },
+    "methylamine": { type: "compound", content: "甲胺", category: "amine" },
+    "ethylamine": { type: "compound", content: "乙胺", category: "amine" },
+    "dimethylamine": { type: "compound", content: "二甲胺", category: "amine" },
+    "trimethylamine": { type: "compound", content: "三甲胺", category: "amine" },
+    "ethylenediamine": { type: "compound", content: "乙二胺", category: "amine" },
+    "benzene": { type: "compound", content: "苯", category: "aromatic" },
+    "toluene": { type: "compound", content: "甲苯", category: "aromatic" },
+    "styrene": { type: "compound", content: "苯乙烯", category: "aromatic" },
+    "o-xylene": { type: "compound", content: "鄰-二甲苯", category: "aromatic" },
+    "m-xylene": { type: "compound", content: "間-二甲苯", category: "aromatic" },
+    "p-xylene": { type: "compound", content: "對-二甲苯", category: "aromatic" },
+    "ethylbenzene": { type: "compound", content: "乙苯", category: "aromatic" },
+    "naphthalene": { type: "compound", content: "萘", category: "aromatic" },
+    "chloromethane": { type: "compound", content: "氯甲烷", category: "halide" },
+    "bromoethane": { type: "compound", content: "溴乙烷", category: "halide" },
+    "chlorobenzene": { type: "compound", content: "氯苯", category: "halide" },
+    "dichloromethane": { type: "compound", content: "二氯甲烷", category: "halide" },
+    "chloroform": { type: "compound", content: "三氯甲烷（氯仿）", category: "halide" },
+    "iodomethane": { type: "compound", content: "碘甲烷", category: "halide" },
+    "vinyl_chloride": { type: "compound", content: "氯乙烯", category: "halide" },
     // 以下原本被歸成 "confused"（易混淆）—— 已改回各自真正的官能基分類
     // phenol 自成一類（與 Level 99 的 CAT_PHENOL 一致）；其餘歸正統官能基
-    "phenol": { type: "text", content: "苯酚", category: "phenol" },
-    "o-cresol": { type: "text", content: "鄰-甲酚", category: "phenol" },
-    "m-cresol": { type: "text", content: "間-甲酚", category: "phenol" },
-    "p-cresol": { type: "text", content: "對-甲酚", category: "phenol" },
-    "catechol": { type: "text", content: "兒茶酚", category: "phenol" },
-    "resorcinol": { type: "text", content: "間苯二酚", category: "phenol" },
-    "benzyl_alcohol": { type: "text", content: "苯甲醇", category: "alcohol" },
-    "benzaldehyde": { type: "text", content: "苯甲醛", category: "aldehyde" },
-    "benzoic_acid": { type: "text", content: "苯甲酸", category: "carboxylic" },
-    "aniline": { type: "text", content: "苯胺", category: "amine" },
+    "phenol": { type: "compound", content: "苯酚", category: "phenol" },
+    "o-cresol": { type: "compound", content: "鄰-甲酚", category: "phenol" },
+    "m-cresol": { type: "compound", content: "間-甲酚", category: "phenol" },
+    "p-cresol": { type: "compound", content: "對-甲酚", category: "phenol" },
+    "catechol": { type: "compound", content: "兒茶酚", category: "phenol" },
+    "resorcinol": { type: "compound", content: "間苯二酚", category: "phenol" },
+    "benzyl_alcohol": { type: "compound", content: "苯甲醇", category: "alcohol" },
+    "benzaldehyde": { type: "compound", content: "苯甲醛", category: "aldehyde" },
+    "benzoic_acid": { type: "compound", content: "苯甲酸", category: "carboxylic" },
+    "aniline": { type: "compound", content: "苯胺", category: "amine" },
 
-    // --- Level 99: 英文類別名稱 (English Categories) ---
-    "CAT_ALKANE": { type: "text", content: "Alkane", category: "cat" },
-    "CAT_ALKENE": { type: "text", content: "Alkene", category: "cat" },
-    "CAT_ALKYNE": { type: "text", content: "Alkyne", category: "cat" },
-    "CAT_ALCOHOL": { type: "text", content: "Alcohol", category: "cat" },
-    "CAT_ALDEHYDE": { type: "text", content: "Aldehyde", category: "cat" },
-    "CAT_KETONE": { type: "text", content: "Ketone", category: "cat" },
-    "CAT_CARBOXYLIC": { type: "text", content: "Carboxylic Acid", category: "cat" },
-    "CAT_ESTER": { type: "text", content: "Ester", category: "cat" },
-    "CAT_ETHER": { type: "text", content: "Ether", category: "cat" },
-    "CAT_AMINE": { type: "text", content: "Amine", category: "cat" },
-    "CAT_AROMATIC": { type: "text", content: "Aromatic", category: "cat" },
-    "CAT_HALIDE": { type: "text", content: "Halide", category: "cat" },
-    "CAT_PHENOL": { type: "text", content: "Phenol / Derivative", category: "cat" }
+    // --- 中文官能基類別 (Beginner difficulty answer pool) ---
+    "CAT_ZH_ALKANE":     { type: "categoryZh", content: "烷類",   category: "alkane" },
+    "CAT_ZH_ALKENE":     { type: "categoryZh", content: "烯類",   category: "alkene" },
+    "CAT_ZH_ALKYNE":     { type: "categoryZh", content: "炔類",   category: "alkyne" },
+    "CAT_ZH_ALCOHOL":    { type: "categoryZh", content: "醇",     category: "alcohol" },
+    "CAT_ZH_ETHER":      { type: "categoryZh", content: "醚",     category: "ether" },
+    "CAT_ZH_ALDEHYDE":   { type: "categoryZh", content: "醛",     category: "aldehyde" },
+    "CAT_ZH_KETONE":     { type: "categoryZh", content: "酮",     category: "ketone" },
+    "CAT_ZH_CARBOXYLIC": { type: "categoryZh", content: "羧酸",   category: "carboxylic" },
+    "CAT_ZH_ESTER":      { type: "categoryZh", content: "酯",     category: "ester" },
+    "CAT_ZH_AMINE":      { type: "categoryZh", content: "胺",     category: "amine" },
+    "CAT_ZH_HALIDE":     { type: "categoryZh", content: "鹵化物", category: "halide" },
+    "CAT_ZH_AROMATIC":   { type: "categoryZh", content: "芳香烴", category: "aromatic" },
+    "CAT_ZH_PHENOL":     { type: "categoryZh", content: "酚",     category: "phenol" },
+
+    // --- 英文官能基類別 (Advanced difficulty answer pool, was CAT_*) ---
+    "CAT_EN_ALKANE":     { type: "categoryEn", content: "Alkane",             category: "alkane" },
+    "CAT_EN_ALKENE":     { type: "categoryEn", content: "Alkene",             category: "alkene" },
+    "CAT_EN_ALKYNE":     { type: "categoryEn", content: "Alkyne",             category: "alkyne" },
+    "CAT_EN_ALCOHOL":    { type: "categoryEn", content: "Alcohol",            category: "alcohol" },
+    "CAT_EN_ALDEHYDE":   { type: "categoryEn", content: "Aldehyde",           category: "aldehyde" },
+    "CAT_EN_KETONE":     { type: "categoryEn", content: "Ketone",             category: "ketone" },
+    "CAT_EN_CARBOXYLIC": { type: "categoryEn", content: "Carboxylic Acid",    category: "carboxylic" },
+    "CAT_EN_ESTER":      { type: "categoryEn", content: "Ester",              category: "ester" },
+    "CAT_EN_ETHER":      { type: "categoryEn", content: "Ether",              category: "ether" },
+    "CAT_EN_AMINE":      { type: "categoryEn", content: "Amine",              category: "amine" },
+    "CAT_EN_AROMATIC":   { type: "categoryEn", content: "Aromatic",           category: "aromatic" },
+    "CAT_EN_HALIDE":     { type: "categoryEn", content: "Halide",             category: "halide" },
+    "CAT_EN_PHENOL":     { type: "categoryEn", content: "Phenol / Derivative", category: "phenol" }
 };
+
+// Legacy aliases: keep CAT_* keys working for any code that hasn't migrated yet.
+// Both keys resolve to the same object reference.
+AnswerBank.CAT_ALKANE     = AnswerBank.CAT_EN_ALKANE;
+AnswerBank.CAT_ALKENE     = AnswerBank.CAT_EN_ALKENE;
+AnswerBank.CAT_ALKYNE     = AnswerBank.CAT_EN_ALKYNE;
+AnswerBank.CAT_ALCOHOL    = AnswerBank.CAT_EN_ALCOHOL;
+AnswerBank.CAT_ALDEHYDE   = AnswerBank.CAT_EN_ALDEHYDE;
+AnswerBank.CAT_KETONE     = AnswerBank.CAT_EN_KETONE;
+AnswerBank.CAT_CARBOXYLIC = AnswerBank.CAT_EN_CARBOXYLIC;
+AnswerBank.CAT_ESTER      = AnswerBank.CAT_EN_ESTER;
+AnswerBank.CAT_ETHER      = AnswerBank.CAT_EN_ETHER;
+AnswerBank.CAT_AMINE      = AnswerBank.CAT_EN_AMINE;
+AnswerBank.CAT_AROMATIC   = AnswerBank.CAT_EN_AROMATIC;
+AnswerBank.CAT_HALIDE     = AnswerBank.CAT_EN_HALIDE;
+AnswerBank.CAT_PHENOL     = AnswerBank.CAT_EN_PHENOL;
 
 // 2. 題目列表 (QuestionSets)
 // 注意：圖片路徑需符合 assets/images/分類資料夾/檔名
@@ -324,6 +355,162 @@ const QuestionSets = {
 
 // 3. 對照表 (Reference Table) - 可留空或放一張通用的官能基總表
 const ReferenceTable = [];
+
+// ============================================================================
+// 新版 data-driven schema (Wave 1)：QuestionImages × Families × Difficulties
+// 舊版 LevelN_List / QuestionSets 仍在上面保留，待 game.js 重寫後在 Wave 2 移除。
+// ============================================================================
+
+// QuestionImages：題圖庫；同一張圖只列一次（category 由 AnswerBank[compoundKey] 推導）
+const QuestionImages = [
+    // 烷
+    { src: "assets/images/01_alkane/01_alkane_methane.svg",        compoundKey: "methane" },
+    { src: "assets/images/01_alkane/01_alkane_ethane.svg",         compoundKey: "ethane" },
+    { src: "assets/images/01_alkane/01_alkane_propane.svg",        compoundKey: "propane" },
+    { src: "assets/images/01_alkane/01_alkane_butane.svg",         compoundKey: "butane" },
+    { src: "assets/images/01_alkane/01_alkane_isobutane.svg",      compoundKey: "isobutane" },
+    { src: "assets/images/01_alkane/01_alkane_cyclohexane.svg",    compoundKey: "cyclohexane" },
+    { src: "assets/images/01_alkane/01_alkane_cyclopropane.svg",   compoundKey: "cyclopropane" },
+    // 烯
+    { src: "assets/images/02_alkene/02_alkene_ethene.svg",         compoundKey: "ethene" },
+    { src: "assets/images/02_alkene/02_alkene_propene.svg",        compoundKey: "propene" },
+    { src: "assets/images/02_alkene/02_alkene_1-butene.svg",       compoundKey: "1-butene" },
+    { src: "assets/images/02_alkene/02_alkene_2-butene.svg",       compoundKey: "2-butene" },
+    { src: "assets/images/02_alkene/02_alkene_1,3-butadiene.svg",  compoundKey: "1,3-butadiene" },
+    { src: "assets/images/02_alkene/02_alkene_cyclohexene.svg",    compoundKey: "cyclohexene" },
+    // 炔
+    { src: "assets/images/03_alkyne/03_alkyne_ethyne.svg",         compoundKey: "ethyne" },
+    { src: "assets/images/03_alkyne/03_alkyne_propyne.svg",        compoundKey: "propyne" },
+    { src: "assets/images/03_alkyne/03_alkyne_1-butyne.svg",       compoundKey: "1-butyne" },
+    { src: "assets/images/03_alkyne/03_alkyne_2-butyne.svg",       compoundKey: "2-butyne" },
+    // 芳香烴
+    { src: "assets/images/11_aromatic/11_aromatic_benzene.svg",      compoundKey: "benzene" },
+    { src: "assets/images/11_aromatic/11_aromatic_toluene.svg",      compoundKey: "toluene" },
+    { src: "assets/images/11_aromatic/11_aromatic_styrene.svg",      compoundKey: "styrene" },
+    { src: "assets/images/11_aromatic/11_aromatic_o-xylene.svg",     compoundKey: "o-xylene" },
+    { src: "assets/images/11_aromatic/11_aromatic_m-xylene.svg",     compoundKey: "m-xylene" },
+    { src: "assets/images/11_aromatic/11_aromatic_p-xylene.svg",     compoundKey: "p-xylene" },
+    { src: "assets/images/11_aromatic/11_aromatic_ethylbenzene.svg", compoundKey: "ethylbenzene" },
+    { src: "assets/images/11_aromatic/11_aromatic_naphthalene.svg",  compoundKey: "naphthalene" },
+    // 醇
+    { src: "assets/images/04_alcohol/04_alcohol_methanol.svg",         compoundKey: "methanol" },
+    { src: "assets/images/04_alcohol/04_alcohol_ethanol.svg",          compoundKey: "ethanol" },
+    { src: "assets/images/04_alcohol/04_alcohol_propanol.svg",         compoundKey: "propanol" },
+    { src: "assets/images/04_alcohol/04_alcohol_isopropanol.svg",      compoundKey: "isopropanol" },
+    { src: "assets/images/04_alcohol/04_alcohol_tert-butanol.svg",     compoundKey: "tert-butanol" },
+    { src: "assets/images/04_alcohol/04_alcohol_ethylene_glycol.svg",  compoundKey: "ethylene_glycol" },
+    { src: "assets/images/04_alcohol/04_alcohol_glycerol.svg",         compoundKey: "glycerol" },
+    { src: "assets/images/04_alcohol/04_alcohol_cyclohexanol.svg",     compoundKey: "cyclohexanol" },
+    { src: "assets/images/13_confused/13_confused_benzyl_alcohol.svg", compoundKey: "benzyl_alcohol" },
+    // 醚
+    { src: "assets/images/09_ether/09_ether_dimethyl_ether.svg",     compoundKey: "dimethyl_ether" },
+    { src: "assets/images/09_ether/09_ether_diethyl_ether.svg",      compoundKey: "diethyl_ether" },
+    { src: "assets/images/09_ether/09_ether_ethyl_methyl_ether.svg", compoundKey: "ethyl_methyl_ether" },
+    { src: "assets/images/09_ether/09_ether_ethylene_oxide.svg",     compoundKey: "ethylene_oxide" },
+    { src: "assets/images/09_ether/09_ether_anisole.svg",            compoundKey: "anisole" },
+    // 醛
+    { src: "assets/images/05_aldehyde/05_aldehyde_formaldehyde.svg", compoundKey: "formaldehyde" },
+    { src: "assets/images/05_aldehyde/05_aldehyde_acetaldehyde.svg", compoundKey: "acetaldehyde" },
+    { src: "assets/images/05_aldehyde/05_aldehyde_propanal.svg",     compoundKey: "propanal" },
+    { src: "assets/images/05_aldehyde/05_aldehyde_butanal.svg",      compoundKey: "butanal" },
+    { src: "assets/images/13_confused/13_confused_benzaldehyde.svg", compoundKey: "benzaldehyde" },
+    // 酮
+    { src: "assets/images/06_ketone/06_ketone_acetone.svg",       compoundKey: "acetone" },
+    { src: "assets/images/06_ketone/06_ketone_butanone.svg",      compoundKey: "butanone" },
+    { src: "assets/images/06_ketone/06_ketone_2-pentanone.svg",   compoundKey: "2-pentanone" },
+    { src: "assets/images/06_ketone/06_ketone_3-pentanone.svg",   compoundKey: "3-pentanone" },
+    { src: "assets/images/06_ketone/06_ketone_cyclohexanone.svg", compoundKey: "cyclohexanone" },
+    { src: "assets/images/06_ketone/06_ketone_acetophenone.svg",  compoundKey: "acetophenone" },
+    // 羧酸
+    { src: "assets/images/07_carboxylic/07_carboxylic_formic_acid.svg",    compoundKey: "formic_acid" },
+    { src: "assets/images/07_carboxylic/07_carboxylic_acetic_acid.svg",    compoundKey: "acetic_acid" },
+    { src: "assets/images/07_carboxylic/07_carboxylic_propionic_acid.svg", compoundKey: "propionic_acid" },
+    { src: "assets/images/07_carboxylic/07_carboxylic_butyric_acid.svg",   compoundKey: "butyric_acid" },
+    { src: "assets/images/07_carboxylic/07_carboxylic_oxalic_acid.svg",    compoundKey: "oxalic_acid" },
+    { src: "assets/images/13_confused/13_confused_benzoic_acid.svg",       compoundKey: "benzoic_acid" },
+    // 酯
+    { src: "assets/images/08_ester/08_ester_methyl_formate.svg",   compoundKey: "methyl_formate" },
+    { src: "assets/images/08_ester/08_ester_ethyl_acetate.svg",    compoundKey: "ethyl_acetate" },
+    { src: "assets/images/08_ester/08_ester_methyl_acetate.svg",   compoundKey: "methyl_acetate" },
+    { src: "assets/images/08_ester/08_ester_isoamyl_acetate.svg",  compoundKey: "isoamyl_acetate" },
+    { src: "assets/images/08_ester/08_ester_ethyl_butyrate.svg",   compoundKey: "ethyl_butyrate" },
+    { src: "assets/images/08_ester/08_ester_methyl_benzoate.svg",  compoundKey: "methyl_benzoate" },
+    // 胺
+    { src: "assets/images/10_amine/10_amine_methylamine.svg",     compoundKey: "methylamine" },
+    { src: "assets/images/10_amine/10_amine_ethylamine.svg",      compoundKey: "ethylamine" },
+    { src: "assets/images/10_amine/10_amine_dimethylamine.svg",   compoundKey: "dimethylamine" },
+    { src: "assets/images/10_amine/10_amine_trimethylamine.svg",  compoundKey: "trimethylamine" },
+    { src: "assets/images/10_amine/10_amine_ethylenediamine.svg", compoundKey: "ethylenediamine" },
+    { src: "assets/images/13_confused/13_confused_aniline.svg",   compoundKey: "aniline" },
+    // 鹵化物
+    { src: "assets/images/12_halide/12_halide_chloromethane.svg",   compoundKey: "chloromethane" },
+    { src: "assets/images/12_halide/12_halide_bromoethane.svg",     compoundKey: "bromoethane" },
+    { src: "assets/images/12_halide/12_halide_chlorobenzene.svg",   compoundKey: "chlorobenzene" },
+    { src: "assets/images/12_halide/12_halide_dichloromethane.svg", compoundKey: "dichloromethane" },
+    { src: "assets/images/12_halide/12_halide_chloroform.svg",      compoundKey: "chloroform" },
+    { src: "assets/images/12_halide/12_halide_iodomethane.svg",     compoundKey: "iodomethane" },
+    { src: "assets/images/12_halide/12_halide_vinyl_chloride.svg",  compoundKey: "vinyl_chloride" },
+    // 酚
+    { src: "assets/images/13_confused/13_confused_phenol.svg", compoundKey: "phenol" },
+    { src: "assets/images/14_phenol/14_phenol_o-cresol.svg",   compoundKey: "o-cresol" },
+    { src: "assets/images/14_phenol/14_phenol_m-cresol.svg",   compoundKey: "m-cresol" },
+    { src: "assets/images/14_phenol/14_phenol_p-cresol.svg",   compoundKey: "p-cresol" },
+    { src: "assets/images/14_phenol/14_phenol_catechol.svg",   compoundKey: "catechol" },
+    { src: "assets/images/14_phenol/14_phenol_resorcinol.svg", compoundKey: "resorcinol" }
+];
+
+// Families：主題子關定義；用 imageFilter 從 QuestionImages 篩出本家族題圖
+const Families = {
+    hydrocarbon: {
+        nameZh: "碳氫骨架",
+        imageFilter: { type: "byCategory", categories: ["alkane", "alkene", "alkyne", "aromatic"] },
+        difficulties: ["beginner", "intermediate"],
+        storyKey: "hydrocarbon"
+    },
+    oxygen: {
+        nameZh: "含氧家族",
+        imageFilter: { type: "byCategory",
+                       categories: ["alcohol", "ether", "aldehyde", "ketone", "carboxylic", "ester", "phenol"] },
+        difficulties: ["beginner", "intermediate"],
+        storyKey: "oxygen"
+    },
+    nitrogenHalide: {
+        nameZh: "含氮鹵化物",
+        imageFilter: { type: "byCategory", categories: ["amine", "halide"] },
+        difficulties: ["beginner", "intermediate"],
+        storyKey: "nitrogenHalide"
+    },
+    mixed: {
+        nameZh: "綜合",
+        imageFilter: { type: "all" },
+        difficulties: ["beginner", "intermediate"],
+        storyKey: "mixed"
+    },
+    shell: {
+        nameZh: "龜殼之地",
+        imageFilter: { type: "byCompoundKeys", keys: [
+            "phenol", "o-cresol", "m-cresol", "p-cresol", "catechol", "resorcinol",
+            "benzyl_alcohol", "benzaldehyde", "benzoic_acid", "aniline",
+            "acetophenone", "methyl_benzoate", "anisole", "chlorobenzene",
+            "benzene", "toluene", "styrene", "o-xylene", "naphthalene"
+        ]},
+        difficulties: ["intermediate"],
+        storyKey: "shell"
+    },
+    englishChallenge: {
+        nameZh: "全題庫英文挑戰",
+        imageFilter: { type: "all" },
+        difficulties: ["advanced"],
+        storyKey: null
+    }
+};
+
+// Difficulties：難度設定（決定答案池與 aKey 前綴）
+const Difficulties = {
+    beginner:     { answerType: "categoryZh", aKeyPrefix: "CAT_ZH_" },
+    intermediate: { answerType: "compound",   aKeyPrefix: null      },
+    advanced:     { answerType: "categoryEn", aKeyPrefix: "CAT_EN_" }
+};
 
 // 4. 化合物小知識（圖鑑用，1~2 句，淺顯不複雜）
 const CompoundFacts = {
