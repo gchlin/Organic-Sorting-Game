@@ -118,3 +118,14 @@ const StoryScripts = {
   ]
 
 };
+
+// === Family-keyed aliases (v2 migration) ===
+// Reference assignments — same array objects, no copy.
+// Legacy level-keyed keys above are preserved verbatim for existing game.js.
+// New code (post-game.js rewrite) reads from these family keys.
+// englishChallenge intentionally absent: Families.englishChallenge.storyKey = null (non-narrative).
+StoryScripts.hydrocarbon    = StoryScripts.level1 || [];
+StoryScripts.oxygen         = StoryScripts.level2 || StoryScripts.level3 || StoryScripts.level4 || [];
+StoryScripts.nitrogenHalide = StoryScripts.level5 || [];
+StoryScripts.mixed          = StoryScripts.level6 || [];
+StoryScripts.shell          = StoryScripts.levelShell || [];
