@@ -3605,3 +3605,44 @@ body.v2-active .screen .v2-back-btn {
     opacity: 0.6;
     letter-spacing: 0.05em;
 }
+
+/* ============================================================
+   Codex molecule card enhancements
+   ============================================================ */
+.codex-mol-en {
+    font-size: 0.65rem;
+    color: var(--hp-parchment-dark);
+    margin-top: 2px;
+    font-style: italic;
+}
+.codex-mol-stamps {
+    display: flex;
+    gap: 3px;
+    justify-content: center;
+    margin-top: 4px;
+}
+.codex-diff-stamp {
+    font-size: 0.6rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: rgba(60,47,42,0.5);
+    color: var(--hp-parchment-dark);
+    border: 1px solid rgba(100,80,60,0.3);
+}
+.codex-diff-stamp.seen {
+    background: var(--hp-green-dark);
+    color: var(--hp-parchment);
+    border-color: var(--hp-green-bright);
+}
+.codex-mol-fact {
+    font-size: 0.68rem;
+    color: var(--hp-parchment-dark);
+    line-height: 1.4;
+    margin-top: 5px;
+    text-align: left;
+    padding: 0 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}

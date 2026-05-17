@@ -1000,6 +1000,7 @@
 
                 const card = document.createElement('div');
                 card.className = 'codex-mol-card' + (unlocked ? '' : ' locked');
+                card.id = 'codex-mol-' + item.ck;
 
                 if (unlocked) {
                     const img = document.createElement('img');
@@ -1008,17 +1009,52 @@
                     img.alt = nameZh;
                     img.loading = 'lazy';
                     card.appendChild(img);
+
+                    const label = document.createElement('div');
+                    label.className = 'codex-mol-name';
+                    label.textContent = nameZh;
+                    card.appendChild(label);
+
+                    // English key as sub-label (no separate formula field in data.js)
+                    const enLabel = document.createElement('div');
+                    enLabel.className = 'codex-mol-en';
+                    enLabel.textContent = item.ck.replace(/_/g, '-');
+                    card.appendChild(enLabel);
+
+                    // Difficulty stamps: check moleculeSeen for beginner/intermediate/advanced
+                    const seen = (typeof Save !== 'undefined' && Save.get)
+                        ? (Save.get().moleculeSeen || {}) : {};
+                    const molSeen = seen[item.ck] || {};
+                    const stamps = document.createElement('div');
+                    stamps.className = 'codex-mol-stamps';
+                    const DIFF_LABELS = { beginner: '初', intermediate: '中', advanced: '高' };
+                    for (const d of ['beginner', 'intermediate', 'advanced']) {
+                        const s = document.createElement('span');
+                        s.className = 'codex-diff-stamp' + (molSeen[d] ? ' seen' : '');
+                        s.textContent = DIFF_LABELS[d];
+                        stamps.appendChild(s);
+                    }
+                    card.appendChild(stamps);
+
+                    // CompoundFacts snippet
+                    const fact = (typeof CompoundFacts !== 'undefined') ? CompoundFacts[item.ck] : null;
+                    if (fact) {
+                        const factEl = document.createElement('div');
+                        factEl.className = 'codex-mol-fact';
+                        factEl.textContent = fact;
+                        card.appendChild(factEl);
+                    }
                 } else {
                     const ph = document.createElement('div');
                     ph.className = 'codex-mol-img placeholder';
                     ph.textContent = '?';
                     card.appendChild(ph);
-                }
 
-                const label = document.createElement('div');
-                label.className = 'codex-mol-name';
-                label.textContent = unlocked ? nameZh : '???';
-                card.appendChild(label);
+                    const label = document.createElement('div');
+                    label.className = 'codex-mol-name';
+                    label.textContent = '???';
+                    card.appendChild(label);
+                }
 
                 grid.appendChild(card);
             }
