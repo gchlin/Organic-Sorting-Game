@@ -1,1 +1,198 @@
-{"version":1,"totalCorrect":1000,"badges":["correct_10","correct_50","correct_200","correct_500","correct_1000"],"seenMolecules":["methane","ethane","propane","butane","isobutane","cyclohexane","cyclopropane","ethene","propene","1-butene","2-butene","1,3-butadiene","cyclohexene","ethyne","propyne","1-butyne","2-butyne","methanol","ethanol","propanol","isopropanol","tert-butanol","ethylene_glycol","glycerol","cyclohexanol","formaldehyde","acetaldehyde","propanal","butanal","acetone","butanone","2-pentanone","3-pentanone","cyclohexanone","acetophenone","formic_acid","acetic_acid","propionic_acid","butyric_acid","oxalic_acid","methyl_formate","ethyl_acetate","methyl_acetate","isoamyl_acetate","ethyl_butyrate","methyl_benzoate","dimethyl_ether","diethyl_ether","ethyl_methyl_ether","ethylene_oxide","anisole","methylamine","ethylamine","dimethylamine","trimethylamine","ethylenediamine","benzene","toluene","styrene","o-xylene","m-xylene","p-xylene","ethylbenzene","naphthalene","chloromethane","bromoethane","chlorobenzene","dichloromethane","chloroform","iodomethane","vinyl_chloride","phenol","o-cresol","m-cresol","p-cresol","catechol","resorcinol","benzyl_alcohol","benzaldehyde","benzoic_acid","aniline"],"knownProperties":["methane","ethane","propane","butane","isobutane","cyclohexane","cyclopropane","ethene","propene","1-butene","2-butene","1,3-butadiene","cyclohexene","ethyne","propyne","1-butyne","2-butyne","methanol","ethanol","propanol","isopropanol","tert-butanol","ethylene_glycol","glycerol","cyclohexanol","formaldehyde","acetaldehyde","propanal","butanal","acetone","butanone","2-pentanone","3-pentanone","cyclohexanone","acetophenone","formic_acid","acetic_acid","propionic_acid","butyric_acid","oxalic_acid","methyl_formate","ethyl_acetate","methyl_acetate","isoamyl_acetate","ethyl_butyrate","methyl_benzoate","dimethyl_ether","diethyl_ether","ethyl_methyl_ether","ethylene_oxide","anisole","methylamine","ethylamine","dimethylamine","trimethylamine","ethylenediamine","benzene","toluene","styrene","o-xylene","m-xylene","p-xylene","ethylbenzene","naphthalene","chloromethane","bromoethane","chlorobenzene","dichloromethane","chloroform","iodomethane","vinyl_chloride","phenol","o-cresol","m-cresol","p-cresol","catechol","resorcinol","benzyl_alcohol","benzaldehyde","benzoic_acid","aniline"],"memes":[1,2],"wrongQueue":{},"storyUnlocked":["level1","level2","level3","level4","level5","level6","levelShell","level99"],"levelClears":{"level1":true,"level2":true,"level3":true,"level4":true,"level5":true,"level6":true,"level99":true,"levelShell":true},"bestScores":{"speed_level3":999,"speed_level4":999,"speed_level6":999,"duel_level3":8,"duel_level4":8,"duel_level6":8,"speed_levelShell":999,"duel_levelShell":8},"tutorialSeen":true,"levelTutorialsSeen":["level1","level2","level3","level4","level5","level6","levelShell","level99"]}
+{
+  "version": 2,
+  "totalCorrect": 1000,
+  "wrongQueue": [],
+  "familyProgress": {
+    "hydrocarbon": {
+      "beginner": {
+        "completedAll": true,
+        "lastAccuracy": 1.0
+      },
+      "intermediate": {
+        "completedAll": true,
+        "lastAccuracy": 1.0
+      }
+    },
+    "oxygen": {
+      "beginner": {
+        "completedAll": true,
+        "lastAccuracy": 1.0
+      },
+      "intermediate": {
+        "completedAll": true,
+        "lastAccuracy": 1.0
+      }
+    },
+    "nitrogenHalide": {
+      "beginner": {
+        "completedAll": true,
+        "lastAccuracy": 1.0
+      },
+      "intermediate": {
+        "completedAll": true,
+        "lastAccuracy": 1.0
+      }
+    },
+    "mixed": {
+      "beginner": {
+        "completedAll": true,
+        "lastAccuracy": 1.0
+      },
+      "intermediate": {
+        "completedAll": true,
+        "lastAccuracy": 1.0
+      }
+    },
+    "shell": {
+      "intermediate": {
+        "completedAll": true,
+        "lastAccuracy": 1.0
+      }
+    },
+    "englishChallenge": {
+      "advanced": {
+        "completedAll": true,
+        "lastAccuracy": 1.0
+      }
+    }
+  },
+  "tutorialsSeen": [
+    "hydrocarbon-beginner",
+    "hydrocarbon-intermediate",
+    "oxygen-beginner",
+    "oxygen-intermediate",
+    "nitrogenHalide-beginner",
+    "nitrogenHalide-intermediate",
+    "mixed-beginner",
+    "mixed-intermediate",
+    "shell-intermediate",
+    "englishChallenge-advanced"
+  ],
+  "moleculeSeen": {
+    "1,3-butadiene": { "beginner": true, "intermediate": true, "advanced": true },
+    "1-butene": { "beginner": true, "intermediate": true, "advanced": true },
+    "1-butyne": { "beginner": true, "intermediate": true, "advanced": true },
+    "2-butene": { "beginner": true, "intermediate": true, "advanced": true },
+    "2-butyne": { "beginner": true, "intermediate": true, "advanced": true },
+    "2-pentanone": { "beginner": true, "intermediate": true, "advanced": true },
+    "3-pentanone": { "beginner": true, "intermediate": true, "advanced": true },
+    "acetaldehyde": { "beginner": true, "intermediate": true, "advanced": true },
+    "acetic_acid": { "beginner": true, "intermediate": true, "advanced": true },
+    "acetone": { "beginner": true, "intermediate": true, "advanced": true },
+    "acetophenone": { "beginner": true, "intermediate": true, "advanced": true },
+    "aniline": { "beginner": true, "intermediate": true, "advanced": true },
+    "anisole": { "beginner": true, "intermediate": true, "advanced": true },
+    "benzaldehyde": { "beginner": true, "intermediate": true, "advanced": true },
+    "benzene": { "beginner": true, "intermediate": true, "advanced": true },
+    "benzoic_acid": { "beginner": true, "intermediate": true, "advanced": true },
+    "benzyl_alcohol": { "beginner": true, "intermediate": true, "advanced": true },
+    "bromoethane": { "beginner": true, "intermediate": true, "advanced": true },
+    "butanal": { "beginner": true, "intermediate": true, "advanced": true },
+    "butane": { "beginner": true, "intermediate": true, "advanced": true },
+    "butanone": { "beginner": true, "intermediate": true, "advanced": true },
+    "butyric_acid": { "beginner": true, "intermediate": true, "advanced": true },
+    "catechol": { "beginner": true, "intermediate": true, "advanced": true },
+    "chlorobenzene": { "beginner": true, "intermediate": true, "advanced": true },
+    "chloroform": { "beginner": true, "intermediate": true, "advanced": true },
+    "chloromethane": { "beginner": true, "intermediate": true, "advanced": true },
+    "cyclohexane": { "beginner": true, "intermediate": true, "advanced": true },
+    "cyclohexanol": { "beginner": true, "intermediate": true, "advanced": true },
+    "cyclohexanone": { "beginner": true, "intermediate": true, "advanced": true },
+    "cyclohexene": { "beginner": true, "intermediate": true, "advanced": true },
+    "cyclopropane": { "beginner": true, "intermediate": true, "advanced": true },
+    "dichloromethane": { "beginner": true, "intermediate": true, "advanced": true },
+    "diethyl_ether": { "beginner": true, "intermediate": true, "advanced": true },
+    "dimethyl_ether": { "beginner": true, "intermediate": true, "advanced": true },
+    "dimethylamine": { "beginner": true, "intermediate": true, "advanced": true },
+    "ethane": { "beginner": true, "intermediate": true, "advanced": true },
+    "ethanol": { "beginner": true, "intermediate": true, "advanced": true },
+    "ethene": { "beginner": true, "intermediate": true, "advanced": true },
+    "ethyl_acetate": { "beginner": true, "intermediate": true, "advanced": true },
+    "ethyl_butyrate": { "beginner": true, "intermediate": true, "advanced": true },
+    "ethyl_methyl_ether": { "beginner": true, "intermediate": true, "advanced": true },
+    "ethylamine": { "beginner": true, "intermediate": true, "advanced": true },
+    "ethylbenzene": { "beginner": true, "intermediate": true, "advanced": true },
+    "ethylene_glycol": { "beginner": true, "intermediate": true, "advanced": true },
+    "ethylene_oxide": { "beginner": true, "intermediate": true, "advanced": true },
+    "ethylenediamine": { "beginner": true, "intermediate": true, "advanced": true },
+    "ethyne": { "beginner": true, "intermediate": true, "advanced": true },
+    "formaldehyde": { "beginner": true, "intermediate": true, "advanced": true },
+    "formic_acid": { "beginner": true, "intermediate": true, "advanced": true },
+    "glycerol": { "beginner": true, "intermediate": true, "advanced": true },
+    "isoamyl_acetate": { "beginner": true, "intermediate": true, "advanced": true },
+    "isobutane": { "beginner": true, "intermediate": true, "advanced": true },
+    "iodomethane": { "beginner": true, "intermediate": true, "advanced": true },
+    "isopropanol": { "beginner": true, "intermediate": true, "advanced": true },
+    "m-cresol": { "beginner": true, "intermediate": true, "advanced": true },
+    "m-xylene": { "beginner": true, "intermediate": true, "advanced": true },
+    "methane": { "beginner": true, "intermediate": true, "advanced": true },
+    "methanol": { "beginner": true, "intermediate": true, "advanced": true },
+    "methyl_acetate": { "beginner": true, "intermediate": true, "advanced": true },
+    "methyl_benzoate": { "beginner": true, "intermediate": true, "advanced": true },
+    "methyl_formate": { "beginner": true, "intermediate": true, "advanced": true },
+    "methylamine": { "beginner": true, "intermediate": true, "advanced": true },
+    "naphthalene": { "beginner": true, "intermediate": true, "advanced": true },
+    "o-cresol": { "beginner": true, "intermediate": true, "advanced": true },
+    "o-xylene": { "beginner": true, "intermediate": true, "advanced": true },
+    "oxalic_acid": { "beginner": true, "intermediate": true, "advanced": true },
+    "p-cresol": { "beginner": true, "intermediate": true, "advanced": true },
+    "p-xylene": { "beginner": true, "intermediate": true, "advanced": true },
+    "phenol": { "beginner": true, "intermediate": true, "advanced": true },
+    "propanal": { "beginner": true, "intermediate": true, "advanced": true },
+    "propane": { "beginner": true, "intermediate": true, "advanced": true },
+    "propanol": { "beginner": true, "intermediate": true, "advanced": true },
+    "propene": { "beginner": true, "intermediate": true, "advanced": true },
+    "propionic_acid": { "beginner": true, "intermediate": true, "advanced": true },
+    "propyne": { "beginner": true, "intermediate": true, "advanced": true },
+    "resorcinol": { "beginner": true, "intermediate": true, "advanced": true },
+    "styrene": { "beginner": true, "intermediate": true, "advanced": true },
+    "tert-butanol": { "beginner": true, "intermediate": true, "advanced": true },
+    "toluene": { "beginner": true, "intermediate": true, "advanced": true },
+    "trimethylamine": { "beginner": true, "intermediate": true, "advanced": true },
+    "vinyl_chloride": { "beginner": true, "intermediate": true, "advanced": true }
+  },
+  "unlockedStories": [
+    "hydrocarbon",
+    "oxygen",
+    "nitrogenHalide",
+    "mixed",
+    "shell"
+  ],
+  "badges": [
+    "correct-10",
+    "correct-50",
+    "correct-200",
+    "correct-500",
+    "correct-1000",
+    "hydrocarbon-beginner-completed",
+    "hydrocarbon-beginner-mastery",
+    "hydrocarbon-intermediate-completed",
+    "hydrocarbon-intermediate-mastery",
+    "oxygen-beginner-completed",
+    "oxygen-beginner-mastery",
+    "oxygen-intermediate-completed",
+    "oxygen-intermediate-mastery",
+    "nitrogenHalide-beginner-completed",
+    "nitrogenHalide-beginner-mastery",
+    "nitrogenHalide-intermediate-completed",
+    "nitrogenHalide-intermediate-mastery",
+    "mixed-beginner-completed",
+    "mixed-beginner-mastery",
+    "mixed-intermediate-completed",
+    "mixed-intermediate-mastery",
+    "shell-intermediate-completed",
+    "shell-intermediate-mastery",
+    "englishChallenge-advanced-completed",
+    "englishChallenge-advanced-mastery"
+  ],
+  "settings": {
+    "devQuickWin": {
+      "enabled": true,
+      "winAfter": 2,
+      "appliesTo": ["practice", "duel"],
+      "showIndicator": true
+    },
+    "devShowFps": false,
+    "devLogActions": false
+  }
+}
