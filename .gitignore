@@ -8,3 +8,8 @@ __pycache__/
 # 作業系統雜物
 Thumbs.db
 .DS_Store
+
+# 本地參考素材與備份（不進版控）
+UI_ref/
+legacy/style.css
+tools/
