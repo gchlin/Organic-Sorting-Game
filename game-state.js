@@ -123,6 +123,82 @@ const GameState = (function () {
         return state;
     }
 
+    // --- V2 state shape (data-driven rewrite, per README "game-state.js — state shape") ---
+    // Additive: legacy createState / createPlayerState above remain in use until game.js
+    // is rewritten in a later wave. New code should call createStateV2 / createPlayerStateV2.
+
+    function createPlayerStateV2() {
+        // NOTE: no `combo` field. comboLevel is derived from correctStreak by render
+        // (see README "Combo / Streak 規格 → 狀態欄位（去除冗餘）").
+        return {
+            score: 0,
+            correctStreak: 0,
+            wrongStreak: 0,
+            correctCount: 0,
+            totalAsked: 0,
+            state: 'ready',
+            isLocked: false
+        };
+    }
+
+    function createStateV2() {
+        return {
+            mode: 'practice',
+            family: 'hydrocarbon',
+            difficulty: 'intermediate',
+            opponent: 'human',
+            phase: 'idle',
+            globalInputLocked: false,
+            queue: [],
+            seenInRound: new Set(),
+            wrongInRound: new Set(),
+            round: { index: 0, size: 10, score: 0, accuracyThisRound: null },
+            question: {
+                current: null,
+                correctKey: '',
+                options: [],
+                eliminatedWrongKeys: new Set(),
+                lastChosenWrongKey: null,
+                failedPlayersThisCycle: new Set()
+            },
+            players: {
+                p1: createPlayerStateV2(),
+                p2: createPlayerStateV2()
+            },
+            buzz: {
+                phase: 'idle',
+                owner: null,
+                eligible: new Set(['p1', 'p2']),
+                timerId: null
+            },
+            dynamic: {
+                variant: null,
+                phase: 'inactive',
+                elapsedMs: 0,
+                completeStateReached: false
+            },
+            effects: {
+                activeIds: new Set(),
+                blacklistIds: new Set()
+            },
+            result: {
+                winner: null,
+                passed: false,
+                badgesEarned: []
+            }
+        };
+    }
+
+    // Invariant I-2: globalInputLocked is derived from phase, not manually set.
+    // Reducer / render consult this; the cached `globalInputLocked` field is for
+    // convenience only — the truth is this function.
+    function isInputLockedPhase(phase) {
+        return phase === 'resolvingCorrect'
+            || phase === 'resolvingWrong'
+            || phase === 'revealing'
+            || phase === 'cleanup';
+    }
+
     return {
         PLAYERS,
         createState,
@@ -134,6 +210,9 @@ const GameState = (function () {
         canPlayerAct,
         recordCorrect,
         recordWrong,
-        clearTransientLocks
+        clearTransientLocks,
+        createStateV2,
+        createPlayerStateV2,
+        isInputLockedPhase
     };
 })();
