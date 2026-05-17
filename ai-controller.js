@@ -8,23 +8,67 @@
 const AIController = (function () {
     'use strict';
 
-    // Difficulty params (mirror of AIDifficulty in mode-rules.js — duplicated
-    // here for module isolation; can be swapped to reading from
-    // ModeRulesV2.AIDifficulty in a later wave once game.js wires dependencies).
-    const DIFFICULTY_PARAMS = Object.freeze({
-        easy:   Object.freeze({ buzzReactionMs: Object.freeze({ mean: 2500, jitter: 500 }), accuracy: 0.60 }),
-        medium: Object.freeze({ buzzReactionMs: Object.freeze({ mean: 1500, jitter: 500 }), accuracy: 0.80 }),
-        hard:   Object.freeze({ buzzReactionMs: Object.freeze({ mean:  700, jitter: 300 }), accuracy: 0.95 })
+    // Default difficulty params — buzz window (progress ratio 0.0–1.0 within
+    // the current buzzOpen effect) and answer think time (ms range).
+    // These are the fallback values; the game reads live overrides from
+    // Save.readSettings().pveAI at the moment each buzzOpen window opens or
+    // each buzz is acquired, so changes in the settings UI take effect on the
+    // very next question without restarting the game.
+    const DEFAULT_PARAMS = Object.freeze({
+        easy: Object.freeze({
+            buzzWindowMin:    0.85,
+            buzzWindowMax:    0.95,
+            answerThinkMin:   1500,
+            answerThinkMax:   3000,
+            accuracy:         0.60
+        }),
+        medium: Object.freeze({
+            buzzWindowMin:    0.75,
+            buzzWindowMax:    0.90,
+            answerThinkMin:   1200,
+            answerThinkMax:   2500,
+            accuracy:         0.80
+        }),
+        hard: Object.freeze({
+            buzzWindowMin:    0.70,
+            buzzWindowMax:    0.85,
+            answerThinkMin:   1000,
+            answerThinkMax:   2000,
+            accuracy:         0.95
+        })
     });
 
-    // ms to "think" after gaining answer ownership, before submitting
-    const THINK_MS = Object.freeze({ mean: 800, jitter: 1500 });
+    // Fallback total duration (ms) used to estimate progress when the current
+    // buzzOpen effect does not expose a known completeStateMs.
+    // TODO: wire to DynamicVariants.zoom.durationMs once module deps allow it.
+    const FALLBACK_BUZZ_DURATION_MS = 8000;
 
     // Polling frequency (ms) - ~60Hz
     const POLL_INTERVAL_MS = 16;
 
-    function _jitterAround(spec) {
-        return Math.max(50, spec.mean + (Math.random() - 0.5) * 2 * spec.jitter);
+    // Read live params from Save.settings.pveAI if available, else fall back to
+    // DEFAULT_PARAMS for the given difficulty.
+    function _getParams(difficulty) {
+        try {
+            if (typeof Save !== 'undefined' && Save.readSettings) {
+                const s = Save.readSettings();
+                if (s && s.pveAI && s.pveAI[difficulty]) {
+                    const p = s.pveAI[difficulty];
+                    return {
+                        buzzWindowMin:  typeof p.buzzWindowMin  === 'number' ? p.buzzWindowMin  : DEFAULT_PARAMS[difficulty].buzzWindowMin,
+                        buzzWindowMax:  typeof p.buzzWindowMax  === 'number' ? p.buzzWindowMax  : DEFAULT_PARAMS[difficulty].buzzWindowMax,
+                        answerThinkMin: typeof p.answerThinkMin === 'number' ? p.answerThinkMin : DEFAULT_PARAMS[difficulty].answerThinkMin,
+                        answerThinkMax: typeof p.answerThinkMax === 'number' ? p.answerThinkMax : DEFAULT_PARAMS[difficulty].answerThinkMax,
+                        accuracy:       typeof p.accuracy       === 'number' ? p.accuracy       : DEFAULT_PARAMS[difficulty].accuracy
+                    };
+                }
+            }
+        } catch (e) {}
+        return DEFAULT_PARAMS[difficulty];
+    }
+
+    function _randomBetween(min, max) {
+        return min + Math.random() * (max - min);
     }
 
     function _hasEligible(buzz, player) {
@@ -32,6 +76,25 @@ const AIController = (function () {
         if (typeof buzz.eligible.has === 'function') return buzz.eligible.has(player);
         if (Array.isArray(buzz.eligible)) return buzz.eligible.indexOf(player) !== -1;
         return false;
+    }
+
+    // Estimate progress ratio (0.0–1.0) for the current buzzOpen phase.
+    // Uses the state's dynamic.elapsedMs / dynamic.durationMs when available,
+    // otherwise falls back to wall-clock time since _buzzOpenEnteredAt.
+    function _getProgress(state, buzzOpenEnteredAt) {
+        // Prefer data-driven dynamic state if present
+        const dyn = state.dynamic;
+        if (dyn) {
+            const dur = typeof dyn.durationMs === 'number' && dyn.durationMs > 0
+                ? dyn.durationMs
+                : FALLBACK_BUZZ_DURATION_MS;
+            if (typeof dyn.elapsedMs === 'number') {
+                return Math.min(1.0, dyn.elapsedMs / dur);
+            }
+        }
+        // Fallback: wall-clock elapsed since buzzOpen was entered
+        const elapsed = Date.now() - buzzOpenEnteredAt;
+        return Math.min(1.0, elapsed / FALLBACK_BUZZ_DURATION_MS);
     }
 
     function AIController(opts) {
@@ -44,7 +107,7 @@ const AIController = (function () {
         const dispatch = opts.dispatch;
         const getState = opts.getState;
 
-        if (!DIFFICULTY_PARAMS[difficulty]) {
+        if (!DEFAULT_PARAMS[difficulty]) {
             throw new Error('Unknown difficulty: ' + difficulty);
         }
         if (player !== 'p1' && player !== 'p2') {
@@ -54,49 +117,62 @@ const AIController = (function () {
             throw new Error('AIController needs { dispatch, getState }');
         }
 
-        const params = DIFFICULTY_PARAMS[difficulty];
-
         let _started = false;
-        let _pendingBuzzId = null;
         let _pendingAnswerId = null;
         let _unsubscribe = null;
         let _lastPhase = null;
         let _lastOwner = null;
 
+        // Buzz-window tracking
+        let _buzzWaiting = false;         // true while we're waiting to reach targetProgress
+        let _targetProgress = 0;          // randomly sampled target from [min, max]
+        let _buzzOpenEnteredAt = 0;       // wall-clock ms when buzzOpen was last entered
+
+        function _enterBuzzOpen() {
+            const params = _getParams(difficulty);
+            const min = Math.max(0, Math.min(params.buzzWindowMin, 0.99));
+            const max = Math.max(min, Math.min(params.buzzWindowMax, 1.0));
+            _targetProgress = _randomBetween(min, max);
+            _buzzOpenEnteredAt = Date.now();
+            _buzzWaiting = true;
+        }
+
+        function _cancelBuzzWait() {
+            _buzzWaiting = false;
+        }
+
+        function _tryFireBuzz(s) {
+            if (!_buzzWaiting) return;
+            if (s.phase !== 'buzzOpen') { _cancelBuzzWait(); return; }
+            if (!_hasEligible(s.buzz, player)) { _cancelBuzzWait(); return; }
+            if (s.globalInputLocked) return;
+
+            const progress = _getProgress(s, _buzzOpenEnteredAt);
+            if (progress >= _targetProgress) {
+                _cancelBuzzWait();
+                dispatch({ type: 'BUZZ', player: player });
+            }
+        }
+
         function _handlePhase(s) {
             if (!s) return;
             if (s.mode !== 'duel') return;
-            // I-8 safety: even though reducer is agnostic, we still gate AI
-            // activation on opponent !== 'human' so a human-vs-human duel
-            // sharing this module never gets AI dispatches.
             if (s.opponent === 'human') return;
-            if (s.globalInputLocked) return; // I-2: respect input lock at source
+            if (s.globalInputLocked) return;
 
             const buzz = s.buzz || {};
 
-            // BuzzOpen + AI eligible → schedule BUZZ
-            if (s.phase === 'buzzOpen' && _hasEligible(buzz, player) && _pendingBuzzId === null) {
-                const delay = _jitterAround(params.buzzReactionMs);
-                _pendingBuzzId = setTimeout(function () {
-                    _pendingBuzzId = null;
-                    const now = getState();
-                    if (!now) return;
-                    // Re-check at fire time (state may have changed)
-                    if (now.phase === 'buzzOpen'
-                        && _hasEligible(now.buzz, player)
-                        && !now.globalInputLocked) {
-                        dispatch({ type: 'BUZZ', player: player });
-                    }
-                }, delay);
+            // BuzzOpen + AI eligible → enter buzz-window waiting mode
+            if (s.phase === 'buzzOpen' && _hasEligible(buzz, player) && !_buzzWaiting) {
+                _enterBuzzOpen();
             }
 
-            // Cancel pending buzz if state moved away
-            if (s.phase !== 'buzzOpen' && _pendingBuzzId !== null) {
-                clearTimeout(_pendingBuzzId);
-                _pendingBuzzId = null;
+            // Cancel buzz wait if state moved away
+            if (s.phase !== 'buzzOpen' && _buzzWaiting) {
+                _cancelBuzzWait();
             }
 
-            // Buzzed by us → schedule SUBMIT_ANSWER
+            // Buzzed by us → schedule SUBMIT_ANSWER after random think time
             if (s.phase === 'buzzed' && buzz.owner === player && _pendingAnswerId === null) {
                 const question = s.question || {};
                 const correctKey = question.correctKey;
@@ -105,6 +181,7 @@ const AIController = (function () {
                     .map(function (o) { return o && o.key; })
                     .filter(function (k) { return typeof k === 'string'; });
                 const wrongOptions = optionKeys.filter(function (k) { return k !== correctKey; });
+                const params = _getParams(difficulty);
                 const willBeCorrect = Math.random() < params.accuracy;
                 let pick;
                 if (willBeCorrect) {
@@ -114,7 +191,7 @@ const AIController = (function () {
                 } else {
                     pick = correctKey;
                 }
-                const delay = _jitterAround(THINK_MS);
+                const thinkMs = _randomBetween(params.answerThinkMin, params.answerThinkMax);
                 _pendingAnswerId = setTimeout(function () {
                     _pendingAnswerId = null;
                     const now = getState();
@@ -125,22 +202,26 @@ const AIController = (function () {
                         && !now.globalInputLocked) {
                         dispatch({ type: 'SUBMIT_ANSWER', player: player, key: pick });
                     }
-                }, delay);
+                }, thinkMs);
             }
 
-            // Cancel pending answer if state moved away (e.g. answer was taken
-            // or timed out elsewhere)
+            // Cancel pending answer if state moved away
             if ((s.phase !== 'buzzed' || buzz.owner !== player) && _pendingAnswerId !== null) {
                 clearTimeout(_pendingAnswerId);
                 _pendingAnswerId = null;
             }
         }
 
-        // Track phase changes by polling getState() between actions; if the host
-        // provides subscribe(), we could swap this out. Polling at ~60Hz is cheap.
+        // Poll at ~60Hz; on each tick check progress for pending buzz-window.
         function _onTick() {
             const s = getState();
             if (!s) return;
+
+            // Fire progress-based buzz check every tick (not only on phase change)
+            if (_buzzWaiting) {
+                _tryFireBuzz(s);
+            }
+
             const curOwner = s.buzz ? s.buzz.owner : null;
             if (s.phase === _lastPhase && curOwner === _lastOwner) return;
             _lastPhase = s.phase;
@@ -156,6 +237,7 @@ const AIController = (function () {
             _started = true;
             _lastPhase = null;
             _lastOwner = null;
+            _buzzWaiting = false;
             const intervalId = setInterval(_onTick, POLL_INTERVAL_MS);
             _unsubscribe = function () { clearInterval(intervalId); };
         };
@@ -163,10 +245,7 @@ const AIController = (function () {
         this.stop = function () {
             if (!_started) return;
             _started = false;
-            if (_pendingBuzzId !== null) {
-                clearTimeout(_pendingBuzzId);
-                _pendingBuzzId = null;
-            }
+            _cancelBuzzWait();
             if (_pendingAnswerId !== null) {
                 clearTimeout(_pendingAnswerId);
                 _pendingAnswerId = null;
@@ -178,9 +257,9 @@ const AIController = (function () {
         };
     }
 
-    AIController.DIFFICULTY_PARAMS = DIFFICULTY_PARAMS;
-    AIController.THINK_MS = THINK_MS;
+    AIController.DEFAULT_PARAMS = DEFAULT_PARAMS;
     AIController.POLL_INTERVAL_MS = POLL_INTERVAL_MS;
+    AIController.FALLBACK_BUZZ_DURATION_MS = FALLBACK_BUZZ_DURATION_MS;
 
     return AIController;
 })();
