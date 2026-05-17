@@ -902,6 +902,17 @@
             }
         }
 
+        // Tutorial button: hide/disable if no tutorial exists for current family-difficulty
+        const tutBtn = document.querySelector('[data-action="show-tutorial"]');
+        if (tutBtn) {
+            const tutKey = (state && state.family && state.difficulty)
+                ? state.family + '-' + state.difficulty : null;
+            const tut = tutKey && (typeof LevelTutorials !== 'undefined') ? LevelTutorials[tutKey] : null;
+            const hasTut = tut && (Array.isArray(tut.pages) ? tut.pages.length > 0
+                                 : Array.isArray(tut) ? tut.length > 0 : false);
+            tutBtn.style.display = hasTut ? '' : 'none';
+        }
+
         // Wrong review (Practice only)
         if (wrongReview && wrongCards) {
             const wrongs = (state.wrongInRound && state.wrongInRound.size > 0)
