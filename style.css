@@ -3731,3 +3731,29 @@ body.v2-active .screen .v2-back-btn {
     color: var(--hp-parchment-dark);
     font-style: italic;
 }
+
+/* ============================================================
+   Settle wrong card enhancements
+   ============================================================ */
+.v2-wrong-card-chosen {
+    font-size: 0.72rem;
+    color: var(--hp-red-bright);
+    margin-top: 3px;
+    text-align: center;
+}
+.v2-wrong-card-codex-link {
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    padding: 3px 0;
+    background: transparent;
+    border: 1px solid var(--hp-gold);
+    border-radius: 4px;
+    color: var(--hp-gold);
+    font-size: 0.7rem;
+    cursor: pointer;
+    font-family: var(--font-serif);
+}
+.v2-wrong-card-codex-link:hover {
+    background: rgba(212,175,55,0.12);
+}

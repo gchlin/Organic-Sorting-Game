@@ -57,6 +57,7 @@
     let _pendingConfirm = null; // { onYes, onNo, text }
     let _tutorialState = null;  // { pages, idx, onDone, key }
     let _storyState = null;     // { lines, idx, playerName, onDone }
+    let _wrongChosenMap = {};   // { compoundKey: chosenWrongAnswerKey } — per round
 
     function dispatch(action) {
         _pendingDispatch.push(action);
@@ -136,6 +137,10 @@
                 }
             } else if (state.mode === 'practice' && !wasCorrect) {
                 state.wrongInRound.add(preCompoundKey);
+                // Track the first chosen wrong answer for this compound (for settle display)
+                if (!_wrongChosenMap[preCompoundKey]) {
+                    _wrongChosenMap[preCompoundKey] = action.key;
+                }
                 if (typeof Save !== 'undefined') {
                     if (Save.recordWrongV2) Save.recordWrongV2(state.family, state.difficulty, preCompoundKey);
                     // A wrong answer also demotes (back to box 1) if already tracked.
@@ -926,9 +931,45 @@
                     const img = _findImageFor(ck);
                     const card = document.createElement('div');
                     card.className = 'v2-wrong-card';
-                    card.innerHTML =
-                        '<img src="' + (img || '') + '" alt="">' +
-                        '<div class="name-zh">' + (entry ? entry.content : ck) + '</div>';
+
+                    const imgEl = document.createElement('img');
+                    imgEl.src = img || '';
+                    imgEl.alt = '';
+                    card.appendChild(imgEl);
+
+                    const nameEl = document.createElement('div');
+                    nameEl.className = 'name-zh';
+                    nameEl.textContent = entry ? entry.content : ck;
+                    card.appendChild(nameEl);
+
+                    // "你選了：XXX"
+                    const chosenKey = _wrongChosenMap[ck];
+                    if (chosenKey) {
+                        const chosenEntry = (typeof AnswerBank !== 'undefined') ? AnswerBank[chosenKey] : null;
+                        const chosenText = chosenEntry ? chosenEntry.content : chosenKey;
+                        const chosenEl = document.createElement('div');
+                        chosenEl.className = 'v2-wrong-card-chosen';
+                        chosenEl.textContent = '你選了：' + chosenText;
+                        card.appendChild(chosenEl);
+                    }
+
+                    // "看圖鑑 →" link
+                    const codexLink = document.createElement('button');
+                    codexLink.className = 'v2-wrong-card-codex-link';
+                    codexLink.textContent = '看圖鑑 →';
+                    (function (molKey) {
+                        codexLink.addEventListener('click', function (e) {
+                            e.stopPropagation();
+                            goToScreen('codex');
+                            // Scroll to the molecule card after render
+                            setTimeout(function () {
+                                const target = document.getElementById('codex-mol-' + molKey);
+                                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }, 80);
+                        });
+                    })(ck);
+                    card.appendChild(codexLink);
+
                     wrongCards.appendChild(card);
                 }
             } else {
@@ -1505,6 +1546,7 @@
         // Tear down any prior AI
         if (aiController) { try { aiController.stop(); } catch (e) {} aiController = null; }
 
+        _wrongChosenMap = {};
         state = GameState.createStateV2();
         state.mode = opts.mode;
         state.family = opts.family;
