@@ -3286,4 +3286,15 @@ const Game = (function() {
     return { init };
 })();
 
-window.addEventListener('load', Game.init);
+// Legacy auto-init guard: when game-v2.js sets window.__GAME_V2_ENABLED__,
+// skip the legacy boot so v2 owns the DOM and dispatch loop.
+// (See README "重寫工程藍圖" and the rewrite/data-driven-core branch plan.)
+window.addEventListener('load', function () {
+    if (typeof window !== 'undefined' && window.__GAME_V2_ENABLED__) {
+        if (typeof console !== 'undefined' && console.info) {
+            console.info('[legacy game.js] disabled because window.__GAME_V2_ENABLED__ === true');
+        }
+        return;
+    }
+    Game.init();
+});
