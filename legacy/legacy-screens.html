@@ -7,7 +7,7 @@
 
   This file is NOT loaded by the live game. It's a snapshot of the legacy menu
   + game UI from before the data-driven rewrite (commit history before the
-  prototype/ folder was created). The live game (index.html) now uses the
+  legacy/ folder was created). The live game (index.html) now uses the
   v2-root DOM and the data-driven flow in game-v2.js + mode-rules.js.
 
   How to read this:
@@ -24,9 +24,9 @@
     - Lines 365–412: settings-modal (full-screen settings with tabs)
 
   Companion files moved together with this snapshot:
-    - prototype/game.js     — legacy game loop, gated by __GAME_V2_ENABLED__
-    - prototype/layout.css  — legacy 3-column landscape grid
-    - prototype/menu.css    — legacy menu button styling
+    - legacy/game.js     — legacy game loop, gated by __GAME_V2_ENABLED__
+    - legacy/layout.css  — legacy 3-column landscape grid
+    - legacy/menu.css    — legacy menu button styling
 
   To cherry-pick something back into the live UI:
     1. Find the markup you want here.
