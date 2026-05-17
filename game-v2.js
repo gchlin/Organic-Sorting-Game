@@ -127,6 +127,8 @@
                 if (typeof Save !== 'undefined') {
                     if (Save.recordMoleculeAnsweredV2) Save.recordMoleculeAnsweredV2(preCompoundKey, state.difficulty);
                     if (Save.addCorrect) Save.addCorrect(1);
+                    // Track molecule as unlocked in codex (README §3 isMolUnlocked).
+                    if (Save.markMolUnlocked) Save.markMolUnlocked(preCompoundKey);
                     // If this compound is in the wrong-book, count this correct
                     // re-answer toward its mastery streak (Leitner-spirit promote).
                     if (Save.promoteWrongV2) Save.promoteWrongV2(state.family, state.difficulty, preCompoundKey);

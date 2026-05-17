@@ -151,6 +151,21 @@
     "trimethylamine": { "beginner": true, "intermediate": true, "advanced": true },
     "vinyl_chloride": { "beginner": true, "intermediate": true, "advanced": true }
   },
+  "unlockedMols": [
+    "methane", "ethane", "propane", "butane", "isobutane", "cyclohexane", "cyclopropane",
+    "ethene", "propene", "1-butene", "2-butene", "1,3-butadiene", "cyclohexene",
+    "ethyne", "propyne", "1-butyne", "2-butyne",
+    "benzene", "toluene", "styrene", "o-xylene", "m-xylene", "p-xylene", "ethylbenzene", "naphthalene",
+    "methanol", "ethanol", "propanol", "isopropanol", "tert-butanol", "ethylene_glycol", "glycerol", "cyclohexanol", "benzyl_alcohol",
+    "dimethyl_ether", "diethyl_ether", "ethyl_methyl_ether", "ethylene_oxide", "anisole",
+    "formaldehyde", "acetaldehyde", "propanal", "butanal", "benzaldehyde",
+    "acetone", "butanone", "2-pentanone", "3-pentanone", "cyclohexanone", "acetophenone",
+    "formic_acid", "acetic_acid", "propionic_acid", "butyric_acid", "oxalic_acid", "benzoic_acid",
+    "methyl_formate", "ethyl_acetate", "methyl_acetate", "isoamyl_acetate", "ethyl_butyrate", "methyl_benzoate",
+    "methylamine", "ethylamine", "dimethylamine", "trimethylamine", "ethylenediamine", "aniline",
+    "chloromethane", "bromoethane", "chlorobenzene", "dichloromethane", "chloroform", "iodomethane", "vinyl_chloride",
+    "phenol", "o-cresol", "m-cresol", "p-cresol", "catechol", "resorcinol"
+  ],
   "unlockedStories": [
     "hydrocarbon",
     "oxygen",

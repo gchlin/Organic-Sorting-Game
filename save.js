@@ -106,6 +106,7 @@ const Save = (function () {
             tutorialsSeen: [],      // ['hydrocarbon-beginner', 'oxygen-intermediate', …]
             moleculeSeen: {},       // { [compoundKey]: { beginner: bool, intermediate: bool, advanced: bool } }
             unlockedStories: [],    // family keys; e.g. ['hydrocarbon', 'oxygen']
+            unlockedMols: [],       // compoundKeys answered correctly at least once
             wrongLog: {},           // { 'family-difficulty': { active: [], fixed: [], lastUpdated: 0 } }
             askedHistory: {},       // { 'family-difficulty': [compoundKey, …] }  — set, stored as array
             settings: defaultSettings()
@@ -209,6 +210,9 @@ const Save = (function () {
         // Settings: start from defaults (old data had none)
         out.settings = defaultSettings();
 
+        // unlockedMols starts empty in v2; v1 had no equivalent
+        out.unlockedMols = [];
+
         // Wrong-log starts empty in v2; v1 had nothing comparable
         out.wrongLog = {};
 
@@ -246,6 +250,7 @@ const Save = (function () {
         if (!out.moleculeSeen || typeof out.moleculeSeen !== 'object') out.moleculeSeen = {};
         if (!Array.isArray(out.tutorialsSeen)) out.tutorialsSeen = [];
         if (!Array.isArray(out.unlockedStories)) out.unlockedStories = [];
+        if (!Array.isArray(out.unlockedMols)) out.unlockedMols = [];
         if (!out.wrongLog || typeof out.wrongLog !== 'object') out.wrongLog = {};
         if (!out.askedHistory || typeof out.askedHistory !== 'object') out.askedHistory = {};
         out.version = 2;
@@ -319,6 +324,23 @@ const Save = (function () {
     function unlockMeme(id) { return addToSet('memes', id); }
 
     function unlockStory(levelKey) { return addToSet('storyUnlocked', levelKey); }
+
+    // v2: track unlocked molecules by compoundKey (e.g. 'ethanol').
+    // markMolUnlocked: add compoundKey to unlockedMols (dedup). Returns true if newly added.
+    function markMolUnlocked(compoundKey) {
+        if (!compoundKey) return false;
+        if (!Array.isArray(data.unlockedMols)) data.unlockedMols = [];
+        if (data.unlockedMols.includes(compoundKey)) return false;
+        data.unlockedMols.push(compoundKey);
+        persist();
+        return true;
+    }
+
+    // isMolUnlocked: return boolean.
+    function isMolUnlocked(compoundKey) {
+        if (!compoundKey) return false;
+        return Array.isArray(data.unlockedMols) && data.unlockedMols.includes(compoundKey);
+    }
 
     // v2: unlock family story by family key → writes to unlockedStories (v2 field).
     // No-op if already unlocked. Returns true if newly added.
@@ -878,6 +900,8 @@ const Save = (function () {
         getActiveWrongs, getWrongEntriesV2, getAllActiveWrongs, clearWrongLog,
         // asked-history v2
         recordAskedV2, getAskedHistory, isSubLevelCleared, clearAskedHistory,
+        // molecule unlock v2
+        markMolUnlocked, isMolUnlocked,
         // story v2
         unlockStoryV2, isStoryUnlockedV2,
         readSettings, writeSettings
