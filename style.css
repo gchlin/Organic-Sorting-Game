@@ -3474,6 +3474,20 @@ body.input-locked .v2-buzz button { pointer-events: none; }
 .v2-setting-btn.danger { border-color: var(--hp-red-bright); color: var(--hp-red-bright); }
 .v2-setting-btn.danger:hover { background: var(--hp-red-bright); color: white; }
 
+/* PvE AI params grid (5 columns: label + 4 fields) */
+.v2-setting-details { margin-top: 12px; }
+.v2-setting-summary { cursor: pointer; color: var(--hp-gold); margin-bottom: 8px; }
+.v2-pveai-grid {
+    display: grid;
+    grid-template-columns: 4em repeat(4, 1fr);
+    gap: 4px 6px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.v2-pveai-header { font-size: 0.75em; color: var(--hp-gold); text-align: center; }
+.v2-pveai-label  { font-size: 0.85em; color: var(--hp-parchment, #f5e6c8); }
+.v2-pveai-input  { width: 100%; box-sizing: border-box; background: var(--hp-bg-dark, #1a1a2e); color: var(--hp-parchment, #f5e6c8); border: 1px solid var(--hp-gold, #c9a84c); border-radius: 4px; padding: 2px 4px; font-size: 0.8em; }
+
 /* ============================================================
    1) Scroll fix for v2 screens
    Override the legacy body/html centering that clips tall v2 content.

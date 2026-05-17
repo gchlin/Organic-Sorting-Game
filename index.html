@@ -158,6 +158,32 @@
                 <label class="v2-setting-row"><input type="checkbox" id="settings-dev-quickwin-show-indicator"> 顯示螢幕底部紅色 banner</label>
                 <label class="v2-setting-row"><input type="checkbox" id="settings-dev-show-fps"> 右上角顯示 FPS</label>
                 <label class="v2-setting-row"><input type="checkbox" id="settings-dev-log-actions"> console.log 每個 action</label>
+                <details class="v2-setting-details">
+                    <summary class="v2-setting-summary">PvE AI 參數</summary>
+                    <div class="v2-pveai-grid">
+                        <div class="v2-pveai-header"></div>
+                        <div class="v2-pveai-header">Buzz min%</div>
+                        <div class="v2-pveai-header">Buzz max%</div>
+                        <div class="v2-pveai-header">思考 min(ms)</div>
+                        <div class="v2-pveai-header">思考 max(ms)</div>
+                        <div class="v2-pveai-label">Easy</div>
+                        <input type="number" class="v2-pveai-input" id="pveai-easy-buzzWindowMin"  min="0" max="1" step="0.01">
+                        <input type="number" class="v2-pveai-input" id="pveai-easy-buzzWindowMax"  min="0" max="1" step="0.01">
+                        <input type="number" class="v2-pveai-input" id="pveai-easy-answerThinkMin" min="0" step="100">
+                        <input type="number" class="v2-pveai-input" id="pveai-easy-answerThinkMax" min="0" step="100">
+                        <div class="v2-pveai-label">Medium</div>
+                        <input type="number" class="v2-pveai-input" id="pveai-medium-buzzWindowMin"  min="0" max="1" step="0.01">
+                        <input type="number" class="v2-pveai-input" id="pveai-medium-buzzWindowMax"  min="0" max="1" step="0.01">
+                        <input type="number" class="v2-pveai-input" id="pveai-medium-answerThinkMin" min="0" step="100">
+                        <input type="number" class="v2-pveai-input" id="pveai-medium-answerThinkMax" min="0" step="100">
+                        <div class="v2-pveai-label">Hard</div>
+                        <input type="number" class="v2-pveai-input" id="pveai-hard-buzzWindowMin"  min="0" max="1" step="0.01">
+                        <input type="number" class="v2-pveai-input" id="pveai-hard-buzzWindowMax"  min="0" max="1" step="0.01">
+                        <input type="number" class="v2-pveai-input" id="pveai-hard-answerThinkMin" min="0" step="100">
+                        <input type="number" class="v2-pveai-input" id="pveai-hard-answerThinkMax" min="0" step="100">
+                    </div>
+                    <button class="v2-setting-btn" id="settings-pveai-reset">重設為預設值</button>
+                </details>
             </section>
         </div>
 

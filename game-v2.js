@@ -1159,6 +1159,15 @@
         _setChecked('settings-dev-quickwin-show-indicator', settings.devQuickWin && settings.devQuickWin.showIndicator);
         _setChecked('settings-dev-show-fps', settings.devShowFps);
         _setChecked('settings-dev-log-actions', settings.devLogActions);
+        // PvE AI params
+        var pveAI = (settings && settings.pveAI) ? settings.pveAI : {};
+        ['easy', 'medium', 'hard'].forEach(function (diff) {
+            var p = (pveAI[diff] && typeof pveAI[diff] === 'object') ? pveAI[diff] : {};
+            _setValue('pveai-' + diff + '-buzzWindowMin',  p.buzzWindowMin);
+            _setValue('pveai-' + diff + '-buzzWindowMax',  p.buzzWindowMax);
+            _setValue('pveai-' + diff + '-answerThinkMin', p.answerThinkMin);
+            _setValue('pveai-' + diff + '-answerThinkMax', p.answerThinkMax);
+        });
     }
     function _setChecked(id, v) {
         const el = document.getElementById(id);
@@ -1565,6 +1574,37 @@
                         : el.value;
                 setter(v);
                 render();
+            });
+        }
+        // PvE AI number inputs (live-update settings.pveAI)
+        ['easy', 'medium', 'hard'].forEach(function (diff) {
+            ['buzzWindowMin', 'buzzWindowMax', 'answerThinkMin', 'answerThinkMax'].forEach(function (field) {
+                const elId = 'pveai-' + diff + '-' + field;
+                const el = document.getElementById(elId);
+                if (!el) return;
+                el.addEventListener('change', function () {
+                    const raw = parseFloat(el.value);
+                    if (isNaN(raw)) return;
+                    const val = (field === 'buzzWindowMin' || field === 'buzzWindowMax')
+                        ? Math.min(1, Math.max(0, raw))
+                        : Math.max(0, raw);
+                    const patch = {};
+                    patch[diff] = {};
+                    patch[diff][field] = val;
+                    Save.writeSettings({ pveAI: patch });
+                });
+            });
+        });
+        // PvE AI reset-to-default button
+        const pveaiReset = document.getElementById('settings-pveai-reset');
+        if (pveaiReset) {
+            pveaiReset.addEventListener('click', function () {
+                Save.writeSettings({ pveAI: {
+                    easy:   { buzzWindowMin: 0.85, buzzWindowMax: 0.95, answerThinkMin: 1500, answerThinkMax: 3000 },
+                    medium: { buzzWindowMin: 0.75, buzzWindowMax: 0.90, answerThinkMin: 1200, answerThinkMax: 2500 },
+                    hard:   { buzzWindowMin: 0.70, buzzWindowMax: 0.85, answerThinkMin: 1000, answerThinkMax: 2000 }
+                }});
+                renderSettingsScreen();
             });
         }
         // Tab switching
