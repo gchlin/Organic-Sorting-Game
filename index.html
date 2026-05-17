@@ -414,6 +414,173 @@
     <!-- 音效由 Web Audio API 即時合成（game.js 的 fallbackSound）；如要改用音檔，
          放回 <audio id="se-correct" src="…"> 等元素即可，playSound 會自動優先使用音檔 -->
 
+    <!-- =====================================================================
+         v2 DOM contract (data-driven rewrite, per README "UI 結構").
+         When game-v2.js boots it sets window.__GAME_V2_ENABLED__ which
+         disables legacy game.js auto-init, then drives this DOM block.
+         Legacy DOM above stays in source so old smoke tests still reach
+         familiar IDs, but v2 takes over the screen routing.
+         ===================================================================== -->
+    <div id="v2-root" class="v2-root">
+
+        <!-- 主選單 -->
+        <div id="screen-main-menu" class="screen is-active">
+            <header class="v2-menu-header">
+                <h1 class="v2-title">有機分類帽</h1>
+                <h2 class="v2-subtitle">Organic Sorting Hat</h2>
+            </header>
+            <div class="v2-menu-grid">
+                <div class="v2-menu-section">
+                    <h3 class="v2-section-title">難度 · 子關</h3>
+                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="beginner">初級<span class="key-hint">1</span></button>
+                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="intermediate">中級<span class="key-hint">2</span></button>
+                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="advanced">高級<span class="key-hint">3</span></button>
+                </div>
+                <div class="v2-menu-section">
+                    <h3 class="v2-section-title">雙人對決</h3>
+                    <button class="v2-menu-btn" data-action="enter-duel-menu">Duel Dynamic<span class="key-hint">4</span></button>
+                </div>
+                <div class="v2-menu-section">
+                    <h3 class="v2-section-title">其他</h3>
+                    <button class="v2-menu-btn" data-action="enter-tutorial">新手導覽<span class="key-hint">T</span></button>
+                    <button class="v2-menu-btn" data-action="enter-codex">圖鑑<span class="key-hint">C</span></button>
+                    <button class="v2-menu-btn" data-action="enter-wrong-book">錯題本<span class="key-hint">W</span></button>
+                    <button class="v2-menu-btn" data-action="enter-settings">設定</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 雙階段第二層 -->
+        <div id="screen-sub-menu" class="screen">
+            <button class="v2-back-btn" data-action="back-to-main">← 返回主選單 (Esc)</button>
+            <h2 id="sub-menu-title" class="v2-screen-title"></h2>
+            <div id="sub-menu-list" class="v2-sub-list"></div>
+        </div>
+
+        <!-- 遊戲畫面（Practice & Duel 共用） -->
+        <div id="screen-game" class="screen">
+            <div id="game-hud" class="v2-hud">
+                <div class="player-area" data-player="p1">
+                    <span class="player-label">P1</span>
+                    <span class="score" data-field="score">0</span>
+                    <span class="streak" data-field="streak"></span>
+                    <span class="combo-level" data-field="combo-level"></span>
+                </div>
+                <div class="player-area" data-player="p2">
+                    <span class="player-label">P2</span>
+                    <span class="score" data-field="score">0</span>
+                    <span class="streak" data-field="streak"></span>
+                    <span class="combo-level" data-field="combo-level"></span>
+                </div>
+                <div id="opponent-label" class="v2-opp-label"></div>
+                <button class="v2-back-btn v2-back-btn-sm" data-action="back-to-menu">返回大廳 (Esc)</button>
+            </div>
+
+            <div id="game-image-container" class="v2-image-frame">
+                <img id="game-image" src="" alt="" />
+            </div>
+
+            <div id="game-options" class="v2-options">
+                <button class="option-btn" data-option-key="" data-player="p1" data-slot="0"></button>
+                <button class="option-btn" data-option-key="" data-player="p1" data-slot="1"></button>
+                <button class="option-btn" data-option-key="" data-player="p1" data-slot="2"></button>
+                <button class="option-btn" data-option-key="" data-player="p1" data-slot="3"></button>
+            </div>
+
+            <div id="game-buzz" class="v2-buzz">
+                <button id="buzz-p1" data-buzz-player="p1">P1 搶答 (Space)</button>
+                <button id="buzz-p2" data-buzz-player="p2">P2 搶答 (Enter)</button>
+            </div>
+
+            <div id="game-hint-bubble" class="v2-hint-bubble"></div>
+
+            <div id="dev-quickwin-banner" class="v2-dev-banner">🔧 測試模式：答對 N 題即結算</div>
+        </div>
+
+        <!-- 結算畫面 -->
+        <div id="screen-settle" class="screen">
+            <h2 id="settle-title" class="v2-screen-title">本輪結算</h2>
+            <div id="settle-stats" class="v2-stats"></div>
+            <div id="settle-wrong-review" class="v2-wrong-review">
+                <h3>本輪錯題</h3>
+                <div id="settle-wrong-cards" class="v2-wrong-cards"></div>
+            </div>
+            <div id="settle-buttons" class="v2-button-row">
+                <button data-action="continue-practice">繼續練習 (R)</button>
+                <button data-action="show-story">看劇情 (S)</button>
+                <button data-action="show-tutorial">看教學 (T)</button>
+                <button data-action="next-level">下一關 (N)</button>
+                <button data-action="back-to-menu">返回大廳 (Esc/M)</button>
+            </div>
+        </div>
+
+        <!-- 圖鑑 -->
+        <div id="screen-codex" class="screen">
+            <button class="v2-back-btn" data-action="back-to-main">← 返回主選單 (Esc)</button>
+            <h2 class="v2-screen-title">圖鑑</h2>
+            <div id="codex-content" class="v2-codex-content"></div>
+        </div>
+
+        <!-- 錯題本 -->
+        <div id="screen-wrong-book" class="screen">
+            <button class="v2-back-btn" data-action="back-to-main">← 返回主選單 (Esc)</button>
+            <h2 class="v2-screen-title">錯題本</h2>
+            <div id="wrong-book-groups" class="v2-wrong-groups"></div>
+        </div>
+
+        <!-- 設定 -->
+        <div id="screen-settings" class="screen">
+            <button class="v2-back-btn" data-action="back-to-main">← 返回主選單 (Esc)</button>
+            <h2 class="v2-screen-title">設定</h2>
+            <nav class="v2-tabs">
+                <button class="v2-tab is-active" data-tab="player">玩家</button>
+                <button class="v2-tab" data-tab="save">存檔</button>
+                <button class="v2-tab" data-tab="dev"><span class="dev-tag">⚠ DEV</span> 開發者</button>
+            </nav>
+            <section class="v2-tab-panel is-active" data-tab-panel="player">
+                <label class="v2-setting-row"><input type="checkbox" id="settings-sound-enabled"> 開啟音效</label>
+            </section>
+            <section class="v2-tab-panel" data-tab-panel="save">
+                <button class="v2-setting-btn" id="settings-export-button">匯出存檔</button>
+                <button class="v2-setting-btn" id="settings-import-button">匯入存檔</button>
+                <button class="v2-setting-btn danger" id="settings-reset-button">重置存檔（危險）</button>
+                <button class="v2-setting-btn danger" id="settings-wrong-book-reset">重置錯題本</button>
+            </section>
+            <section class="v2-tab-panel" data-tab-panel="dev">
+                <label class="v2-setting-row"><input type="checkbox" id="settings-dev-quickwin-enabled"> 啟用「答對 N 題即結算」</label>
+                <label class="v2-setting-row">N = <input type="number" id="settings-dev-quickwin-after" min="1" value="2"></label>
+                <label class="v2-setting-row"><input type="checkbox" id="settings-dev-quickwin-show-indicator"> 顯示螢幕底部紅色 banner</label>
+                <label class="v2-setting-row"><input type="checkbox" id="settings-dev-show-fps"> 右上角顯示 FPS</label>
+                <label class="v2-setting-row"><input type="checkbox" id="settings-dev-log-actions"> console.log 每個 action</label>
+            </section>
+        </div>
+
+        <!-- 教學 modal -->
+        <div id="modal-tutorial" class="modal">
+            <div class="modal-content">
+                <h2 id="modal-tutorial-title">教學</h2>
+                <div id="modal-tutorial-body" class="modal-body"></div>
+                <div class="modal-button-row">
+                    <button data-action="tutorial-prev">← 上一頁</button>
+                    <button data-action="tutorial-next">下一頁 →</button>
+                    <button data-action="tutorial-close">略過</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirm modal -->
+        <div id="modal-confirm" class="modal">
+            <div class="modal-content">
+                <p id="modal-confirm-text">確定？</p>
+                <div class="modal-button-row">
+                    <button data-action="confirm-yes">確認</button>
+                    <button data-action="confirm-no">取消</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
     <script src="data.js"></script>
     <script src="story.js"></script>
     <script src="tutorial.js"></script>
@@ -425,5 +592,6 @@
     <script src="input-controller.js"></script>
     <script src="ai-controller.js"></script>
     <script src="game.js"></script>
+    <script src="game-v2.js"></script>
 </body>
 </html>
