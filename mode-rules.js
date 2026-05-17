@@ -110,10 +110,10 @@ const ModeRules = (function () {
 })();
 
 // =====================================================================
-// V2: data-driven reducer tables (wave 2 of rewrite, per README spec).
-// Coexists with the legacy ModeRules IIFE above so existing game.js still
-// works. Will be renamed back to ModeRules once the legacy IIFE is removed
-// in a later wave.
+// Reducer table (wave 2 of rewrite, per README spec).
+// Used exclusively by reduce() below; game-v2.js calls reduce() rather
+// than referencing ModeRulesV2 directly. Grep confirmed: no other file
+// references this symbol — it is intentionally module-private.
 // =====================================================================
 
 // Flat composite-key reducer table. key = `${mode}.${phase}.${ACTION}`.
