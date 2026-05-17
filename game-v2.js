@@ -960,6 +960,76 @@
 
         const frag = document.createDocumentFragment();
 
+        // --- Family overview cards ---
+        const famOverview = document.createElement('div');
+        famOverview.className = 'codex-family-overview';
+        for (const fKey of Object.keys(Families)) {
+            const fam = Families[fKey];
+            const unlockedBadges = (typeof Save !== 'undefined' && Save.get)
+                ? (Save.get().badges || []) : [];
+
+            // Count unlocked mols for this family
+            const fFilter = fam.imageFilter || {};
+            let famMolKeys = [];
+            for (let i = 0; i < QuestionImages.length; i++) {
+                const img = QuestionImages[i];
+                const ck = img.compoundKey;
+                let inc = false;
+                if (fFilter.type === 'all') inc = true;
+                else if (fFilter.type === 'byCategory') {
+                    const e = AnswerBank[ck];
+                    inc = e && fFilter.categories && fFilter.categories.includes(e.category);
+                } else if (fFilter.type === 'byCompoundKeys') {
+                    inc = fFilter.keys && fFilter.keys.includes(ck);
+                }
+                if (inc) famMolKeys.push(ck);
+            }
+            const totalMols = famMolKeys.length;
+            const unlockedMolsList = (typeof Save !== 'undefined' && Save.get)
+                ? (Save.get().unlockedMols || []) : [];
+            const unlockedCount = famMolKeys.filter(function (ck) {
+                return unlockedMolsList.includes(ck);
+            }).length;
+
+            // Collect badges for this family
+            const famBadges = [];
+            for (const diff of (fam.difficulties || [])) {
+                const completedId = fKey + '-' + diff + '-completed';
+                const masteryId   = fKey + '-' + diff + '-mastery';
+                if (unlockedBadges.includes(completedId)) famBadges.push({ id: completedId, icon: '🥉', label: diff + ' 通關' });
+                if (unlockedBadges.includes(masteryId))   famBadges.push({ id: masteryId,   icon: '🏆', label: diff + ' 精通' });
+            }
+
+            const fc = document.createElement('div');
+            fc.className = 'codex-family-card';
+
+            const fcName = document.createElement('div');
+            fcName.className = 'codex-family-card-name';
+            fcName.textContent = fam.nameZh || fKey;
+            fc.appendChild(fcName);
+
+            const fcProgress = document.createElement('div');
+            fcProgress.className = 'codex-family-card-progress';
+            fcProgress.textContent = '解鎖 ' + unlockedCount + ' / ' + totalMols;
+            fc.appendChild(fcProgress);
+
+            if (famBadges.length > 0) {
+                const fcBadges = document.createElement('div');
+                fcBadges.className = 'codex-family-card-badges';
+                for (const b of famBadges) {
+                    const sp = document.createElement('span');
+                    sp.className = 'codex-family-badge';
+                    sp.title = b.label;
+                    sp.textContent = b.icon;
+                    fcBadges.appendChild(sp);
+                }
+                fc.appendChild(fcBadges);
+            }
+
+            famOverview.appendChild(fc);
+        }
+        frag.appendChild(famOverview);
+
         // --- Family sections: each family → molecules grid ---
         for (const fKey of Object.keys(Families)) {
             const fam = Families[fKey];

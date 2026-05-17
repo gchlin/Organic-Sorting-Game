@@ -3646,3 +3646,41 @@ body.v2-active .screen .v2-back-btn {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+
+/* ============================================================
+   Codex family overview cards
+   ============================================================ */
+.codex-family-overview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.codex-family-card {
+    background: rgba(30, 24, 18, 0.85);
+    border: 1px solid var(--hp-gold);
+    border-radius: 6px;
+    padding: 10px 14px;
+    min-width: 120px;
+    flex: 1 1 120px;
+}
+.codex-family-card-name {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--hp-gold);
+    margin-bottom: 4px;
+}
+.codex-family-card-progress {
+    font-size: 0.75rem;
+    color: var(--hp-parchment-dark);
+    margin-bottom: 4px;
+}
+.codex-family-card-badges {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.codex-family-badge {
+    font-size: 1.1rem;
+    cursor: default;
+}
