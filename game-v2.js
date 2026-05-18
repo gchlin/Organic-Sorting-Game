@@ -387,7 +387,8 @@
         // Body phase classes (state → class)
         document.body.classList.remove(
             'phase-resolving-correct', 'phase-resolving-wrong',
-            'phase-revealing', 'phase-revealed', 'phase-cleanup', 'input-locked'
+            'phase-revealing', 'phase-revealed', 'phase-cleanup',
+            'phase-buzzed', 'buzz-owner-p1', 'buzz-owner-p2', 'input-locked'
         );
         if (state) {
             if (state.phase === 'resolvingCorrect') document.body.classList.add('phase-resolving-correct');
@@ -395,6 +396,11 @@
             if (state.phase === 'revealing') document.body.classList.add('phase-revealing');
             if (state.phase === 'revealed') document.body.classList.add('phase-revealed');
             if (state.phase === 'cleanup') document.body.classList.add('phase-cleanup');
+            if (state.phase === 'buzzed') {
+                document.body.classList.add('phase-buzzed');
+                if (state.buzz && state.buzz.owner === 'p1') document.body.classList.add('buzz-owner-p1');
+                if (state.buzz && state.buzz.owner === 'p2') document.body.classList.add('buzz-owner-p2');
+            }
             if (state.globalInputLocked) document.body.classList.add('input-locked');
         }
 

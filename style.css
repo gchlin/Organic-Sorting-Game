@@ -2645,6 +2645,52 @@ body.v2-active .v2-root { display: block; }
     }
     #screen-game .option-btn { padding: 8px; font-size: 0.9rem; }
     #screen-game .v2-buzz button { padding: 8px; font-size: 0.9rem; }
+
+    body.phase-buzzed #screen-game.mode-duel.is-active {
+        grid-template-columns: 58px minmax(0, 1fr) minmax(190px, 270px) 58px;
+        grid-template-rows: auto 68px minmax(0, 1fr);
+        grid-template-areas:
+            "hud hud hud hud"
+            "timer-left image options timer-right"
+            "giveup-left image options giveup-right";
+        column-gap: 8px;
+    }
+    body.phase-buzzed #screen-game.mode-duel .v2-image-frame {
+        width: 100%;
+        padding: 8px 12px;
+    }
+    body.phase-buzzed #screen-game.mode-duel .v2-options {
+        align-self: stretch;
+        width: 100%;
+        grid-template-columns: 1fr;
+        gap: 6px;
+        max-width: none;
+    }
+    body.phase-buzzed #screen-game.mode-duel #game-buzz {
+        display: none !important;
+    }
+    body.phase-buzzed #screen-game.mode-duel #buzz-countdown {
+        position: static;
+        width: 54px;
+        height: 54px;
+        font-size: 1.85rem;
+        align-self: center;
+        justify-self: center;
+        pointer-events: none;
+    }
+    body.phase-buzzed #screen-game.mode-duel #buzz-countdown[data-side="left"] { grid-area: timer-left; }
+    body.phase-buzzed #screen-game.mode-duel #buzz-countdown[data-side="right"] { grid-area: timer-right; }
+    body.phase-buzzed #screen-game.mode-duel #btn-giveup {
+        position: static;
+        width: 54px;
+        padding: 6px 4px;
+        font-size: 0.68rem;
+        line-height: 1.25;
+        align-self: start;
+        justify-self: center;
+    }
+    body.phase-buzzed #screen-game.mode-duel #btn-giveup[data-side="left"] { grid-area: giveup-left; }
+    body.phase-buzzed #screen-game.mode-duel #btn-giveup[data-side="right"] { grid-area: giveup-right; }
 }
 
 @media (orientation: portrait), (max-width: 520px) {
