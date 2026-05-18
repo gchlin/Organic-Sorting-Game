@@ -60,6 +60,7 @@
     let _wrongChosenMap = {};   // { compoundKey: chosenWrongAnswerKey } — per round
     let _codexTab = 'molecules'; // 'molecules' | 'levels' | 'badges' | 'story'
     let _wrongBookTab = 'category'; // 'category' | 'all' | 'box1' | 'box2' | 'box3' | 'mastered'
+    let _lastAnswerPlayer = null;
 
     function dispatch(action) {
         _pendingDispatch.push(action);
@@ -126,6 +127,7 @@
         // in the box even after one correct review — repeated correct reviews promote
         // it to a higher box, and only the player decides when to retire it.
         if (action.type === 'SUBMIT_ANSWER' && preCompoundKey) {
+            _lastAnswerPlayer = action.player || null;
             const wasCorrect = (action.key === preCorrectKey);
             if (state.mode === 'practice' && wasCorrect) {
                 if (typeof Save !== 'undefined') {
@@ -149,6 +151,12 @@
                     if (Save.demoteWrongV2) Save.demoteWrongV2(state.family, state.difficulty, preCompoundKey);
                 }
             }
+        }
+        if (action.type === 'ANSWER_TIMEOUT' || action.type === 'GIVE_UP') {
+            _lastAnswerPlayer = action.player || null;
+        }
+        if (action.type === 'LOAD_NEXT_QUESTION' || action.type === 'BUZZ') {
+            _lastAnswerPlayer = null;
         }
 
         // LOAD_NEXT_QUESTION side effects — enrich the freshly-loaded question.
@@ -670,8 +678,13 @@
                 const container = optContainers[c];
                 const isP2 = container.classList.contains('v2-options-p2');
                 const isDuel = state.mode === 'duel';
-                container.style.visibility = (showOptions && (!isP2 || isDuel)) ? 'visible' : 'hidden';
-                container.setAttribute('aria-hidden', (!showOptions || (isP2 && !isDuel)) ? 'true' : 'false');
+                const owner = state.buzz && state.buzz.owner;
+                const ownerSideVisible = !isDuel
+                    || ((isP2 && owner === 'p2') || (!isP2 && owner === 'p1'));
+                const containerPlayer = isP2 ? 'p2' : 'p1';
+                const feedbackApplies = !isDuel || !_lastAnswerPlayer || _lastAnswerPlayer === containerPlayer;
+                container.style.visibility = (showOptions && ownerSideVisible) ? 'visible' : 'hidden';
+                container.setAttribute('aria-hidden', (!showOptions || !ownerSideVisible) ? 'true' : 'false');
                 const btns = container.querySelectorAll('.option-btn');
                 for (let i = 0; i < btns.length; i++) {
                     const opt = state.question.options[i];
@@ -686,16 +699,18 @@
                                 : '<span class="option-key-hint">[' + _escapeHtml(leftKey) + ']</span><span class="option-label">' + _escapeHtml(opt.content || '') + '</span><span class="option-key-hint">[' + _escapeHtml(rightKey) + ']</span>';
                         btns[i].innerHTML = keyHtml;
                         btns[i].classList.toggle('eliminated',
+                            feedbackApplies &&
                             state.question.eliminatedWrongKeys && state.question.eliminatedWrongKeys.has
                                 && state.question.eliminatedWrongKeys.has(opt.key)
                                 && opt.key !== state.question.lastChosenWrongKey);
                         btns[i].classList.toggle('wrong-chosen',
-                            opt.key === state.question.lastChosenWrongKey);
+                            feedbackApplies && opt.key === state.question.lastChosenWrongKey);
                         btns[i].classList.toggle('correct-reveal',
+                            feedbackApplies &&
                             (state.phase === 'revealing' || state.phase === 'revealed')
                             && opt.key === state.question.correctKey);
                         btns[i].classList.toggle('correct-chosen',
-                            state.phase === 'resolvingCorrect' && opt.key === state.question.correctKey);
+                            feedbackApplies && state.phase === 'resolvingCorrect' && opt.key === state.question.correctKey);
                     } else {
                         btns[i].setAttribute('data-option-key', '');
                         btns[i].innerHTML = '';
