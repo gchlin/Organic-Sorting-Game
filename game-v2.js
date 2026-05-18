@@ -520,15 +520,29 @@
                 });
                 listEl.appendChild(btn);
             }
-            // "修改對手模式" 放在底下，視覺上跟難度按鈕區分
-            const modeBtn = document.createElement('button');
-            modeBtn.className = 'v2-sub-mode-toggle';
-            setMenuButtonContent(modeBtn, '', '修改對手模式...');
-            modeBtn.addEventListener('click', function () {
-                _subMenuContext = { kind: 'duelOpponentSetting' };
-                render();
-            });
-            listEl.appendChild(modeBtn);
+            const opponentRow = document.createElement('div');
+            opponentRow.className = 'v2-duel-opponent-row';
+            const opponents = [
+                { key: 'human', label: 'PvP（雙人）' },
+                { key: 'aiEasy', label: 'PvE 易' },
+                { key: 'aiMedium', label: 'PvE 中' },
+                { key: 'aiHard', label: 'PvE 難' }
+            ];
+            for (let i = 0; i < opponents.length; i++) {
+                const op = opponents[i];
+                const btn = document.createElement('button');
+                btn.className = 'v2-duel-opponent-card';
+                setMenuButtonContent(btn, '', op.label);
+                if (op.key === currentOpp) btn.classList.add('sub-cleared');
+                btn.addEventListener('click', function () {
+                    if (typeof Save !== 'undefined' && Save.writeSettings) {
+                        Save.writeSettings({ duelOpponent: op.key });
+                    }
+                    render();
+                });
+                opponentRow.appendChild(btn);
+            }
+            listEl.appendChild(opponentRow);
         } else if (_subMenuContext.kind === 'duelFamily') {
             const diff = _subMenuContext.difficulty;
             const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
