@@ -2579,6 +2579,7 @@ body.v2-active .v2-root { display: block; }
 }
 #screen-game #game-hud { grid-area: hud; }
 #screen-game #game-options { grid-area: options; }
+#screen-game #game-options-p2 { grid-area: options-right; }
 #screen-game #game-buzz { grid-area: buzz; }
 #screen-game #game-hint-bubble { grid-area: hint; }
 .v2-image-frame {
@@ -2646,25 +2647,39 @@ body.v2-active .v2-root { display: block; }
     #screen-game .option-btn { padding: 8px; font-size: 0.9rem; }
     #screen-game .v2-buzz button { padding: 8px; font-size: 0.9rem; }
 
+    #screen-game.mode-duel.is-active {
+        grid-template-columns: minmax(160px, 240px) minmax(0, 1fr) minmax(160px, 240px);
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        grid-template-areas:
+            "hud hud hud"
+            "options image options-right"
+            "buzz buzz buzz";
+    }
+    #screen-game.mode-duel .v2-image-frame {
+        width: 100%;
+        padding: 8px 12px;
+    }
+    #screen-game.mode-duel .v2-options {
+        align-self: stretch;
+        width: 100%;
+        grid-template-columns: 1fr;
+        align-content: start;
+        gap: 6px;
+        max-width: none;
+    }
+
     body.phase-buzzed #screen-game.mode-duel.is-active {
-        grid-template-columns: 58px minmax(0, 1fr) minmax(190px, 270px) 58px;
+        grid-template-columns: 58px minmax(150px, 220px) minmax(0, 1fr) minmax(150px, 220px) 58px;
         grid-template-rows: auto 68px minmax(0, 1fr);
         grid-template-areas:
-            "hud hud hud hud"
-            "timer-left image options timer-right"
-            "giveup-left image options giveup-right";
+            "hud hud hud hud hud"
+            "timer-left options image options-right timer-right"
+            "giveup-left options image options-right giveup-right";
         column-gap: 8px;
     }
     body.phase-buzzed #screen-game.mode-duel .v2-image-frame {
         width: 100%;
         padding: 8px 12px;
-    }
-    body.phase-buzzed #screen-game.mode-duel .v2-options {
-        align-self: stretch;
-        width: 100%;
-        grid-template-columns: 1fr;
-        gap: 6px;
-        max-width: none;
     }
     body.phase-buzzed #screen-game.mode-duel #game-buzz {
         display: none !important;
@@ -2691,6 +2706,17 @@ body.v2-active .v2-root { display: block; }
     }
     body.phase-buzzed #screen-game.mode-duel #btn-giveup[data-side="left"] { grid-area: giveup-left; }
     body.phase-buzzed #screen-game.mode-duel #btn-giveup[data-side="right"] { grid-area: giveup-right; }
+}
+
+#screen-game.mode-practice .v2-options-p2 {
+    display: none;
+}
+#screen-game.mode-duel .v2-options-p1 .option-btn,
+#screen-game.mode-duel .v2-options-p2 .option-btn {
+    grid-template-columns: minmax(34px, auto) minmax(0, 1fr);
+}
+#screen-game.mode-duel .v2-options-p2 .option-btn {
+    grid-template-columns: minmax(0, 1fr) minmax(34px, auto);
 }
 
 @media (orientation: portrait), (max-width: 520px) {

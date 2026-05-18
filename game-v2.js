@@ -657,43 +657,50 @@
 
         // Options: render only when phase indicates options should be visible.
         // Practice: visible whenever question exists. Duel: visible only while phase===buzzed (and shown to owner only) or revealing.
-        const optsContainer = document.getElementById('game-options');
-        if (optsContainer && state.question && state.question.options) {
+        const optContainers = Array.from(document.querySelectorAll('#screen-game .v2-options'));
+        if (optContainers.length && state.question && state.question.options) {
             const showOptions = (state.mode === 'practice')
                 || (state.mode === 'duel'
                     && (state.phase === 'buzzed' || state.phase === 'revealing' || state.phase === 'revealed'
                         || state.phase === 'resolvingCorrect' || state.phase === 'resolvingWrong'));
-            optsContainer.style.visibility = showOptions ? 'visible' : 'hidden';
-            const btns = optsContainer.querySelectorAll('.option-btn');
             const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
             const keybindings = settings.keybindings || {};
-            for (let i = 0; i < btns.length; i++) {
-                const opt = state.question.options[i];
-                if (opt) {
-                    btns[i].setAttribute('data-option-key', opt.key);
-                    const leftKey = _formatKeyCode(keybindings['optionLeft' + i]);
-                    const rightKey = _formatKeyCode(keybindings['optionRight' + i]);
-                    btns[i].innerHTML =
-                        '<span class="option-key-hint">[' + _escapeHtml(leftKey) + ']</span>' +
-                        '<span class="option-label">' + _escapeHtml(opt.content || '') + '</span>' +
-                        '<span class="option-key-hint">[' + _escapeHtml(rightKey) + ']</span>';
-                    // option class overlays
-                    btns[i].classList.toggle('eliminated',
-                        state.question.eliminatedWrongKeys && state.question.eliminatedWrongKeys.has
-                            && state.question.eliminatedWrongKeys.has(opt.key)
-                            && opt.key !== state.question.lastChosenWrongKey);
-                    btns[i].classList.toggle('wrong-chosen',
-                        opt.key === state.question.lastChosenWrongKey);
-                    btns[i].classList.toggle('correct-reveal',
-                        (state.phase === 'revealing' || state.phase === 'revealed')
-                        && opt.key === state.question.correctKey);
-                    // Also light up the correct option green while in resolvingCorrect (Practice + Duel)
-                    btns[i].classList.toggle('correct-chosen',
-                        state.phase === 'resolvingCorrect' && opt.key === state.question.correctKey);
-                } else {
-                    btns[i].setAttribute('data-option-key', '');
-                    btns[i].innerHTML = '';
-                    btns[i].classList.remove('eliminated', 'wrong-chosen', 'correct-reveal');
+
+            for (let c = 0; c < optContainers.length; c++) {
+                const container = optContainers[c];
+                const isP2 = container.classList.contains('v2-options-p2');
+                const isDuel = state.mode === 'duel';
+                container.style.visibility = (showOptions && (!isP2 || isDuel)) ? 'visible' : 'hidden';
+                container.setAttribute('aria-hidden', (!showOptions || (isP2 && !isDuel)) ? 'true' : 'false');
+                const btns = container.querySelectorAll('.option-btn');
+                for (let i = 0; i < btns.length; i++) {
+                    const opt = state.question.options[i];
+                    if (opt) {
+                        btns[i].setAttribute('data-option-key', opt.key);
+                        const leftKey = _formatKeyCode(keybindings['optionLeft' + i]);
+                        const rightKey = _formatKeyCode(keybindings['optionRight' + i]);
+                        const keyHtml = isDuel && isP2
+                            ? '<span class="option-label">' + _escapeHtml(opt.content || '') + '</span><span class="option-key-hint">[' + _escapeHtml(rightKey) + ']</span>'
+                            : isDuel
+                                ? '<span class="option-key-hint">[' + _escapeHtml(leftKey) + ']</span><span class="option-label">' + _escapeHtml(opt.content || '') + '</span>'
+                                : '<span class="option-key-hint">[' + _escapeHtml(leftKey) + ']</span><span class="option-label">' + _escapeHtml(opt.content || '') + '</span><span class="option-key-hint">[' + _escapeHtml(rightKey) + ']</span>';
+                        btns[i].innerHTML = keyHtml;
+                        btns[i].classList.toggle('eliminated',
+                            state.question.eliminatedWrongKeys && state.question.eliminatedWrongKeys.has
+                                && state.question.eliminatedWrongKeys.has(opt.key)
+                                && opt.key !== state.question.lastChosenWrongKey);
+                        btns[i].classList.toggle('wrong-chosen',
+                            opt.key === state.question.lastChosenWrongKey);
+                        btns[i].classList.toggle('correct-reveal',
+                            (state.phase === 'revealing' || state.phase === 'revealed')
+                            && opt.key === state.question.correctKey);
+                        btns[i].classList.toggle('correct-chosen',
+                            state.phase === 'resolvingCorrect' && opt.key === state.question.correctKey);
+                    } else {
+                        btns[i].setAttribute('data-option-key', '');
+                        btns[i].innerHTML = '';
+                        btns[i].classList.remove('eliminated', 'wrong-chosen', 'correct-reveal');
+                    }
                 }
             }
         }

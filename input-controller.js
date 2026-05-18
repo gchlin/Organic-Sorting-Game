@@ -166,16 +166,11 @@ const InputController = (function () {
             const btn = e.target.closest && e.target.closest('[data-option-key]');
             if (!btn) return;
             const key = btn.getAttribute('data-option-key');
-            // Authority over WHO clicked: in Duel buzzed phase, it's whoever owns
-            // the buzz — the option buttons are shared between players (same set
-            // of options visible to both), so their data-player attribute is
-            // hardcoded "p1" and would otherwise lock P2 out of mouse input.
-            // In Practice (single-player) or buzzOpen (shouldn't be answering),
-            // fall back to the DOM attribute.
             let player;
             if (state.mode === 'duel' && state.phase === 'buzzed') {
-                player = state.buzz && state.buzz.owner;
-                if (!player) return;
+                player = btn.getAttribute('data-player') || 'p1';
+                if (state.opponent !== 'human' && player === 'p2') return;
+                if (!state.buzz || state.buzz.owner !== player) return;
             } else {
                 player = btn.getAttribute('data-player') || 'p1';
             }
