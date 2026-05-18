@@ -96,10 +96,10 @@ const Save = (function () {
         return {
             soundEnabled: true,     // 音效開關（玩家分頁 checkbox）
             devQuickWin: {
-                enabled: true,
+                enabled: false,
                 winAfter: 2,
                 appliesTo: ['practice', 'duel'],
-                showIndicator: true
+                showIndicator: false
             },
             devShowFps: false,
             devLogActions: false,
