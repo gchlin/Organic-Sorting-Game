@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap">
 
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="sorting-hat.css">
+    <link rel="stylesheet" href="menu.css">
     <!-- Legacy layout.css / menu.css moved to legacy/ — v2 styles in style.css are self-contained. -->
 </head>
 <body>
@@ -20,26 +22,43 @@
         <!-- 主選單 -->
         <div id="screen-main-menu" class="screen is-active">
             <header class="v2-menu-header">
-                <h1 class="v2-title">有機分類帽</h1>
-                <h2 class="v2-subtitle">Organic Sorting Hat</h2>
+                <div id="main-menu-hat" class="title-hat hat-char neutral" aria-hidden="true"></div>
+                <div class="title-text-wrap">
+                    <h1 class="v2-title">有機分類帽</h1>
+                    <h2 class="v2-subtitle">Organic Sorting Hat</h2>
+                </div>
+                <div class="v2-menu-progress" aria-label="遊戲進度">
+                    <span class="v2-progress-stat">分子 <strong id="main-menu-mol-progress">0 / 0</strong></span>
+                    <span class="v2-progress-stat">答對 <strong id="main-menu-correct-total">0</strong></span>
+                </div>
+                <button class="v2-codex-entry" data-icon="codex" data-action="enter-codex">分類帽圖鑑</button>
             </header>
             <div class="v2-menu-grid">
                 <div class="v2-menu-section">
-                    <h3 class="v2-section-title">難度 · 子關</h3>
-                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="beginner">初級<span class="key-hint">1</span></button>
-                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="intermediate">中級<span class="key-hint">2</span></button>
-                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="advanced">高級<span class="key-hint">3</span></button>
+                    <div class="v2-section-head">
+                        <h3 class="v2-section-title" data-icon="flask">自我修煉</h3>
+                        <span class="v2-section-sub">Practice</span>
+                    </div>
+                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="beginner"><span class="level-tag">L1</span><span class="level-name">初級</span><span class="key-hint">1</span></button>
+                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="intermediate"><span class="level-tag">L3</span><span class="level-name">中級</span><span class="key-hint">2</span></button>
+                    <button class="v2-menu-btn v2-boss-btn" data-action="enter-difficulty" data-arg="advanced"><span class="level-tag">L6</span><span class="level-name">高級</span><span class="key-hint">3</span></button>
                 </div>
                 <div class="v2-menu-section">
-                    <h3 class="v2-section-title">對決模式</h3>
-                    <button class="v2-menu-btn" data-action="enter-duel-menu">對決 ⚔️<span class="key-hint">4</span></button>
+                    <div class="v2-section-head">
+                        <h3 class="v2-section-title" data-icon="swords">巫師對決</h3>
+                        <span class="v2-section-sub">Duel</span>
+                    </div>
+                    <button class="v2-menu-btn v2-duel-btn" data-icon="swords" data-action="enter-duel-menu"><span class="level-name">選擇對決難度</span><span class="key-hint">4</span></button>
                 </div>
                 <div class="v2-menu-section">
-                    <h3 class="v2-section-title">其他</h3>
-                    <button class="v2-menu-btn" data-action="enter-tutorial">新手導覽<span class="key-hint">T</span></button>
-                    <button class="v2-menu-btn" data-action="enter-codex">圖鑑<span class="key-hint">C</span></button>
-                    <button class="v2-menu-btn" data-action="enter-wrong-book">錯題本<span class="key-hint">W</span></button>
-                    <button class="v2-menu-btn" data-action="enter-settings">設定</button>
+                    <div class="v2-section-head">
+                        <h3 class="v2-section-title" data-icon="books">工具</h3>
+                        <span class="v2-section-sub">Tools</span>
+                    </div>
+                    <button class="v2-menu-btn v2-tutorial-btn" data-icon="quill" data-action="enter-tutorial"><span class="level-name">新手導覽</span><span class="key-hint">T</span></button>
+                    <button class="v2-menu-btn" data-icon="codex" data-action="enter-codex"><span class="level-name">圖鑑</span><span class="key-hint">C</span></button>
+                    <button class="v2-menu-btn" data-icon="wrong-book" data-action="enter-wrong-book"><span class="level-name">錯題本</span><span class="key-hint">W</span></button>
+                    <button class="v2-menu-btn" data-icon="settings" data-action="enter-settings"><span class="level-name">設定</span></button>
                 </div>
             </div>
         </div>

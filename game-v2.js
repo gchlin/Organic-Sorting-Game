@@ -412,7 +412,30 @@
         renderDevBanner();
     }
 
-    function renderMainMenu() { /* static markup; no per-state rendering */ }
+    function renderMainMenu() {
+        const molEl = document.getElementById('main-menu-mol-progress');
+        const correctEl = document.getElementById('main-menu-correct-total');
+        const save = (typeof Save !== 'undefined' && Save.get) ? Save.get() : {};
+
+        if (correctEl) {
+            correctEl.textContent = String(save.totalCorrect || save.correctTotal || 0);
+        }
+
+        if (molEl && typeof Families !== 'undefined' && typeof QuestionImages !== 'undefined' && typeof AnswerBank !== 'undefined') {
+            const unlocked = save.unlockedMols || [];
+            let total = 0;
+            let seen = 0;
+            const famKeys = Object.keys(Families);
+            for (let i = 0; i < famKeys.length; i++) {
+                const items = _famCompoundKeys(Families[famKeys[i]]);
+                total += items.length;
+                for (let j = 0; j < items.length; j++) {
+                    if (unlocked.indexOf(items[j].ck) !== -1) seen++;
+                }
+            }
+            molEl.textContent = seen + ' / ' + total;
+        }
+    }
 
     // Sub-menu kinds:
     //   'difficulty'           { difficulty }   → family list, click starts practice

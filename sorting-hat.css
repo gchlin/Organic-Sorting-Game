@@ -1,0 +1,443 @@
+/* --- Sorting Hat character, coach, tutorial, and story styles --- */
+
+/* Legacy title row: sorting-hat character + title text. */
+.title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 8px;
+}
+.title-hat {
+    width: clamp(56px, 12vw, 88px);
+    height: clamp(56px, 12vw, 88px);
+    flex-shrink: 0;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,.5));
+}
+.title-text-wrap { text-align: left; }
+
+.question-container:has(.coach-bubble:not(.hidden)) {
+    grid-template-columns: minmax(0, 1fr) minmax(190px, 34%);
+}
+
+.wizard-avatar {
+    display: none;
+    flex-shrink: 0;
+    align-self: start;
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+    z-index: 1;
+}
+
+/* 帽子 + 說話泡泡的包裝（泡泡在帽子左邊，箭頭指向帽子） */
+.hat-coach-wrap {
+    flex-shrink: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.hat-display {
+    display: none;
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    justify-self: end;
+    flex-shrink: 0;
+    height: clamp(42px, 13vh, 76px);
+    width:  auto;
+    aspect-ratio: 1 / 1;
+    filter: drop-shadow(0 0 8px rgba(212,175,55,0.55));
+    user-select: none;
+    pointer-events: none;
+}
+body.duel-desktop .hat-display {
+    height: 55%;
+    min-height: 36px;
+}
+body.duel-mode .wizard-avatar {
+    display: none;
+}
+body.countdown-active .wizard-avatar,
+body.countdown-active .hat-display {
+    opacity: 0;
+}
+
+/* ===== 分類帽角色（Sorting_Hat.webp 身體 + CSS 五官，會做表情）===== */
+.hat-char {
+    position: relative;
+    --eye-y: 52%;
+    --eye-dx: 16%;          /* 兩眼間距的一半（相對寬度） */
+    --eye-w: 19%;
+    --eye-h: 24%;
+    --pupil: 38%;           /* 瞳孔相對眼睛寬 */
+    --mouth-y: 76%;
+    --ink: #ede2c8;
+    --ink-shadow: 0 1px 2px rgba(0,0,0,.7), 0 0 1px rgba(0,0,0,.9);
+}
+.hat-char .hat-img {
+    position: absolute; inset: 0;
+    background: url('assets/images/character/Sorting_Hat.webp') no-repeat center / contain;
+}
+.hat-char .eye {
+    position: absolute;
+    top: var(--eye-y);
+    width: var(--eye-w); height: var(--eye-h);
+    background: #f7f2e4;
+    border: 1.5px solid #6b5535;
+    border-radius: 50%;
+    box-shadow: inset 0 -2px 3px rgba(0,0,0,.15), 0 1px 3px rgba(0,0,0,.5);
+    overflow: hidden;
+    transition: height .15s ease, transform .2s ease, border-radius .2s ease;
+}
+.hat-char .eye.left  { left: calc(50% - var(--eye-dx) - var(--eye-w)); }
+.hat-char .eye.right { left: calc(50% + var(--eye-dx)); }
+.hat-char .pupil {
+    position: absolute; left: 50%; top: 52%;
+    width: var(--pupil); aspect-ratio: 1/1;
+    background: radial-gradient(circle at 35% 30%, #555, #000 60%);
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+    transition: transform .18s ease;
+}
+.hat-char .pupil::after {
+    content: ''; position: absolute; left: 22%; top: 18%;
+    width: 30%; height: 30%; background: rgba(255,255,255,.85); border-radius: 50%;
+}
+.hat-char .brow {
+    position: absolute;
+    top: calc(var(--eye-y) - 11%);
+    width: calc(var(--eye-w) + 5%);
+    height: 5%;
+    background: var(--ink);
+    border-radius: 4px;
+    box-shadow: var(--ink-shadow);
+    transition: transform .2s ease, top .2s ease;
+}
+.hat-char .brow.left  { left: calc(50% - var(--eye-dx) - var(--eye-w) - 2.5%); transform-origin: right center; transform: rotate(-4deg); }
+.hat-char .brow.right { left: calc(50% + var(--eye-dx) - 2.5%);                transform-origin: left center;  transform: rotate(4deg);  }
+.hat-char .mouth {
+    position: absolute; left: 50%; top: var(--mouth-y);
+    width: 26%; height: 11%;
+    transform: translateX(-50%);
+    border: 2.5px solid var(--ink);
+    border-top-color: transparent;
+    border-radius: 0 0 999px 999px / 0 0 26px 26px;
+    background: transparent;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.7));
+    transition: all .2s ease;
+}
+/* 自動眨眼（surprised/sleepy 例外）*/
+@keyframes hatBlink { 0%,92%,100%{ transform: scaleY(1); } 96%{ transform: scaleY(.08); } }
+.hat-char:not(.surprised):not(.sleepy) .eye { animation: hatBlink 4.2s infinite; }
+.hat-char:not(.surprised):not(.sleepy) .eye.right { animation-delay: .05s; }
+
+/* ---- 表情 ---- */
+.hat-char.happy .eye { height: calc(var(--eye-h) * .55); border-radius: 0 0 999px 999px / 0 0 60px 60px; border-top-color: transparent; }
+.hat-char.happy .pupil { display: none; }
+.hat-char.happy .brow { top: calc(var(--eye-y) - 15%); }
+.hat-char.happy .brow.left  { transform: rotate(-10deg); }
+.hat-char.happy .brow.right { transform: rotate(10deg); }
+.hat-char.happy .mouth { width: 34%; height: 16%; border-radius: 0 0 999px 999px / 0 0 40px 40px; }
+
+.hat-char.sad .pupil { transform: translate(-50%,18%); }
+.hat-char.sad .brow.left  { transform: rotate(20deg)  translateY(3%); }
+.hat-char.sad .brow.right { transform: rotate(-20deg) translateY(3%); }
+.hat-char.sad .mouth { width: 24%; height: 11%; border-top: 2.5px solid var(--ink); border-bottom-color: transparent; border-radius: 26px 26px 0 0 / 26px 26px 0 0; top: calc(var(--mouth-y) + 5%); }
+
+.hat-char.surprised .eye { height: calc(var(--eye-h) * 1.3); transform: translateY(-3%); }
+.hat-char.surprised .pupil { width: 24%; }
+.hat-char.surprised .brow { top: calc(var(--eye-y) - 18%); }
+.hat-char.surprised .mouth { width: 16%; height: 18%; border: 2.5px solid var(--ink); border-radius: 50%; background: rgba(0,0,0,.35); }
+
+.hat-char.thinking .pupil { transform: translate(-25%,-85%); }
+.hat-char.thinking .brow.right { top: calc(var(--eye-y) - 17%); transform: rotate(-14deg); }
+.hat-char.thinking .mouth { width: 15%; height: 0; border: none; border-bottom: 2.5px solid var(--ink); border-radius: 0; transform: translateX(-50%) translateX(20%) rotate(-8deg); }
+
+.hat-char.wink .eye.right { height: 9%; border-radius: 0 0 999px 999px / 0 0 14px 14px; border-top-color: transparent; animation: none; }
+.hat-char.wink .eye.right .pupil { display: none; }
+.hat-char.wink .eye.left { height: calc(var(--eye-h) * .62); border-radius: 0 0 999px 999px; border-top-color: transparent; }
+.hat-char.wink .eye.left .pupil { display: none; }
+.hat-char.wink .brow.right { transform: rotate(8deg) translateY(2%); }
+.hat-char.wink .mouth { width: 30%; height: 14%; transform: translateX(-50%) rotate(-5deg); }
+
+/* 競技場中央裁判帽：用相同角色，尺寸見 .arena-center-hat */
+
+/* 競技場中央裁判帽 */
+.arena-center-hat {
+    position: absolute;
+    left: 50%;
+    bottom: 10px;
+    transform: translateX(-50%);
+    width: clamp(40px, 10vh, 64px);
+    height: clamp(40px, 10vh, 64px);
+    filter: drop-shadow(0 0 10px rgba(212,175,55,0.8));
+    pointer-events: none;
+}
+
+.coach-bubble {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: stretch;
+    align-self: center;
+    max-height: 100%;
+    overflow-y: auto;
+    padding: 10px 13px;
+    border-radius: 10px;
+    border: 2px solid rgba(212, 175, 55, 0.75);
+    background: rgba(31, 24, 20, 0.95);
+    color: var(--hp-parchment);
+    font-size: 1.02rem;
+    line-height: 1.45;
+    text-align: left;
+    box-shadow: 0 0 14px rgba(0,0,0,0.55), 0 0 8px rgba(212, 175, 55, 0.22);
+    max-width: min(520px, 100%);
+    position: relative;
+}
+/* 泡泡右側箭頭指向（右邊的）帽子 */
+.coach-bubble::after {
+    display: none;
+}
+
+@keyframes coachFloat {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-5px) rotate(2deg); }
+}
+
+.story-modal-content {
+    max-width: 520px;
+    width: 92vw;
+    padding: 24px 20px 18px;
+}
+
+.story-speaker-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.story-speaker-emoji {
+    font-size: 2.2rem;
+    line-height: 1;
+    filter: drop-shadow(0 0 6px rgba(212,175,55,0.6));
+}
+/* 講者是分類帽時：用有眼睛的帽子角色 */
+.story-hat {
+    width: 64px; height: 64px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,.4));
+}
+/* 新手導覽第一頁的帽子角色 */
+.tutorial-icon .hat-char { width: 72px; height: 72px; margin: 0 auto; filter: drop-shadow(0 2px 6px rgba(0,0,0,.45)); }
+
+.story-speaker-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #7f0909;            /* 羊皮紙底 → 深紅色，分類帽 */
+    letter-spacing: 0.05em;
+}
+
+.story-bubble {
+    min-height: 90px;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+    position: relative;
+    background: rgba(20, 12, 35, 0.92);
+    border: 1px solid rgba(212,175,55,0.35);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+}
+
+.story-bubble p {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--hp-parchment);
+    font-family: var(--font-serif);
+}
+
+/* 說話者切換時：帽子靠左（預設），魔法師靠右 */
+.story-modal-content.speaker-wiz .story-speaker-row {
+    flex-direction: row-reverse;
+}
+
+.story-modal-content.speaker-wiz .story-speaker-name {
+    color: #1a5c1a;            /* 羊皮紙底 → 深綠色，魔法師（玩家） */
+}
+
+.story-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.story-dots {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.story-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,220,100,0.25);
+    transition: background 0.2s;
+}
+
+.story-dot.done {
+    background: var(--hp-gold);
+    box-shadow: 0 0 4px rgba(212,175,55,0.6);
+}
+
+.story-dot.current {
+    background: #fff5c0;
+    box-shadow: 0 0 6px rgba(255,245,192,0.8);
+}
+
+.story-btn-row {
+    display: flex;
+    gap: 8px;
+}
+
+/* 結算頁解鎖故事的按鈕（顯示與否由 .hidden class 控制） */
+#btn-show-story {
+    margin-top: 10px;
+}
+
+/* ===== 圖鑑 Modal ===== */
+
+.tutorial-slide-media {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+}
+/* 手機：帽子小 */
+#tutorial-hat {
+    width: 72px;
+    height: 80px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,.45));
+}
+/* 大螢幕：帽子較大 */
+@media (min-width: 560px) {
+    #tutorial-hat { width: 110px; height: 122px; }
+}
+
+/* ============================================================
+   Story screen
+   ============================================================ */
+/* Only apply layout when active — base .screen rule keeps it display:none otherwise. */
+.screen.v2-story-screen.is-active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px 60px;
+    background: radial-gradient(ellipse at center, #1e1e2e 0%, #0f0f18 100%);
+    cursor: pointer;
+    gap: 16px;
+}
+/* [USED: story player] hat + box layout — portrait: stacked (hat on top);
+   landscape: side-by-side (hat on left). Two-orientation responsive. */
+.v2-story-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(10px, 2vh, 22px);
+    width: 100%;
+    max-width: 900px;
+}
+@media (orientation: landscape) and (min-width: 720px) {
+    .v2-story-stage {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+    }
+}
+#story-hat {
+    width: clamp(90px, 18vh, 160px);
+    height: clamp(100px, 20vh, 178px);
+    flex-shrink: 0;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,.5));
+}
+.v2-story-box {
+    width: min(680px, 92vw);
+    background: var(--hp-parchment);
+    border: 2px solid var(--hp-gold);
+    border-radius: 8px;
+    padding: 24px 28px;
+    min-height: 120px;
+    color: #2c2416;
+}
+.v2-story-box .v2-story-who { color: #7f0909; }
+.v2-story-box .v2-story-text { color: #2c2416; }
+.v2-story-who {
+    font-size: 0.85rem;
+    color: var(--hp-gold);
+    font-weight: bold;
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+}
+.v2-story-text {
+    font-size: 1.05rem;
+    color: var(--hp-parchment);
+    line-height: 1.65;
+    white-space: pre-wrap;
+}
+.v2-story-hint {
+    margin-top: 16px;
+    font-size: 0.78rem;
+    color: var(--hp-parchment-dark);
+    opacity: 0.6;
+    letter-spacing: 0.05em;
+}
+
+@media (max-width: 760px) {
+    .coach-bubble {
+        font-size: 0.8rem;
+        max-width: min(420px, 100%);
+    }
+}
+
+@media (max-height: 620px) and (orientation: landscape) {
+    .question-container:has(.coach-bubble:not(.hidden)) {
+        grid-template-columns: minmax(0, 1fr) minmax(210px, 36%);
+    }
+    .coach-bubble {
+        padding: 7px 10px;
+        font-size: clamp(.78rem, 3.1vh, .92rem);
+        line-height: 1.35;
+        max-width: 100%;
+    }
+    #story-modal.modal {
+        align-items: stretch;
+        padding: 8px;
+    }
+    .story-modal-content {
+        width: min(96vw, 680px);
+        max-height: calc(100dvh - 16px);
+        margin: auto;
+        padding: 12px 14px 10px;
+    }
+    .tutorial-slide-media {
+        gap: 8px;
+    }
+    #tutorial-hat {
+        width: clamp(48px, 14vh, 72px);
+        height: clamp(54px, 16vh, 80px);
+    }
+}
