@@ -1,0 +1,781 @@
+<!--
+    問題和答案檢視器 (Question & Answer Viewer)
+
+    用途：
+    - 檢視所有遊戲題目（按照 Families 組織）
+    - 查看不同難度級別的答案選項
+    - 從選項池逆向查詢包含該答案的所有題目
+
+    數據來源：
+    - 載入 data.js 中的 Families（6 個主題家族）
+    - 載入 data.js 中的 QuestionImages（81 張題圖）
+    - 載入 data.js 中的 AnswerBank（所有答案選項）
+    - 載入 data.js 中的 Difficulties（難度設定）
+
+    功能：
+    1. 主題家族檢視：
+       - 碳氫骨架（hydrocarbon）：初級+中級
+       - 含氧家族（oxygen）：初級+中級
+       - 含氮鹵化物（nitrogenHalide）：初級+中級
+       - 綜合題（mixed）：初級+中級
+       - 龜殼之地（shell）：中級
+       - 英文挑戰（englishChallenge）：進階
+
+    2. 難度級別切換（根據家族支援的難度）：
+       - 初級：官能基類別（中文）
+       - 中級：化合物名稱
+       - 進階：官能基類別（英文）
+
+    3. 選項池檢視：
+       - 全部：顯示所有答案選項
+       - 按難度過濾：初級、中級、進階
+
+    4. 逆向查詢：
+       - 點擊選項池中的任何答案
+       - 自動找出所有包含該答案的題目
+       - 顯示完整的題目資訊（Family、難度、圖片、化合物名）
+
+    使用方式：
+    1. 在瀏覽器中打開此 HTML 檔案
+    2. 側邊欄選擇「主題家族」或「選項池」
+    3. 對於主題家族，使用難度標籤切換不同答案池
+    4. 在選項池中點擊任何答案來查詢包含它的題目
+    5. 點擊「← 返回選項池」回到選項池檢視
+
+    技術細節：
+    - 純 JavaScript（無依賴）
+    - 響應式設計（支援行動裝置）
+    - 動態從 data.js 中的 Families 和 QuestionImages 生成內容
+    - 支援跨難度級別的逆向查詢
+-->
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>問題和答案檢視器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            height: fit-content;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 20px;
+        }
+
+        .sidebar h3 {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            margin-top: 20px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .sidebar h3:first-child {
+            margin-top: 0;
+        }
+
+        .level-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: #f5f5f5;
+            border: none;
+            border-left: 4px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            text-align: left;
+            transition: all 0.3s ease;
+            color: #333;
+        }
+
+        .level-btn:hover {
+            background: #667eea;
+            color: white;
+            border-left-color: #667eea;
+        }
+
+        .level-btn.active {
+            background: #667eea;
+            color: white;
+            border-left-color: #fff;
+            font-weight: bold;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .level-title {
+            font-size: 2em;
+            color: #667eea;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .difficulty-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .difficulty-tab {
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+        }
+
+        .difficulty-tab:hover {
+            border-color: #667eea;
+            background: #f9f9f9;
+        }
+
+        .difficulty-tab.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+
+        .category {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 5px solid #667eea;
+        }
+
+        .category-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: normal;
+        }
+
+        .questions {
+            display: grid;
+            gap: 15px;
+        }
+
+        .question-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        .question-item:hover {
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            border-color: #667eea;
+        }
+
+        .question-img {
+            width: 100%;
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: block;
+        }
+
+        .answer {
+            color: #764ba2;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .answer-type {
+            color: #999;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
+        .answer-pool-section {
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 3px solid #667eea;
+        }
+
+        .answer-pool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .answer-type-group {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 5px solid #667eea;
+        }
+
+        .answer-type-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .answer-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .answer-item {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .answer-item {
+            cursor: pointer;
+        }
+
+        .answer-item:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .question-results {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f0f8ff;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+        }
+
+        .question-results h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .clear-search {
+            background: #999;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .clear-search:hover {
+            background: #666;
+        }
+
+        @media (max-width: 1024px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+            }
+
+            .categories {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 有機分類遊戲 - 問題檢視器</h1>
+
+        <div class="layout">
+            <aside class="sidebar">
+                <h3>主題家族</h3>
+                <button class="level-btn active" data-family="hydrocarbon">碳氫骨架</button>
+                <button class="level-btn" data-family="oxygen">含氧家族</button>
+                <button class="level-btn" data-family="nitrogenHalide">含氮鹵化物</button>
+                <button class="level-btn" data-family="mixed">綜合題</button>
+                <button class="level-btn" data-family="shell">龜殼之地</button>
+                <button class="level-btn" data-family="englishChallenge">英文挑戰</button>
+
+                <h3>選項池</h3>
+                <button class="level-btn" data-pool="all">全部</button>
+                <button class="level-btn" data-pool="categoryZh">初級（官能基）</button>
+                <button class="level-btn" data-pool="compound">中級（化合物）</button>
+                <button class="level-btn" data-pool="categoryEn">進階（英文）</button>
+            </aside>
+
+            <main class="main-content">
+                <div id="content"></div>
+            </main>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script>
+        // 調試：檢查數據加載
+        console.log('QuestionImages:', QuestionImages ? QuestionImages.length : 'undefined');
+        console.log('Families:', Object.keys(Families || {}).length);
+        console.log('Difficulties:', Object.keys(Difficulties || {}).length);
+        console.log('AnswerBank keys sample:', Object.keys(AnswerBank).slice(0, 10));
+
+        const FAMILY_NAMES = {
+            'hydrocarbon': '碳氫骨架',
+            'oxygen': '含氧家族',
+            'nitrogenHalide': '含氮鹵化物',
+            'mixed': '綜合題',
+            'shell': '龜殼之地',
+            'englishChallenge': '全題庫英文挑戰'
+        };
+
+        let currentDifficulty = null;
+        let searchingAnswerKey = null;  // 正在搜尋的答案 key
+
+        // 获取 Family 的所有化合物
+        function getFamilyCompounds(family) {
+            if (!Families[family]) return [];
+
+            const filter = Families[family].imageFilter;
+            const compounds = [];
+
+            QuestionImages.forEach(img => {
+                const info = AnswerBank[img.compoundKey];
+                if (!info) return;
+
+                if (filter.type === 'byCategory' && filter.categories.includes(info.category)) {
+                    compounds.push(img);
+                } else if (filter.type === 'byCompoundKeys' && filter.keys.includes(img.compoundKey)) {
+                    compounds.push(img);
+                } else if (filter.type === 'all') {
+                    compounds.push(img);
+                }
+            });
+
+            return compounds;
+        }
+
+        // 按难度筛选答案选项
+        function getAnswerForDifficulty(compound, difficulty) {
+            const info = AnswerBank[compound.compoundKey];
+            if (!info) return null;
+
+            const diff = Difficulties[difficulty];
+            if (!diff) return null;
+
+            if (diff.answerType === 'compound') {
+                return info.type === 'compound' ? info : null;
+            } else if (diff.answerType === 'categoryZh') {
+                const key = 'CAT_ZH_' + info.category.toUpperCase();
+                return AnswerBank[key] || null;
+            } else if (diff.answerType === 'categoryEn') {
+                const key = 'CAT_EN_' + info.category.toUpperCase();
+                return AnswerBank[key] || null;
+            }
+            return null;
+        }
+
+        // 获取分类的中文名称
+        function getCategoryTitle(cat) {
+            const categories = {
+                'alkane': '烷類',
+                'alkene': '烯類',
+                'alkyne': '炔類',
+                'aromatic': '芳香烴',
+                'alcohol': '醇',
+                'aldehyde': '醛',
+                'ketone': '酮',
+                'carboxylic': '羧酸',
+                'ether': '醚',
+                'ester': '酯',
+                'amine': '胺',
+                'halide': '鹵化物',
+                'phenol': '酚'
+            };
+            return categories[cat] || cat;
+        }
+
+        function renderFamily(family) {
+            const familyData = Families[family];
+            if (!familyData) return '';
+
+            const compounds = getFamilyCompounds(family);
+            const difficulties = familyData.difficulties;
+
+            let html = `<h2 class="level-title">${familyData.nameZh}</h2>`;
+
+            // 难度标签
+            html += `<div class="difficulty-tabs">`;
+            difficulties.forEach((diff, idx) => {
+                const diffLabel = {
+                    'beginner': '初級（官能基類別）',
+                    'intermediate': '中級（化合物名稱）',
+                    'advanced': '進階（英文官能基）'
+                };
+                html += `<button class="difficulty-tab ${idx === 0 ? 'active' : ''}" data-difficulty="${diff}">${diffLabel[diff]}</button>`;
+            });
+            html += `</div>`;
+
+            // 使用第一个难度作为默认
+            currentDifficulty = difficulties[0];
+
+            // 按难度分组显示
+            difficulties.forEach((difficulty, idx) => {
+                const grouped = {};
+                compounds.forEach(compound => {
+                    const answer = getAnswerForDifficulty(compound, difficulty);
+                    if (!answer) return;
+
+                    const category = AnswerBank[compound.compoundKey].category;
+                    if (!grouped[category]) {
+                        grouped[category] = [];
+                    }
+                    grouped[category].push({ compound, answer });
+                });
+
+                const categoryOrder = [
+                    'alkane', 'alkene', 'alkyne', 'aromatic',
+                    'alcohol', 'aldehyde', 'ketone', 'carboxylic', 'ether', 'ester', 'amine', 'halide', 'phenol'
+                ];
+
+                html += `<div class="difficulty-content" data-difficulty="${difficulty}" style="display: ${idx === 0 ? 'block' : 'none'}">`;
+                html += `<div class="categories">`;
+
+                categoryOrder.forEach(cat => {
+                    if (!grouped[cat]) return;
+                    const items = grouped[cat];
+
+                    html += `<div class="category">`;
+                    html += `<div class="category-title">
+                        ${getCategoryTitle(cat)}
+                        <span class="category-badge">${items.length}</span>
+                    </div>`;
+                    html += `<div class="questions">`;
+
+                    items.forEach(item => {
+                        html += `
+                            <div class="question-item">
+                                <img src="${item.compound.src}" alt="molecule" class="question-img">
+                                <div class="answer">✓ ${item.answer.content}</div>
+                            </div>
+                        `;
+                    });
+
+                    html += `</div></div>`;
+                });
+
+                html += `</div></div>`;
+            });
+
+            // 添加难度切换事件
+            setTimeout(() => {
+                document.querySelectorAll('.difficulty-tab').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.difficulty-tab').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+
+                        const diff = btn.dataset.difficulty;
+                        document.querySelectorAll('.difficulty-content').forEach(el => {
+                            el.style.display = el.dataset.difficulty === diff ? 'block' : 'none';
+                        });
+                    });
+                });
+            }, 0);
+
+            return html;
+        }
+
+        // 查找包含特定答案的所有题目
+        function findQuestionsForAnswer(answerContent) {
+            const results = [];
+
+            // 遍历所有家族
+            Object.entries(Families).forEach(([familyKey, familyData]) => {
+                const compounds = getFamilyCompounds(familyKey);
+
+                compounds.forEach(compound => {
+                    const info = AnswerBank[compound.compoundKey];
+                    if (!info) return;
+
+                    // 检查所有难度下是否匹配答案
+                    familyData.difficulties.forEach(difficulty => {
+                        const answer = getAnswerForDifficulty(compound, difficulty);
+                        if (answer && answer.content === answerContent) {
+                            results.push({
+                                family: familyKey,
+                                familyName: familyData.nameZh,
+                                difficulty: difficulty,
+                                compound: compound,
+                                answer: answer,
+                                compoundName: info.content
+                            });
+                        }
+                    });
+                });
+            });
+
+            return results;
+        }
+
+        // 渲染查找結果
+        function renderQuestionResults(answerContent, results) {
+            if (results.length === 0) {
+                return `
+                    <div class="question-results">
+                        <h3>❌ 找不到包含「${answerContent}」的題目</h3>
+                    </div>
+                `;
+            }
+
+            let html = `
+                <div class="question-results">
+                    <button class="clear-search" onclick="clearSearch()">← 返回選項池</button>
+                    <h3>🔍 找到 ${results.length} 個包含「${answerContent}」的題目</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            `;
+
+            results.forEach(result => {
+                const diffLabel = {
+                    'beginner': '初級',
+                    'intermediate': '中級',
+                    'advanced': '進階'
+                };
+
+                html += `
+                    <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+                        <div style="color: #666; font-size: 0.85em; margin-bottom: 8px;">
+                            ${result.familyName} / ${diffLabel[result.difficulty]}
+                        </div>
+                        <img src="${result.compound.src}" alt="molecule" class="question-img" style="max-width: 150px;">
+                        <div style="margin-top: 10px; color: #333; font-size: 0.9em;">
+                            <strong>化合物：</strong> ${result.compoundName}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div></div>`;
+            return html;
+        }
+
+        function renderAnswerPool(poolType = 'all') {
+            const grouped = {};
+
+            Object.entries(AnswerBank).forEach(([key, value]) => {
+                if (!value.type) return;
+
+                if (poolType !== 'all' && value.type !== poolType) return;
+
+                if (!grouped[value.type]) {
+                    grouped[value.type] = [];
+                }
+                grouped[value.type].push(value);
+            });
+
+            let title = '📚 選項池 (Answer Bank)';
+            if (poolType === 'categoryZh') title += ' - 初級（官能基類別）';
+            if (poolType === 'compound') title += ' - 中級（化合物名稱）';
+            if (poolType === 'categoryEn') title += ' - 進階（英文官能基）';
+
+            let html = `<h2 class="level-title">${title}</h2>`;
+            html += `<div class="answer-pool-grid">`;
+
+            const typeOrder = ['categoryZh', 'compound', 'categoryEn'];
+            const typeNames = {
+                'compound': '化合物',
+                'categoryZh': '官能基（中文）',
+                'categoryEn': '官能基（英文）'
+            };
+
+            typeOrder.forEach(type => {
+                if (!grouped[type]) return;
+
+                const items = grouped[type];
+                const categoryGroups = {};
+
+                items.forEach(item => {
+                    if (!categoryGroups[item.category]) {
+                        categoryGroups[item.category] = [];
+                    }
+                    categoryGroups[item.category].push(item);
+                });
+
+                html += `<div class="answer-type-group">`;
+                html += `<div class="answer-type-title">
+                    ${typeNames[type]}
+                    <span class="category-badge">${items.length}</span>
+                </div>`;
+
+                const categoryOrder = [
+                    'alkane', 'alkene', 'alkyne', 'aromatic',
+                    'alcohol', 'aldehyde', 'ketone', 'carboxylic', 'ether', 'ester', 'amine', 'halide', 'phenol'
+                ];
+
+                categoryOrder.forEach(cat => {
+                    if (!categoryGroups[cat]) return;
+                    const catItems = categoryGroups[cat];
+
+                    html += `<div style="margin-bottom: 15px;">`;
+                    html += `<div style="font-weight: bold; color: #764ba2; margin-bottom: 8px; font-size: 0.95em;">
+                        ${getCategoryTitle(cat)} (${catItems.length})
+                    </div>`;
+                    html += `<div class="answer-items">`;
+
+                    catItems.forEach(item => {
+                        html += `<span class="answer-item" onclick="searchQuestions('${item.content}')">${item.content}</span>`;
+                    });
+
+                    html += `</div></div>`;
+                });
+
+                html += `</div>`;
+            });
+
+            html += `</div>`;
+            return html;
+        }
+
+        // 搜尋答案對應的題目
+        function searchQuestions(answerContent) {
+            searchingAnswerKey = answerContent;
+            const results = findQuestionsForAnswer(answerContent);
+            document.getElementById('content').innerHTML = renderQuestionResults(answerContent, results);
+        }
+
+        // 清空搜尋，返回選項池
+        function clearSearch() {
+            searchingAnswerKey = null;
+            const poolType = document.querySelector('[data-pool].active')?.dataset.pool || 'all';
+            document.getElementById('content').innerHTML = renderAnswerPool(poolType);
+        }
+
+        // 事件监听
+        document.querySelectorAll('[data-family]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('[data-family]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('content').innerHTML = renderFamily(btn.dataset.family);
+            });
+        });
+
+        document.querySelectorAll('[data-pool]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('[data-pool]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('content').innerHTML = renderAnswerPool(btn.dataset.pool);
+            });
+        });
+
+        // 初始化和驗證
+        function initPage() {
+            if (!QuestionImages || !Families || !Difficulties || !AnswerBank) {
+                document.getElementById('content').innerHTML = `
+                    <div style="padding: 20px; background: #fee; border-radius: 8px; color: #c00;">
+                        <h2>❌ 數據加載失敗</h2>
+                        <p>QuestionImages: ${QuestionImages ? '✓' : '✗'}</p>
+                        <p>Families: ${Families ? '✓' : '✗'}</p>
+                        <p>Difficulties: ${Difficulties ? '✓' : '✗'}</p>
+                        <p>AnswerBank: ${AnswerBank ? '✓' : '✗'}</p>
+                        <p>請確認 data.js 正確加載</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const hydrocarbonCompounds = getFamilyCompounds('hydrocarbon');
+            console.log('hydrocarbon compounds:', hydrocarbonCompounds.length);
+
+            if (hydrocarbonCompounds.length === 0) {
+                document.getElementById('content').innerHTML = `
+                    <div style="padding: 20px; background: #fea; border-radius: 8px; color: #a70;">
+                        <h2>⚠️ 沒有找到項目</h2>
+                        <p>QuestionImages 數量: ${QuestionImages.length}</p>
+                        <p>檢查樣本: ${QuestionImages[0] ? JSON.stringify(QuestionImages[0]) : '無'}</p>
+                        <p>AnswerBank 樣本: ${AnswerBank.methane ? JSON.stringify(AnswerBank.methane) : '無'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            document.getElementById('content').innerHTML = renderFamily('hydrocarbon');
+        }
+
+        // 頁面加載完成後初始化
+        window.addEventListener('load', initPage);
+        // 如果已經加載則立即執行
+        if (document.readyState === 'complete') {
+            initPage();
+        }
+    </script>
+</body>
+</html>

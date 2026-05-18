@@ -13,3 +13,5 @@ Thumbs.db
 UI_ref/
 legacy/style.css
 tools/
+# 例外：工具檔案（遊戲輔助檢視器等）
+!tools/*.html
