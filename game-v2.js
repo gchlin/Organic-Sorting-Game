@@ -455,7 +455,21 @@
             return { beginner: '初級', intermediate: '中級', advanced: '高級' }[d] || d;
         };
 
-        function appendFamilyButton(fk, diff, onClick) {
+        function setMenuButtonContent(btn, tag, label) {
+            btn.innerHTML = '';
+            if (tag) {
+                const tagEl = document.createElement('span');
+                tagEl.className = 'level-tag';
+                tagEl.textContent = tag;
+                btn.appendChild(tagEl);
+            }
+            const nameEl = document.createElement('span');
+            nameEl.className = 'level-name';
+            nameEl.textContent = label;
+            btn.appendChild(nameEl);
+        }
+
+        function appendFamilyButton(fk, diff, tag, onClick) {
             const btn = document.createElement('button');
             let label = Families[fk].nameZh;
             if (typeof QuestionEngine !== 'undefined' && QuestionEngine.getQuestionSet) {
@@ -466,7 +480,7 @@
                     label += '  （' + Math.min(askedSize, totalQs) + ' / ' + totalQs + ' 題）';
                 }
             }
-            btn.textContent = label;
+            setMenuButtonContent(btn, tag, label);
             if (typeof Save !== 'undefined' && Save.isSubLevelCleared && Save.isSubLevelCleared(fk, diff)) {
                 btn.classList.add('sub-cleared');
             }
@@ -480,17 +494,16 @@
             const familyKeys = Object.keys(Families).filter(k => Families[k].difficulties.indexOf(diff) !== -1);
             for (let i = 0; i < familyKeys.length; i++) {
                 const fk = familyKeys[i];
-                const btn = appendFamilyButton(fk, diff, function () {
+                const btn = appendFamilyButton(fk, diff, 'L' + (i + 1), function () {
                     startMode({ mode: 'practice', family: fk, difficulty: diff, opponent: 'human' });
                 });
-                btn.textContent = (i + 1) + '. ' + btn.textContent;
                 listEl.appendChild(btn);
             }
         } else if (_subMenuContext.kind === 'duelDifficulty') {
             const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
             const currentOpp = settings.duelOpponent || 'aiMedium';
             const oppLabel = { human: 'PvP（雙人）', aiEasy: 'PvE 易', aiMedium: 'PvE 中', aiHard: 'PvE 難' }[currentOpp] || currentOpp;
-            titleEl.textContent = '⚔️ 對決 — 選擇難度（目前對手：' + oppLabel + '）';
+            titleEl.textContent = '對決 — 選擇難度（目前對手：' + oppLabel + '）';
             const diffs = [
                 { key: 'beginner', label: '1. 初級' },
                 { key: 'intermediate', label: '2. 中級' },
@@ -499,7 +512,7 @@
             for (let i = 0; i < diffs.length; i++) {
                 const d = diffs[i];
                 const btn = document.createElement('button');
-                btn.textContent = d.label;
+                setMenuButtonContent(btn, String(i + 1), d.label.replace(/^\d+\.\s*/, ''));
                 btn.addEventListener('click', function () {
                     _subMenuContext = { kind: 'duelFamily', difficulty: d.key };
                     render();
@@ -509,7 +522,7 @@
             // "修改對手模式" 放在底下，視覺上跟難度按鈕區分
             const modeBtn = document.createElement('button');
             modeBtn.className = 'v2-sub-mode-toggle';
-            modeBtn.textContent = '4. 修改對手模式...';
+            setMenuButtonContent(modeBtn, '4', '修改對手模式...');
             modeBtn.addEventListener('click', function () {
                 _subMenuContext = { kind: 'duelOpponentSetting' };
                 render();
@@ -520,19 +533,18 @@
             const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
             const opponent = settings.duelOpponent || 'aiMedium';
             const oppLabel = { human: 'PvP', aiEasy: 'PvE 易', aiMedium: 'PvE 中', aiHard: 'PvE 難' }[opponent] || opponent;
-            titleEl.textContent = '⚔️ ' + diffName(diff) + ' 對決（' + oppLabel + '） — 選擇主題子關';
+            titleEl.textContent = diffName(diff) + ' 對決（' + oppLabel + '） — 選擇主題子關';
             const familyKeys = Object.keys(Families).filter(k => Families[k].difficulties.indexOf(diff) !== -1);
             for (let i = 0; i < familyKeys.length; i++) {
                 const fk = familyKeys[i];
-                const btn = appendFamilyButton(fk, diff, function () {
+                const btn = appendFamilyButton(fk, diff, 'L' + (i + 1), function () {
                     // 直接用 settings 裡存的對手模式開始對決
                     startMode({ mode: 'duel', family: fk, difficulty: diff, opponent: opponent });
                 });
-                btn.textContent = (i + 1) + '. ' + btn.textContent;
                 listEl.appendChild(btn);
             }
         } else if (_subMenuContext.kind === 'duelOpponentSetting') {
-            titleEl.textContent = '⚔️ 對決 — 選擇對手模式（會記住下次自動使用）';
+            titleEl.textContent = '對決 — 選擇對手模式（會記住下次自動使用）';
             const opponents = [
                 { key: 'human', label: '1. PvP（雙人）' },
                 { key: 'aiEasy', label: '2. PvE 易' },
@@ -544,7 +556,7 @@
             for (let i = 0; i < opponents.length; i++) {
                 const op = opponents[i];
                 const btn = document.createElement('button');
-                btn.textContent = op.label + (op.key === current ? '  ✓' : '');
+                setMenuButtonContent(btn, String(i + 1), op.label.replace(/^\d+\.\s*/, '') + (op.key === current ? '  ✓' : ''));
                 if (op.key === current) btn.classList.add('sub-cleared');
                 btn.addEventListener('click', function () {
                     if (typeof Save !== 'undefined' && Save.writeSettings) {
