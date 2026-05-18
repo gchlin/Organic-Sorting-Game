@@ -489,6 +489,13 @@
             return btn;
         }
 
+        function appendDifficultyButton(diff, tag, onClick) {
+            const btn = document.createElement('button');
+            setMenuButtonContent(btn, tag, diffName(diff));
+            btn.addEventListener('click', onClick);
+            listEl.appendChild(btn);
+        }
+
         if (_subMenuContext.kind === 'difficulty') {
             const diff = _subMenuContext.difficulty;
             titleEl.textContent = diffName(diff) + ' 練習 — 選擇主題子關';
@@ -531,19 +538,16 @@
             listEl.appendChild(opponentRow);
 
             const diffs = [
-                { key: 'beginner', label: '1. 初級' },
-                { key: 'intermediate', label: '2. 中級' },
-                { key: 'advanced', label: '3. 高級' }
+                { key: 'beginner', tag: 'L1' },
+                { key: 'intermediate', tag: 'L3' },
+                { key: 'advanced', tag: 'L6' }
             ];
             for (let i = 0; i < diffs.length; i++) {
                 const d = diffs[i];
-                const btn = document.createElement('button');
-                setMenuButtonContent(btn, '', d.label.replace(/^\d+\.\s*/, ''));
-                btn.addEventListener('click', function () {
+                appendDifficultyButton(d.key, d.tag, function () {
                     _subMenuContext = { kind: 'duelFamily', difficulty: d.key };
                     render();
                 });
-                listEl.appendChild(btn);
             }
         } else if (_subMenuContext.kind === 'duelFamily') {
             const diff = _subMenuContext.difficulty;
@@ -2064,13 +2068,8 @@
             const arg = t.getAttribute('data-arg');
             switch (action) {
                 case 'enter-difficulty':
-                    if (arg === 'advanced') {
-                        // Advanced has only englishChallenge — skip sub-menu.
-                        startMode({ mode: 'practice', family: 'englishChallenge', difficulty: 'advanced', opponent: 'human' });
-                    } else {
-                        _subMenuContext = { kind: 'difficulty', difficulty: arg };
-                        goToScreen('sub-menu');
-                    }
+                    _subMenuContext = { kind: 'difficulty', difficulty: arg };
+                    goToScreen('sub-menu');
                     break;
                 case 'enter-duel-menu':
                     _subMenuContext = { kind: 'duelDifficulty' };
