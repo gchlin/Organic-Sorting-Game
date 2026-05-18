@@ -639,11 +639,18 @@
                         || state.phase === 'resolvingCorrect' || state.phase === 'resolvingWrong'));
             optsContainer.style.visibility = showOptions ? 'visible' : 'hidden';
             const btns = optsContainer.querySelectorAll('.option-btn');
+            const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
+            const keybindings = settings.keybindings || {};
             for (let i = 0; i < btns.length; i++) {
                 const opt = state.question.options[i];
                 if (opt) {
                     btns[i].setAttribute('data-option-key', opt.key);
-                    btns[i].textContent = opt.content || '';
+                    const leftKey = _formatKeyCode(keybindings['optionLeft' + i]);
+                    const rightKey = _formatKeyCode(keybindings['optionRight' + i]);
+                    btns[i].innerHTML =
+                        '<span class="option-key-hint">[' + _escapeHtml(leftKey) + ']</span>' +
+                        '<span class="option-label">' + _escapeHtml(opt.content || '') + '</span>' +
+                        '<span class="option-key-hint">[' + _escapeHtml(rightKey) + ']</span>';
                     // option class overlays
                     btns[i].classList.toggle('eliminated',
                         state.question.eliminatedWrongKeys && state.question.eliminatedWrongKeys.has
@@ -659,7 +666,7 @@
                         state.phase === 'resolvingCorrect' && opt.key === state.question.correctKey);
                 } else {
                     btns[i].setAttribute('data-option-key', '');
-                    btns[i].textContent = '';
+                    btns[i].innerHTML = '';
                     btns[i].classList.remove('eliminated', 'wrong-chosen', 'correct-reveal');
                 }
             }
@@ -1497,6 +1504,14 @@
         if (code.indexOf('Numpad') === 0) return 'Num ' + code.slice(6);     // Numpad4 → Num 4
         if (code.indexOf('Arrow') === 0)  return '↑↓←→ '.charAt(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(code)) || code;
         return code;                                                          // Space, Enter, Tab, …
+    }
+
+    function _escapeHtml(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
     }
 
     function _renderKeybindingsList(bindings) {

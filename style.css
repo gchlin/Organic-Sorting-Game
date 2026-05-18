@@ -2698,8 +2698,26 @@ body.v2-active .v2-root { display: block; }
     font-family: inherit;
     font-size: 1.1rem;
     font-weight: 700;
+    display: grid;
+    grid-template-columns: minmax(34px, auto) minmax(0, 1fr) minmax(34px, auto);
+    align-items: center;
+    gap: 10px;
+    text-align: center;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 2px 0 rgba(0,0,0,.35);
     transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+.option-label {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.option-key-hint {
+    align-self: center;
+    color: rgba(245,239,222,.72);
+    font-family: "Consolas", monospace;
+    font-size: .82rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    white-space: nowrap;
 }
 .option-btn:hover {
     color: #fff5c0;
