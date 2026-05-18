@@ -59,6 +59,7 @@
     let _storyState = null;     // { lines, idx, playerName, onDone }
     let _wrongChosenMap = {};   // { compoundKey: chosenWrongAnswerKey } — per round
     let _codexTab = 'molecules'; // 'molecules' | 'levels' | 'badges' | 'story'
+    let _wrongBookTab = 'category'; // 'category' | 'all' | 'box1' | 'box2' | 'box3' | 'mastered'
 
     function dispatch(action) {
         _pendingDispatch.push(action);
@@ -1267,17 +1268,36 @@
     function renderWrongBookScreen() {
         const root = document.getElementById('wrong-book-groups');
         if (!root) return;
-        root.innerHTML = '';
         const all = (typeof Save !== 'undefined' && Save.getAllActiveWrongs)
             ? Save.getAllActiveWrongs() : {};
         const keys = Object.keys(all);
         if (keys.length === 0) {
-            const empty = document.createElement('div');
-            empty.className = 'v2-wrong-empty';
-            empty.textContent = '目前沒有錯題 ✨';
-            root.appendChild(empty);
+            root.innerHTML = '<div class="v2-wrong-empty">目前沒有錯題</div>';
             return;
         }
+
+        const DIFF_NAME = { beginner: '初級', intermediate: '中級', advanced: '高級' };
+        const tabs = [
+            { key: 'category', label: '依類別' },
+            { key: 'all', label: '全部' },
+            { key: 'box1', label: '沒對過' },
+            { key: 'box2', label: '答對一次' },
+            { key: 'box3', label: '答對兩次' },
+            { key: 'mastered', label: '已克服' }
+        ];
+
+        function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        function tabMatches(entry) {
+            if (_wrongBookTab === 'all' || _wrongBookTab === 'category') return true;
+            if (_wrongBookTab === 'box1') return entry.box <= 1;
+            if (_wrongBookTab === 'box2') return entry.box === 2;
+            if (_wrongBookTab === 'box3') return entry.box === 3;
+            if (_wrongBookTab === 'mastered') return entry.box >= 4;
+            return true;
+        }
+
+        const groups = [];
+        const counts = { category: 0, all: 0, box1: 0, box2: 0, box3: 0, mastered: 0 };
         for (let i = 0; i < keys.length; i++) {
             const key = keys[i]; // 'family-difficulty'
             const dashIdx = key.lastIndexOf('-');
@@ -1285,92 +1305,131 @@
             const family = key.slice(0, dashIdx);
             const difficulty = key.slice(dashIdx + 1);
             const fam = (typeof Families !== 'undefined') ? Families[family] : null;
-            const diffName = { beginner: '初', intermediate: '中', advanced: '高' }[difficulty] || difficulty;
-
             const entries = (Save.getWrongEntriesV2)
                 ? Save.getWrongEntriesV2(family, difficulty)
                 : all[key].map(function (ck) { return { compoundKey: ck, box: 1, correctStreak: 0 }; });
-            const masteredCount = entries.filter(function (e) { return e.box >= 4; }).length;
-            const struggleCount = entries.length - masteredCount;
+            entries.forEach(function (e) {
+                counts.category++;
+                counts.all++;
+                if (e.box <= 1) counts.box1++;
+                else if (e.box === 2) counts.box2++;
+                else if (e.box === 3) counts.box3++;
+                else if (e.box >= 4) counts.mastered++;
+            });
+            const filtered = entries.filter(tabMatches);
+            if (!filtered.length) continue;
+            groups.push({ key: key, family: family, difficulty: difficulty, fam: fam, entries: filtered, allEntries: entries });
+        }
 
-            const block = document.createElement('div');
-            block.className = 'v2-wrong-group';
+        let html = '<nav class="codex-tabs v2-wrong-tabs" role="tablist">';
+        for (const t of tabs) {
+            const active = (_wrongBookTab === t.key) ? ' active' : '';
+            html += '<button type="button" class="tab' + active + '" data-wrong-tab="' + t.key + '">'
+                + esc(t.label) + ' <span class="count">' + esc(counts[t.key]) + '</span></button>';
+        }
+        html += '</nav>';
 
-            const header = document.createElement('div');
-            header.innerHTML =
-                '<h3>' + (fam ? fam.nameZh : family) + ' · ' + diffName + '</h3>' +
-                '<div>共 <span class="count">' + entries.length + '</span> 題（still 練習中 ' + struggleCount
-                + '，已克服 ' + masteredCount + '）</div>';
-            block.appendChild(header);
+        if (!groups.length) {
+            html += '<div class="v2-wrong-empty">這個頁籤目前沒有卡片</div>';
+            root.innerHTML = html;
+            wireWrongBookTabs(root);
+            return;
+        }
 
-            // Cards
-            const cardWrap = document.createElement('div');
-            cardWrap.className = 'v2-wrong-cards';
-            for (let j = 0; j < entries.length; j++) {
-                const entry = entries[j];
+        html += '<div class="v2-wrong-group-list' + (_wrongBookTab === 'category' ? '' : ' is-flat') + '">';
+        for (let i = 0; i < groups.length; i++) {
+            const g = groups[i];
+            const masteredCount = g.allEntries.filter(function (e) { return e.box >= 4; }).length;
+            const practiceCount = g.allEntries.length - masteredCount;
+            const title = (g.fam ? g.fam.nameZh : g.family) + ' ' + (DIFF_NAME[g.difficulty] || g.difficulty)
+                + ' 共' + g.allEntries.length + '題 要練習';
+            const groupTag = g.family + '|' + g.difficulty;
+            const filteredKeys = g.entries.map(function (e) { return e.compoundKey; }).join(',');
+
+            html += '<details class="v2-wrong-group" open data-wrong-group="' + esc(groupTag) + '">'
+                + '<summary class="v2-wrong-summary">'
+                    + '<span class="v2-wrong-summary-title">' + esc(title) + '</span>'
+                    + '<span class="v2-wrong-summary-meta">練習中 ' + practiceCount + ' / 已克服 ' + masteredCount + '</span>'
+                + '</summary>'
+                + '<div class="v2-wrong-cards">';
+
+            for (let j = 0; j < g.entries.length; j++) {
+                const family = g.family;
+                const difficulty = g.difficulty;
+                const entry = g.entries[j];
                 const ck = entry.compoundKey;
                 const bank = (typeof AnswerBank !== 'undefined') ? AnswerBank[ck] : null;
                 const img = _findImageFor(ck);
-                const card = document.createElement('div');
-                card.className = 'v2-wrong-card box-' + entry.box;
-                if (entry.box >= 4) card.classList.add('mastered');
                 const boxDots = '●'.repeat(entry.box) + '○'.repeat(5 - entry.box);
-                card.innerHTML =
-                    '<img src="' + (img || '') + '" alt="">' +
-                    '<div class="name-zh">' + (bank ? bank.content : ck) + '</div>' +
-                    '<div class="box-indicator" title="鞋盒層級 ' + entry.box + '/5">' + boxDots + '</div>';
-                const del = document.createElement('button');
-                del.className = 'v2-wrong-delete';
-                del.textContent = '✕';
-                del.title = '從錯題本移除';
-                del.addEventListener('click', function () {
-                    if (Save.deleteWrongV2) {
-                        Save.deleteWrongV2(family, difficulty, ck);
-                        render();
-                    }
-                });
-                card.appendChild(del);
-                cardWrap.appendChild(card);
+                const masteredClass = entry.box >= 4 ? ' mastered' : '';
+                html += '<div class="v2-wrong-card box-' + entry.box + masteredClass + '">'
+                    + '<img src="' + esc(img || '') + '" alt="">'
+                    + '<div class="name-zh">' + esc(bank ? bank.content : ck) + '</div>'
+                    + '<div class="box-indicator" title="卡片盒層級 ' + entry.box + '/5">' + boxDots + '</div>'
+                    + '<button type="button" class="v2-wrong-practice" data-wrong-practice="' + esc(groupTag + '|' + ck) + '">練習</button>'
+                    + '<button type="button" class="v2-wrong-delete" data-wrong-delete="' + esc(groupTag + '|' + ck) + '" title="從錯題本移除">×</button>'
+                + '</div>';
             }
-            block.appendChild(cardWrap);
-
-            // Action buttons
-            const actions = document.createElement('div');
-            actions.className = 'v2-wrong-actions';
-
-            const retrainBtn = document.createElement('button');
-            retrainBtn.textContent = '重練這組 (' + entries.length + ' 題)';
-            retrainBtn.addEventListener('click', function () {
-                startMode({
-                    mode: 'practice', family: family, difficulty: difficulty,
-                    opponent: 'human', queueSource: 'wrongOnly'
-                });
-            });
-            actions.appendChild(retrainBtn);
-
+            html += '</div><div class="v2-wrong-actions">'
+                + '<button type="button" data-wrong-retrain="' + esc(groupTag) + '" data-wrong-keys="' + esc(filteredKeys) + '">重練目前篩選 (' + g.entries.length + ' 題)</button>';
             if (masteredCount > 0) {
-                const purgeBtn = document.createElement('button');
-                purgeBtn.textContent = '刪除已克服 (' + masteredCount + ' 題)';
-                purgeBtn.className = 'v2-wrong-purge';
-                purgeBtn.addEventListener('click', function () {
-                    _pendingConfirm = {
-                        text: '確定要刪除這組已克服的 ' + masteredCount + ' 題？',
-                        onYes: function () {
-                            if (Save.deleteMasteredWrongsV2) {
-                                Save.deleteMasteredWrongsV2(family, difficulty);
-                            }
-                            render();
-                        },
-                        onNo: function () {}
-                    };
-                    render();
-                });
-                actions.appendChild(purgeBtn);
+                html += '<button type="button" class="v2-wrong-purge" data-wrong-purge="' + esc(groupTag) + '">刪除已克服 (' + masteredCount + ' 題)</button>';
             }
-            block.appendChild(actions);
-
-            root.appendChild(block);
+            html += '</div></details>';
         }
+        html += '</div>';
+        root.innerHTML = html;
+        wireWrongBookTabs(root);
+        wireWrongBookActions(root);
+    }
+
+    function wireWrongBookTabs(root) {
+        root.querySelectorAll('[data-wrong-tab]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                _wrongBookTab = btn.getAttribute('data-wrong-tab') || 'category';
+                renderWrongBookScreen();
+            });
+        });
+    }
+
+    function wireWrongBookActions(root) {
+        root.querySelectorAll('[data-wrong-retrain]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const parts = (btn.getAttribute('data-wrong-retrain') || '').split('|');
+                const keys = (btn.getAttribute('data-wrong-keys') || '').split(',').filter(Boolean);
+                startMode({ mode: 'practice', family: parts[0], difficulty: parts[1], opponent: 'human', queueSource: 'wrongOnly', wrongKeys: keys });
+            });
+        });
+        root.querySelectorAll('[data-wrong-practice]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const parts = (btn.getAttribute('data-wrong-practice') || '').split('|');
+                startMode({ mode: 'practice', family: parts[0], difficulty: parts[1], opponent: 'human', queueSource: 'wrongOnly', wrongKeys: [parts[2]] });
+            });
+        });
+        root.querySelectorAll('[data-wrong-delete]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const parts = (btn.getAttribute('data-wrong-delete') || '').split('|');
+                if (Save.deleteWrongV2) {
+                    Save.deleteWrongV2(parts[0], parts[1], parts[2]);
+                    render();
+                }
+            });
+        });
+        root.querySelectorAll('[data-wrong-purge]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const parts = (btn.getAttribute('data-wrong-purge') || '').split('|');
+                _pendingConfirm = {
+                    text: '確定要刪除這組已克服的卡片？',
+                    onYes: function () {
+                        if (Save.deleteMasteredWrongsV2) Save.deleteMasteredWrongsV2(parts[0], parts[1]);
+                        render();
+                    },
+                    onNo: function () {}
+                };
+                render();
+            });
+        });
     }
 
     function renderSettingsScreen() {
@@ -1653,6 +1712,53 @@
         if (t) t.textContent = _pendingConfirm.text || '確定？';
     }
 
+    function openHelp(kind) {
+        if (kind === 'wrong-book') {
+            _tutorialState = {
+                pages: [
+                    {
+                        title: '錯題本說明',
+                        expr: 'neutral',
+                        text: '每張卡片下方的五個點代表卡片盒位置：● 越多表示越熟。答錯會回到第 1 盒，答對會往後移。'
+                    },
+                    {
+                        title: '卡片盒記憶法',
+                        expr: 'happy',
+                        text: '卡片盒記憶法會把不熟的題目安排得更常出現，熟的題目往後放，讓複習集中在真正需要練的卡片。'
+                    },
+                    {
+                        title: '何時消失',
+                        expr: 'neutral',
+                        text: '答對後卡片會逐步升盒；進入第 4 盒就算已克服，可用「刪除已克服」移除，也可以按單張卡片右上角的 × 自己刪除。'
+                    }
+                ],
+                idx: 0,
+                onDone: function () { goToScreen('wrong-book'); }
+            };
+            render();
+            return;
+        }
+        if (kind === 'codex') {
+            _tutorialState = {
+                pages: [
+                    {
+                        title: '圖鑑頁籤',
+                        expr: 'neutral',
+                        text: '分子會顯示已解鎖的化合物；闖關進度記錄各子關完成狀態；勳章是累積成就；劇情會在通關後解鎖。'
+                    },
+                    {
+                        title: '卡片內容',
+                        expr: 'happy',
+                        text: '已解鎖的分子卡可以點開，查看結構圖、名稱、分類與簡短說明。未解鎖卡片會先以 ??? 顯示。'
+                    }
+                ],
+                idx: 0,
+                onDone: function () { goToScreen('codex'); }
+            };
+            render();
+        }
+    }
+
     function renderDevBanner() {
         const banner = document.getElementById('dev-quickwin-banner');
         if (!banner) return;
@@ -1705,7 +1811,7 @@
 
         // Build queue
         if (opts.queueSource === 'wrongOnly') {
-            state.queue = _buildQueueFromWrongBook(opts.family, opts.difficulty);
+            state.queue = _buildQueueFromWrongBook(opts.family, opts.difficulty, opts.wrongKeys);
         } else {
             const asked = (typeof Save !== 'undefined' && Save.getAskedHistory)
                 ? Save.getAskedHistory(opts.family, opts.difficulty) : new Set();
@@ -1774,8 +1880,10 @@
         // Wrong-in-round will be added by SUBMIT_ANSWER handler (we wrap dispatch below).
     }
 
-    function _buildQueueFromWrongBook(family, difficulty) {
-        const active = (typeof Save !== 'undefined' && Save.getActiveWrongs)
+    function _buildQueueFromWrongBook(family, difficulty, overrideKeys) {
+        const active = Array.isArray(overrideKeys) && overrideKeys.length
+            ? overrideKeys
+            : (typeof Save !== 'undefined' && Save.getActiveWrongs)
             ? Save.getActiveWrongs(family, difficulty) : [];
         if (!active.length) return [];
         const all = QuestionEngine.getQuestionSet(family, difficulty);
@@ -1961,6 +2069,9 @@
                 case 'enter-codex': goToScreen('codex'); break;
                 case 'enter-wrong-book': goToScreen('wrong-book'); break;
                 case 'enter-settings': goToScreen('settings'); break;
+                case 'open-help':
+                    openHelp(arg);
+                    break;
                 case 'back-to-main':
                 case 'back-to-menu':
                     if (aiController) { try { aiController.stop(); } catch (err) {} aiController = null; }
