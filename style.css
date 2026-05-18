@@ -2920,42 +2920,72 @@ body.v2-active .v2-root { display: block; }
     50% { background: #5fd084; }
 }
 
-/* Big overlay feedback during resolving phases — makes correctness obvious. */
+/* Resolving feedback band, matched to level_UI. */
 #feedback-overlay {
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.6);
-    font-size: 6rem;
-    font-weight: bold;
+    left: 0;
+    right: 0;
+    top: 48%;
+    display: grid;
+    justify-items: center;
+    gap: 3px;
+    padding: 18px 20px;
+    transform: translateY(-50%) scale(.98);
+    text-align: center;
+    white-space: nowrap;
     z-index: 9999;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.15s, transform 0.25s ease-out;
-    text-shadow: 0 0 16px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.5);
+    background: rgba(0,0,0,.48);
+    border-block: 1px solid rgba(255,255,255,.18);
+    transition: opacity .18s ease, transform .18s ease;
+}
+#feedback-overlay span {
+    color: var(--hp-parchment-dark);
+    font-family: "Cinzel", Georgia, serif;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    font-size: clamp(.72rem, 1.8vw, .95rem);
+    line-height: 1;
+}
+#feedback-overlay strong {
+    color: #fff;
+    font-family: "Cinzel", Georgia, serif;
+    font-size: clamp(2.6rem, 8vw, 5.4rem);
+    line-height: 1;
+    font-weight: 900;
+    white-space: nowrap;
+}
+#feedback-overlay small {
+    color: #fff5c0;
+    font-size: clamp(.78rem, 2vw, 1rem);
+    line-height: 1.1;
+    white-space: nowrap;
+}
+#feedback-overlay.combo-suppressed {
+    opacity: 0 !important;
 }
 #feedback-overlay.show-correct {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-    color: #6fe09c;
-    animation: v2-feedback-pop 0.5s ease-out;
+    transform: translateY(-50%) scale(1);
+    background: linear-gradient(90deg, transparent, rgba(48,132,82,.72), transparent);
+    animation: v2-feedback-pop .18s ease-out;
 }
 #feedback-overlay.show-wrong {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-    color: #ff5a5a;
-    animation: v2-feedback-shake 0.4s ease-out;
+    transform: translateY(-50%) scale(1);
+    background: linear-gradient(90deg, transparent, rgba(150,32,28,.75), transparent);
+    animation: v2-feedback-shake .22s ease-out;
 }
 @keyframes v2-feedback-pop {
-    0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
-    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    0% { transform: translateY(-50%) scale(.98); opacity: 0; }
+    100% { transform: translateY(-50%) scale(1); opacity: 1; }
 }
 @keyframes v2-feedback-shake {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); }
-    25% { transform: translate(-52%, -50%) scale(1); }
-    50% { transform: translate(-48%, -50%) scale(1); }
-    75% { transform: translate(-52%, -50%) scale(1); }
+    0%, 100% { transform: translateY(-50%) translateX(0) scale(1); }
+    25% { transform: translateY(-50%) translateX(-4px) scale(1); }
+    50% { transform: translateY(-50%) translateX(4px) scale(1); }
+    75% { transform: translateY(-50%) translateX(-2px) scale(1); }
 }
 
 .v2-buzz {
@@ -3476,41 +3506,52 @@ body.v2-active .screen .v2-back-btn {
    ============================================================ */
 .combo-popup {
     position: fixed;
-    top: 32%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0);
+    left: 0;
+    right: 0;
+    top: 48%;
+    transform: translateY(-50%) scale(.98);
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: clamp(8px, 1.7vw, 18px);
     font-family: "Cinzel", "Georgia", serif;
     font-weight: 900;
-    font-size: 3rem;
-    color: var(--hp-gold);
-    text-shadow: 0 0 12px var(--hp-gold-glow), 2px 2px 0 rgba(0,0,0,0.7);
+    line-height: 1;
+    letter-spacing: 0;
+    color: #fff;
+    background: linear-gradient(90deg, transparent, rgba(48,132,82,.72), transparent);
+    border-block: 1px solid rgba(255,255,255,.18);
+    padding: 12px 18px;
+    text-shadow: 0 2px 6px rgba(0,0,0,.7);
     z-index: 9500;
     pointer-events: none;
     white-space: nowrap;
-    animation: comboPopupAnim 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    text-align: center;
+    animation: comboPopupAnim 1.15s ease forwards;
 }
-.combo-popup.side-left  { left: 25%; }
-.combo-popup.side-right { left: 75%; }
-.combo-popup.tier-good     { color: #6fe09c; }
-.combo-popup.tier-great    { color: #f5d76e; font-size: 3.5rem; }
+.combo-popup .combo-mid {
+    font-size: clamp(2.6rem, 8vw, 5.4rem);
+    white-space: nowrap;
+}
+.combo-popup .combo-big {
+    color: #ffd86a;
+    font-size: clamp(3.4rem, 10vw, 6.4rem);
+    text-shadow: 0 2px 6px rgba(0,0,0,.72), 0 0 16px rgba(212,175,55,.48);
+    white-space: nowrap;
+}
+.combo-popup.tier-good { background: linear-gradient(90deg, transparent, rgba(48,132,82,.72), transparent); }
+.combo-popup.tier-great {
+    background: linear-gradient(90deg, transparent, rgba(58,142,88,.78), transparent);
+}
 .combo-popup.tier-brilliant {
-    color: #ff8c69;
-    font-size: 4.2rem;
-    text-shadow: 0 0 16px #ff8c69, 0 0 28px #ff5a5a, 2px 2px 0 rgba(0,0,0,0.7);
-    animation: comboPopupAnim 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards,
-               comboBrilliantSpin 1.4s linear forwards;
+    background: linear-gradient(90deg, transparent, rgba(68,152,96,.84), transparent);
+    border-block-color: rgba(255,245,192,.42);
 }
 @keyframes comboPopupAnim {
-    0%   { transform: translate(-50%, -50%) scale(0)   rotate(-8deg); opacity: 0; }
-    18%  { transform: translate(-50%, -50%) scale(1.5) rotate(4deg);  opacity: 1; }
-    35%  { transform: translate(-50%, -50%) scale(1)   rotate(0);     opacity: 1; }
-    70%  { transform: translate(-50%, -50%) scale(1)   rotate(0);     opacity: 1; }
-    100% { transform: translate(-50%, -120%) scale(0.85) rotate(0);   opacity: 0; }
-}
-@keyframes comboBrilliantSpin {
-    0%   { filter: hue-rotate(0deg)   brightness(1); }
-    50%  { filter: hue-rotate(40deg)  brightness(1.3); }
-    100% { filter: hue-rotate(0deg)   brightness(1); }
+    0%   { transform: translateY(-50%) scale(.98); opacity: 0; }
+    18%  { transform: translateY(-50%) scale(1);   opacity: 1; }
+    72%  { transform: translateY(-50%) scale(1);   opacity: 1; }
+    100% { transform: translateY(-70%) scale(.98); opacity: 0; }
 }
 
 /* ============================================================

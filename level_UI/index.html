@@ -18,6 +18,9 @@
             <button type="button" data-demo-mode="duel">Duel</button>
             <button type="button" data-feedback="correct">答對</button>
             <button type="button" data-feedback="wrong">答錯</button>
+            <button type="button" data-feedback="combo" data-combo-word="厲害">Combo 3</button>
+            <button type="button" data-feedback="combo" data-combo-word="天才">Combo 5</button>
+            <button type="button" data-feedback="combo" data-combo-word="無敵">Combo 7</button>
             <button type="button" data-feedback="clear">清除</button>
         </nav>
 
@@ -115,6 +118,11 @@
                 <strong>答錯</strong>
                 <small>正解：炔類</small>
             </div>
+            <div class="feedback-band feedback-combo" aria-hidden="true">
+                <span>Combo</span>
+                <strong class="combo-line"><b id="combo-left">厲</b><em>答對</em><b id="combo-right">害</b></strong>
+                <small>連續答對</small>
+            </div>
 
             <div class="dev-pill">測試模式：答對 2 題即結算</div>
         </section>
@@ -134,9 +142,15 @@
         });
         document.querySelectorAll('[data-feedback]').forEach((button) => {
             button.addEventListener('click', () => {
-                screen.classList.remove('show-correct', 'show-wrong');
+                screen.classList.remove('show-correct', 'show-wrong', 'show-combo');
                 if (button.dataset.feedback === 'correct') screen.classList.add('show-correct');
                 if (button.dataset.feedback === 'wrong') screen.classList.add('show-wrong');
+                if (button.dataset.feedback === 'combo') {
+                    const word = button.dataset.comboWord || '厲害';
+                    document.getElementById('combo-left').textContent = word.charAt(0);
+                    document.getElementById('combo-right').textContent = word.charAt(1);
+                    screen.classList.add('show-combo');
+                }
             });
         });
     </script>

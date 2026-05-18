@@ -809,13 +809,17 @@
         el.classList.remove('show-correct', 'show-wrong');
         if (!state) { el.textContent = ''; return; }
         if (state.phase === 'resolvingCorrect') {
-            el.textContent = '✓ 答對';
+            el.innerHTML = '<span>Correct</span><strong>答對</strong><small>繼續保持</small>';
             el.classList.add('show-correct');
         } else if (state.phase === 'resolvingWrong') {
             const reason = state.question && state.question.lastResolveReason;
-            el.textContent = reason === 'timeout' ? '⏱ 逾時'
-                           : reason === 'giveup' ? '⊘ 放棄'
-                           : '✗ 答錯';
+            const label = reason === 'timeout' ? 'Timeout'
+                        : reason === 'giveup' ? 'Give Up'
+                        : 'Wrong';
+            const text = reason === 'timeout' ? '逾時'
+                       : reason === 'giveup' ? '放棄'
+                       : '答錯';
+            el.innerHTML = '<span>' + label + '</span><strong>' + text + '</strong><small>再觀察一次</small>';
             el.classList.add('show-wrong');
         } else {
             el.textContent = '';
@@ -905,15 +909,15 @@
     }
 
     function _comboLevel(streak) {
-        if (streak >= 8) return 'Brilliant!';
-        if (streak >= 5) return 'Great!';
-        if (streak >= 3) return 'Good!';
+        if (streak >= 7) return '無敵';
+        if (streak >= 5) return '天才';
+        if (streak >= 3) return '厲害';
         return '';
     }
     function _comboTier(label) {
-        if (label === 'Brilliant!') return 'brilliant';
-        if (label === 'Great!')     return 'great';
-        if (label === 'Good!')      return 'good';
+        if (label === '無敵') return 'brilliant';
+        if (label === '天才') return 'great';
+        if (label === '厲害') return 'good';
         return '';
     }
 
@@ -926,12 +930,22 @@
         const tier = _comboTier(label);
         if (!tier) return;
         const el = document.createElement('div');
-        el.className = 'combo-popup tier-' + tier + ' side-' + (player === 'p1' ? 'left' : 'right');
-        el.textContent = label;
+        el.className = 'combo-popup tier-' + tier;
+        if (label === '厲害') {
+            el.innerHTML = '<span class="combo-big">厲</span><span class="combo-mid">答對</span><span class="combo-big">害</span>';
+        } else {
+            el.innerHTML = '<span class="combo-big">' + _escapeHtml(label.charAt(0)) + '</span><span class="combo-mid">答對</span><span class="combo-big">' + _escapeHtml(label.charAt(1)) + '</span>';
+        }
+        el.setAttribute('aria-label', label + ' 答對');
+        const feedback = document.getElementById('feedback-overlay');
+        if (feedback) feedback.classList.add('combo-suppressed');
         document.body.appendChild(el);
         // Auto-remove after the CSS animation finishes (1.4s). Doubled timer so
         // late removal doesn't clip the fade-out.
-        setTimeout(function () { if (el && el.parentNode) el.parentNode.removeChild(el); }, 1600);
+        setTimeout(function () {
+            if (el && el.parentNode) el.parentNode.removeChild(el);
+            if (feedback) feedback.classList.remove('combo-suppressed');
+        }, 1600);
     }
     function _checkComboPopup() {
         if (!state || !state.players) return;
