@@ -142,11 +142,12 @@ const InputController = (function () {
                 let optIdx = null;
                 if (e.code in maps.left)  { player = 'p1'; optIdx = maps.left[e.code]; }
                 else if (e.code in maps.right) {
-                    // In Duel PvP, right-side keys = p2; in Practice or PvE, right-side keys also act as p1 (alternate input)
-                    player = (state.mode === 'duel' && state.opponent === 'human') ? 'p2' : 'p1';
+                    // Duel keeps sides strict: P2 keys never submit for P1.
+                    player = state.mode === 'duel' ? 'p2' : 'p1';
                     optIdx = maps.right[e.code];
                 }
                 if (player !== null && optIdx !== null) {
+                    if (state.mode === 'duel' && state.opponent !== 'human' && player === 'p2') return;
                     // In buzzed phase, only the buzz owner can answer
                     if (state.phase === 'buzzed' && state.buzz && state.buzz.owner !== player) return;
                     const opt = state.question && state.question.options && state.question.options[optIdx];
