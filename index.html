@@ -38,25 +38,25 @@
                         <h3 class="v2-section-title" data-icon="flask">自我修煉</h3>
                         <span class="v2-section-sub">Practice</span>
                     </div>
-                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="beginner"><span class="level-tag">L1</span><span class="level-name">初級</span><span class="key-hint">1</span></button>
-                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="intermediate"><span class="level-tag">L3</span><span class="level-name">中級</span><span class="key-hint">2</span></button>
-                    <button class="v2-menu-btn v2-boss-btn" data-action="enter-difficulty" data-arg="advanced"><span class="level-tag">L6</span><span class="level-name">高級</span><span class="key-hint">3</span></button>
+                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="beginner"><span class="level-tag">L1</span><span class="level-name">初級</span></button>
+                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="intermediate"><span class="level-tag">L3</span><span class="level-name">中級</span></button>
+                    <button class="v2-menu-btn v2-boss-btn" data-action="enter-difficulty" data-arg="advanced"><span class="level-tag">L6</span><span class="level-name">高級</span></button>
                 </div>
                 <div class="v2-menu-section">
                     <div class="v2-section-head">
                         <h3 class="v2-section-title" data-icon="swords">巫師對決</h3>
                         <span class="v2-section-sub">Duel</span>
                     </div>
-                    <button class="v2-menu-btn v2-duel-btn" data-icon="swords" data-action="enter-duel-menu"><span class="level-name">選擇對決難度</span><span class="key-hint">4</span></button>
+                    <button class="v2-menu-btn v2-duel-btn" data-icon="swords" data-action="enter-duel-menu"><span class="level-name">選擇對決難度</span></button>
                 </div>
                 <div class="v2-menu-section">
                     <div class="v2-section-head">
                         <h3 class="v2-section-title" data-icon="books">工具</h3>
                         <span class="v2-section-sub">Tools</span>
                     </div>
-                    <button class="v2-menu-btn v2-tutorial-btn" data-icon="quill" data-action="enter-tutorial"><span class="level-name">新手導覽</span><span class="key-hint">T</span></button>
-                    <button class="v2-menu-btn" data-icon="codex" data-action="enter-codex"><span class="level-name">圖鑑</span><span class="key-hint">C</span></button>
-                    <button class="v2-menu-btn" data-icon="wrong-book" data-action="enter-wrong-book"><span class="level-name">錯題本</span><span class="key-hint">W</span></button>
+                    <button class="v2-menu-btn v2-tutorial-btn" data-icon="quill" data-action="enter-tutorial"><span class="level-name">新手導覽</span></button>
+                    <button class="v2-menu-btn" data-icon="codex" data-action="enter-codex"><span class="level-name">圖鑑</span></button>
+                    <button class="v2-menu-btn" data-icon="wrong-book" data-action="enter-wrong-book"><span class="level-name">錯題本</span></button>
                     <button class="v2-menu-btn" data-icon="settings" data-action="enter-settings"><span class="level-name">設定</span></button>
                 </div>
             </div>
@@ -64,7 +64,7 @@
 
         <!-- 雙階段第二層 -->
         <div id="screen-sub-menu" class="screen">
-            <button class="v2-back-btn" data-action="back-to-main">← 返回主選單 (Esc)</button>
+            <button class="v2-back-btn" data-action="back-to-main">← 返回主選單</button>
             <h2 id="sub-menu-title" class="v2-screen-title"></h2>
             <div id="sub-menu-list" class="v2-sub-list"></div>
         </div>
@@ -130,39 +130,45 @@
                 <div id="settle-wrong-cards" class="v2-wrong-cards"></div>
             </div>
             <div id="settle-buttons" class="v2-button-row">
-                <button data-action="continue-practice">繼續練習 (R)</button>
-                <button data-action="show-story">看劇情 (S)</button>
-                <button data-action="show-tutorial">看教學 (T)</button>
-                <button data-action="next-level">下一關 (N)</button>
-                <button data-action="back-to-menu">返回大廳 (Esc/M)</button>
+                <button data-action="continue-practice">繼續練習</button>
+                <button data-action="show-story">看劇情</button>
+                <button data-action="show-tutorial">看教學</button>
+                <button data-action="next-level">下一關</button>
+                <button data-action="back-to-menu">返回大廳</button>
             </div>
         </div>
 
         <!-- 圖鑑 -->
         <div id="screen-codex" class="screen">
-            <button class="v2-back-btn" data-action="back-to-main">← 返回主選單 (Esc)</button>
+            <button class="v2-back-btn" data-action="back-to-main">← 返回主選單</button>
             <h2 class="v2-screen-title">圖鑑</h2>
             <div id="codex-content" class="v2-codex-content"></div>
         </div>
 
         <!-- 錯題本 -->
         <div id="screen-wrong-book" class="screen">
-            <button class="v2-back-btn" data-action="back-to-main">← 返回主選單 (Esc)</button>
+            <button class="v2-back-btn" data-action="back-to-main">← 返回主選單</button>
             <h2 class="v2-screen-title">錯題本</h2>
             <div id="wrong-book-groups" class="v2-wrong-groups"></div>
         </div>
 
         <!-- 設定 -->
         <div id="screen-settings" class="screen">
-            <button class="v2-back-btn" data-action="back-to-main">← 返回主選單 (Esc)</button>
+            <button class="v2-back-btn" data-action="back-to-main">← 返回主選單</button>
             <h2 class="v2-screen-title">設定</h2>
             <nav class="v2-tabs">
                 <button class="v2-tab is-active" data-tab="player">玩家</button>
+                <button class="v2-tab" data-tab="keys">快速鍵</button>
                 <button class="v2-tab" data-tab="save">存檔</button>
                 <button class="v2-tab" data-tab="dev"><span class="dev-tag">⚠ DEV</span> 開發者</button>
             </nav>
             <section class="v2-tab-panel is-active" data-tab-panel="player">
                 <label class="v2-setting-row"><input type="checkbox" id="settings-sound-enabled"> 開啟音效</label>
+            </section>
+            <section class="v2-tab-panel" data-tab-panel="keys">
+                <p class="v2-setting-hint">點擊任一格後按下新的鍵即可重新綁定。Esc 取消。若新按鍵已被其他項目使用，會自動交換。</p>
+                <div id="keybindings-list" class="v2-keybindings"></div>
+                <button class="v2-setting-btn" id="settings-keys-reset">重設為預設值</button>
             </section>
             <section class="v2-tab-panel" data-tab-panel="save">
                 <button class="v2-setting-btn" id="settings-export-button">匯出存檔</button>

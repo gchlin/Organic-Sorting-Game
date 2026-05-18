@@ -3052,6 +3052,50 @@ body.input-locked .v2-buzz button { pointer-events: none; }
 .v2-pveai-label  { font-size: 0.85em; color: var(--hp-parchment, #f5e6c8); }
 .v2-pveai-input  { width: 100%; box-sizing: border-box; background: var(--hp-bg-dark, #1a1a2e); color: var(--hp-parchment, #f5e6c8); border: 1px solid var(--hp-gold, #c9a84c); border-radius: 4px; padding: 2px 4px; font-size: 0.8em; }
 
+/* Keybindings tab */
+.v2-setting-hint { color: var(--hp-parchment); opacity: 0.75; font-size: 0.85em; margin: 0 0 12px; }
+.v2-keybindings { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.v2-kb-group-title { color: var(--hp-gold); font-size: 0.85em; margin: 10px 0 6px; text-transform: uppercase; letter-spacing: 1px; }
+.v2-kb-grid { display: grid; gap: 8px; }
+.v2-kb-grid.v2-kb-grid2x2 { grid-template-columns: 1fr 1fr; }
+.v2-kb-grid.v2-kb-row2    { grid-template-columns: 1fr 1fr; }
+.v2-kb-grid.v2-kb-list    { grid-template-columns: 1fr; }
+.v2-kb-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 10px 12px;
+    background: rgba(60, 47, 42, 0.4);
+    border-radius: 4px;
+    color: var(--hp-parchment);
+}
+.v2-kb-label { font-size: 0.85em; opacity: 0.85; text-align: center; }
+.v2-kb-key {
+    padding: 10px 12px;
+    background: var(--hp-bg-dark);
+    color: var(--hp-parchment);
+    border: 1px solid var(--hp-gold);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 1px;
+}
+.v2-kb-key:hover { background: var(--hp-wood-dark); }
+.v2-kb-key.is-capturing { background: var(--hp-gold); color: var(--hp-bg-dark); animation: kb-pulse 0.8s ease-in-out infinite; }
+.v2-kb-key.is-conflict { border-color: var(--hp-red-bright); color: var(--hp-red-bright); }
+.v2-kb-key.is-readonly {
+    cursor: default;
+    opacity: 0.65;
+    border-style: dashed;
+    background: transparent;
+}
+.v2-kb-key.is-readonly:hover { background: transparent; }
+@keyframes kb-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
 /* ============================================================
    1) Scroll fix for v2 screens
    Override the legacy body/html centering that clips tall v2 content.

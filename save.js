@@ -107,7 +107,28 @@ const Save = (function () {
             // 'human' = PvP；'aiEasy'/'aiMedium'/'aiHard' = PvE 各難度。
             duelOpponent: 'aiMedium',
             // PvE AI 參數（buzz window + think time per difficulty）
-            pveAI: defaultPveAI()
+            pveAI: defaultPveAI(),
+            // 玩家自訂快速鍵；值是 KeyboardEvent.code。
+            // 僅「答題選項」與「搶答」可改；其他系統鍵（Esc/M/T/C/W/R/N/S/G…）維持寫死。
+            keybindings: defaultKeybindings()
+        };
+    }
+
+    function defaultKeybindings() {
+        return {
+            // 左側 / P1 / Practice 單人：4 個選項
+            optionLeft0:  'KeyA',
+            optionLeft1:  'KeyF',
+            optionLeft2:  'KeyZ',
+            optionLeft3:  'KeyC',
+            // 右側 / P2（PvP）/ Practice & PvE 替代輸入：4 個選項
+            optionRight0: 'Digit4',
+            optionRight1: 'Digit6',
+            optionRight2: 'Digit1',
+            optionRight3: 'Digit3',
+            // 搶答
+            buzzP1: 'Space',
+            buzzP2: 'Enter'
         };
     }
 
@@ -273,6 +294,12 @@ const Save = (function () {
                 out.settings.devQuickWin = defaultSettings().devQuickWin;
             } else {
                 out.settings.devQuickWin = Object.assign({}, defaultSettings().devQuickWin, out.settings.devQuickWin);
+            }
+            // Fill missing keybindings sub-object (added in this wave)
+            if (!out.settings.keybindings || typeof out.settings.keybindings !== 'object') {
+                out.settings.keybindings = defaultKeybindings();
+            } else {
+                out.settings.keybindings = Object.assign({}, defaultKeybindings(), out.settings.keybindings);
             }
             // Fill missing pveAI sub-object (added in this wave)
             if (!out.settings.pveAI || typeof out.settings.pveAI !== 'object') {
@@ -909,6 +936,8 @@ const Save = (function () {
         for (const key of Object.keys(partial)) {
             if (key === 'devQuickWin' && partial[key] && typeof partial[key] === 'object') {
                 data.settings.devQuickWin = Object.assign({}, data.settings.devQuickWin || {}, partial[key]);
+            } else if (key === 'keybindings' && partial[key] && typeof partial[key] === 'object') {
+                data.settings.keybindings = Object.assign({}, data.settings.keybindings || defaultKeybindings(), partial[key]);
             } else if (key === 'pveAI' && partial[key] && typeof partial[key] === 'object') {
                 if (!data.settings.pveAI || typeof data.settings.pveAI !== 'object') {
                     data.settings.pveAI = defaultPveAI();
@@ -957,6 +986,7 @@ const Save = (function () {
         markMolUnlocked, isMolUnlocked,
         // story v2
         unlockStoryV2, isStoryUnlockedV2,
-        readSettings, writeSettings
+        readSettings, writeSettings,
+        defaultKeybindings
     };
 })();

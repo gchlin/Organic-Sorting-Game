@@ -78,11 +78,30 @@ const InputController = (function () {
                     || phase === 'revealing' || phase === 'cleanup';
             };
 
-        // Key → option index mapping (2x2 layout):
-        // A=0, F=1, Z=2, C=3 (left player or single)
-        // 4=0, 6=1, 1=2, 3=3 (right player; also matches numpad)
-        const KEY_TO_OPT_LEFT  = { KeyA: 0, KeyF: 1, KeyZ: 2, KeyC: 3 };
-        const KEY_TO_OPT_RIGHT = { Digit4: 0, Numpad4: 0, Digit6: 1, Numpad6: 1, Digit1: 2, Numpad1: 2, Digit3: 3, Numpad3: 3 };
+        // Key → option index mapping. Reads from Save.readSettings().keybindings
+        // each keydown so live rebinds in Settings take effect immediately.
+        // Defaults: A/F/Z/C (left) and 4/6/1/3 (right).
+        function _kb() {
+            if (typeof Save !== 'undefined' && Save.readSettings) {
+                const s = Save.readSettings();
+                if (s && s.keybindings) return s.keybindings;
+            }
+            return (typeof Save !== 'undefined' && Save.defaultKeybindings) ? Save.defaultKeybindings() : {};
+        }
+        function _keyMaps() {
+            const kb = _kb();
+            const left = {};
+            left[kb.optionLeft0]  = 0;
+            left[kb.optionLeft1]  = 1;
+            left[kb.optionLeft2]  = 2;
+            left[kb.optionLeft3]  = 3;
+            const right = {};
+            right[kb.optionRight0] = 0;
+            right[kb.optionRight1] = 1;
+            right[kb.optionRight2] = 2;
+            right[kb.optionRight3] = 3;
+            return { left, right, buzzP1: kb.buzzP1, buzzP2: kb.buzzP2 };
+        }
 
         function handleKeydown(e) {
             const state = getState();
@@ -91,14 +110,16 @@ const InputController = (function () {
                 return;  // I-2: drop input at source
             }
 
+            const maps = _keyMaps();
+
             // Buzz keys (only in Duel PvP / PvE)
             if (state.mode === 'duel' && state.phase === 'buzzOpen') {
-                if (e.code === 'Space') {
+                if (e.code === maps.buzzP1) {
                     dispatch({ type: 'BUZZ', player: 'p1' });
                     e.preventDefault();
                     return;
                 }
-                if (e.code === 'Enter' && state.opponent === 'human') {
+                if (e.code === maps.buzzP2 && state.opponent === 'human') {
                     dispatch({ type: 'BUZZ', player: 'p2' });
                     e.preventDefault();
                     return;
@@ -109,11 +130,11 @@ const InputController = (function () {
             if (state.phase === 'canAnswer' || state.phase === 'buzzed') {
                 let player = null;
                 let optIdx = null;
-                if (e.code in KEY_TO_OPT_LEFT)  { player = 'p1'; optIdx = KEY_TO_OPT_LEFT[e.code]; }
-                else if (e.code in KEY_TO_OPT_RIGHT) {
+                if (e.code in maps.left)  { player = 'p1'; optIdx = maps.left[e.code]; }
+                else if (e.code in maps.right) {
                     // In Duel PvP, right-side keys = p2; in Practice or PvE, right-side keys also act as p1 (alternate input)
                     player = (state.mode === 'duel' && state.opponent === 'human') ? 'p2' : 'p1';
-                    optIdx = KEY_TO_OPT_RIGHT[e.code];
+                    optIdx = maps.right[e.code];
                 }
                 if (player !== null && optIdx !== null) {
                     // In buzzed phase, only the buzz owner can answer

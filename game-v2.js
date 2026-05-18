@@ -512,7 +512,7 @@
             for (let i = 0; i < diffs.length; i++) {
                 const d = diffs[i];
                 const btn = document.createElement('button');
-                setMenuButtonContent(btn, String(i + 1), d.label.replace(/^\d+\.\s*/, ''));
+                setMenuButtonContent(btn, '', d.label.replace(/^\d+\.\s*/, ''));
                 btn.addEventListener('click', function () {
                     _subMenuContext = { kind: 'duelFamily', difficulty: d.key };
                     render();
@@ -522,7 +522,7 @@
             // "修改對手模式" 放在底下，視覺上跟難度按鈕區分
             const modeBtn = document.createElement('button');
             modeBtn.className = 'v2-sub-mode-toggle';
-            setMenuButtonContent(modeBtn, '4', '修改對手模式...');
+            setMenuButtonContent(modeBtn, '', '修改對手模式...');
             modeBtn.addEventListener('click', function () {
                 _subMenuContext = { kind: 'duelOpponentSetting' };
                 render();
@@ -556,7 +556,7 @@
             for (let i = 0; i < opponents.length; i++) {
                 const op = opponents[i];
                 const btn = document.createElement('button');
-                setMenuButtonContent(btn, String(i + 1), op.label.replace(/^\d+\.\s*/, '') + (op.key === current ? '  ✓' : ''));
+                setMenuButtonContent(btn, '', op.label.replace(/^\d+\.\s*/, '') + (op.key === current ? '  ✓' : ''));
                 if (op.key === current) btn.classList.add('sub-cleared');
                 btn.addEventListener('click', function () {
                     if (typeof Save !== 'undefined' && Save.writeSettings) {
@@ -1374,6 +1374,106 @@
             _setValue('pveai-' + diff + '-answerThinkMin', p.answerThinkMin);
             _setValue('pveai-' + diff + '-answerThinkMax', p.answerThinkMax);
         });
+        _renderKeybindingsList(settings.keybindings || {});
+    }
+
+    // 快速鍵分組（顯示順序＝畫面順序；layout: 'grid2x2' 對應 2×2 選項版面）
+    const _KEYBIND_GROUPS = [
+        { title: '左側 / P1 答題', layout: 'grid2x2', rows: [
+            { id: 'optionLeft0', label: '左上' },
+            { id: 'optionLeft1', label: '右上' },
+            { id: 'optionLeft2', label: '左下' },
+            { id: 'optionLeft3', label: '右下' }
+        ]},
+        { title: '右側 / P2 答題（PvP）／練習替代輸入', layout: 'grid2x2', rows: [
+            { id: 'optionRight0', label: '左上' },
+            { id: 'optionRight1', label: '右上' },
+            { id: 'optionRight2', label: '左下' },
+            { id: 'optionRight3', label: '右下' }
+        ]},
+        { title: '搶答', layout: 'row2', rows: [
+            { id: 'buzzP1', label: 'P1 搶答' },
+            { id: 'buzzP2', label: 'P2 搶答' }
+        ]}
+    ];
+
+    // 系統快速鍵：只顯示、不可改
+    const _KEYBIND_READONLY_GROUPS = [
+        { title: '選單操作（不可改）', layout: 'row2', rows: [
+            { label: '移動焦點',  code: '↑ ↓ ← →' },
+            { label: '啟動所選項', code: 'Enter / Space' }
+        ]},
+        { title: '畫面導航（不可改）', layout: 'row2', rows: [
+            { label: '返回 / 離開', code: 'Esc / M' },
+            { label: '投降（對決搶答中）', code: 'G' }
+        ]},
+        { title: '劇情播放（不可改）', layout: 'row2', rows: [
+            { label: '推進對話', code: 'Space / Enter' },
+            { label: '離開劇情', code: 'Esc' }
+        ]}
+    ];
+
+    // 將 KeyboardEvent.code 轉成顯示文字
+    function _formatKeyCode(code) {
+        if (!code) return '—';
+        if (code.indexOf('Key') === 0)    return code.slice(3);              // KeyA → A
+        if (code.indexOf('Digit') === 0)  return code.slice(5);              // Digit4 → 4
+        if (code.indexOf('Numpad') === 0) return 'Num ' + code.slice(6);     // Numpad4 → Num 4
+        if (code.indexOf('Arrow') === 0)  return '↑↓←→ '.charAt(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(code)) || code;
+        return code;                                                          // Space, Enter, Tab, …
+    }
+
+    function _renderKeybindingsList(bindings) {
+        const root = document.getElementById('keybindings-list');
+        if (!root) return;
+        root.innerHTML = '';
+        _KEYBIND_GROUPS.forEach(function (group) {
+            const h = document.createElement('div');
+            h.className = 'v2-kb-group-title';
+            h.textContent = group.title;
+            root.appendChild(h);
+            const grid = document.createElement('div');
+            grid.className = 'v2-kb-grid v2-kb-' + (group.layout || 'list');
+            group.rows.forEach(function (row) {
+                const cell = document.createElement('div');
+                cell.className = 'v2-kb-cell';
+                const lbl = document.createElement('span');
+                lbl.className = 'v2-kb-label';
+                lbl.textContent = row.label;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'v2-kb-key';
+                btn.setAttribute('data-kb-id', row.id);
+                btn.textContent = _formatKeyCode(bindings[row.id]);
+                cell.appendChild(lbl);
+                cell.appendChild(btn);
+                grid.appendChild(cell);
+            });
+            root.appendChild(grid);
+        });
+        // Read-only system keys
+        _KEYBIND_READONLY_GROUPS.forEach(function (group) {
+            const h = document.createElement('div');
+            h.className = 'v2-kb-group-title';
+            h.textContent = group.title;
+            root.appendChild(h);
+            const grid = document.createElement('div');
+            grid.className = 'v2-kb-grid v2-kb-' + (group.layout || 'list');
+            group.rows.forEach(function (row) {
+                const cell = document.createElement('div');
+                cell.className = 'v2-kb-cell';
+                const lbl = document.createElement('span');
+                lbl.className = 'v2-kb-label';
+                lbl.textContent = row.label;
+                const key = document.createElement('span');
+                key.className = 'v2-kb-key is-readonly';
+                key.textContent = row.code;
+                cell.appendChild(lbl);
+                cell.appendChild(key);
+                grid.appendChild(cell);
+            });
+            root.appendChild(grid);
+        });
     }
     function _setChecked(id, v) {
         const el = document.getElementById(id);
@@ -1696,6 +1796,87 @@
     function goToScreen(screenId) {
         _currentScreen = screenId;
         render();
+        if (_isMenuScreen(screenId)) _focusFirstMenuItem(screenId);
+    }
+
+    // ----- 選單方向鍵導航 -----
+    const _MENU_SCREEN_IDS = ['main-menu', 'sub-menu', 'settle'];
+    function _isMenuScreen(id) {
+        return _MENU_SCREEN_IDS.indexOf(id) !== -1;
+    }
+    function _menuButtons(screenId) {
+        const root = document.getElementById('screen-' + screenId);
+        if (!root) return [];
+        // 收集畫面內所有可見、可互動的 button（含 back btn / 各區段選項）
+        const list = root.querySelectorAll('button');
+        const out = [];
+        for (let i = 0; i < list.length; i++) {
+            const b = list[i];
+            if (b.disabled) continue;
+            if (b.offsetParent === null && getComputedStyle(b).position !== 'fixed') continue;
+            out.push(b);
+        }
+        return out;
+    }
+    function _focusFirstMenuItem(screenId) {
+        // 延後到 render() 之後，避免 sub-menu 動態內容尚未掛上
+        requestAnimationFrame(function () {
+            const btns = _menuButtons(screenId);
+            if (btns.length === 0) return;
+            // 略過畫面最上方的「返回」按鈕，預設選第一個內容項目
+            const target = btns.find(function (b) { return !b.classList.contains('v2-back-btn'); }) || btns[0];
+            try { target.focus({ preventScroll: false }); } catch (e) { target.focus(); }
+        });
+    }
+    function _handleMenuArrowNav(e) {
+        const dirMap = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
+        if (e.code === 'Enter' || e.code === 'Space') {
+            const ae = document.activeElement;
+            if (ae && ae.tagName === 'BUTTON' && _menuButtons(_currentScreen).indexOf(ae) !== -1) {
+                ae.click();
+                e.preventDefault();
+                return true;
+            }
+            return false;
+        }
+        const dir = dirMap[e.code];
+        if (!dir) return false;
+        const btns = _menuButtons(_currentScreen);
+        if (btns.length === 0) return false;
+        let current = document.activeElement;
+        if (!current || btns.indexOf(current) === -1) current = btns[0];
+        const next = _findSpatialNeighbor(current, btns, dir);
+        if (next) {
+            try { next.focus({ preventScroll: false }); } catch (err) { next.focus(); }
+            e.preventDefault();
+            return true;
+        }
+        return false;
+    }
+    function _findSpatialNeighbor(current, candidates, direction) {
+        const cur = current.getBoundingClientRect();
+        const cx = cur.left + cur.width / 2;
+        const cy = cur.top + cur.height / 2;
+        let best = null;
+        let bestScore = Infinity;
+        for (let i = 0; i < candidates.length; i++) {
+            const b = candidates[i];
+            if (b === current) continue;
+            const r = b.getBoundingClientRect();
+            const x = r.left + r.width / 2;
+            const y = r.top + r.height / 2;
+            const dx = x - cx;
+            const dy = y - cy;
+            let primary, secondary;
+            if (direction === 'up')         { if (dy >= -2) continue; primary = -dy; secondary = Math.abs(dx); }
+            else if (direction === 'down')  { if (dy <=  2) continue; primary =  dy; secondary = Math.abs(dx); }
+            else if (direction === 'left')  { if (dx >= -2) continue; primary = -dx; secondary = Math.abs(dy); }
+            else if (direction === 'right') { if (dx <=  2) continue; primary =  dx; secondary = Math.abs(dy); }
+            else continue;
+            const score = primary + secondary * 2;
+            if (score < bestScore) { bestScore = score; best = b; }
+        }
+        return best;
     }
 
     // -----------------------------------------------------------------------
@@ -1851,15 +2032,9 @@
 
         // Keyboard shortcuts for menu screens (game-screen input is handled by InputController)
         document.addEventListener('keydown', function (e) {
-            // Globals
-            if (_currentScreen === 'main-menu') {
-                if (e.code === 'Digit1' || e.code === 'Numpad1') { _enterDifficulty('beginner'); e.preventDefault(); return; }
-                if (e.code === 'Digit2' || e.code === 'Numpad2') { _enterDifficulty('intermediate'); e.preventDefault(); return; }
-                if (e.code === 'Digit3' || e.code === 'Numpad3') { _enterDifficulty('advanced'); e.preventDefault(); return; }
-                if (e.code === 'Digit4' || e.code === 'Numpad4') { _subMenuContext = { kind: 'duelDifficulty' }; goToScreen('sub-menu'); e.preventDefault(); return; }
-                if (e.code === 'KeyT') { _clickAction('enter-tutorial'); e.preventDefault(); return; }
-                if (e.code === 'KeyC') { goToScreen('codex'); e.preventDefault(); return; }
-                if (e.code === 'KeyW') { goToScreen('wrong-book'); e.preventDefault(); return; }
+            // 選單畫面：方向鍵移動焦點、Enter/Space 啟動
+            if (_isMenuScreen(_currentScreen)) {
+                if (_handleMenuArrowNav(e)) return;
             }
             if (_currentScreen !== 'main-menu' && _currentScreen !== 'game' && (e.code === 'Escape' || e.code === 'KeyM')) {
                 // Step-back through the duel sub-menu tree before bailing to main.
@@ -1886,12 +2061,6 @@
                 render();
                 e.preventDefault();
                 return;
-            }
-            if (_currentScreen === 'settle') {
-                if (e.code === 'KeyR') { _clickAction('continue-practice'); e.preventDefault(); return; }
-                if (e.code === 'KeyN') { _clickAction('next-level'); e.preventDefault(); return; }
-                if (e.code === 'KeyS') { _clickAction('show-story'); e.preventDefault(); return; }
-                if (e.code === 'KeyT') { _clickAction('show-tutorial'); e.preventDefault(); return; }
             }
             if (_currentScreen === 'story') {
                 if (e.code === 'Space' || e.code === 'Enter') { _advanceStory(); e.preventDefault(); return; }
@@ -1922,6 +2091,49 @@
         _tutorialState = null;
         render();
         if (typeof cb === 'function') cb();
+    }
+
+    // 快速鍵捕捉：一次只允許一個格子處於捕捉狀態
+    let _kbCaptureCleanup = null;
+    function _wireKeybindingsCapture() {
+        const root = document.getElementById('keybindings-list');
+        if (!root) return;
+        root.addEventListener('click', function (e) {
+            const btn = e.target.closest && e.target.closest('.v2-kb-key');
+            if (!btn || btn.classList.contains('is-readonly')) return;
+            _startKeybindingCapture(btn);
+        });
+    }
+    function _startKeybindingCapture(btn) {
+        if (_kbCaptureCleanup) _kbCaptureCleanup();
+        const id = btn.getAttribute('data-kb-id');
+        btn.classList.add('is-capturing');
+        btn.textContent = '按下任一鍵…';
+        function onKey(ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            cleanup();
+            if (ev.code === 'Escape') { renderSettingsScreen(); return; }
+            // 找出衝突的 binding，若有 → 交換到舊鍵
+            const current = Save.readSettings().keybindings || {};
+            const oldCode = current[id];
+            const patch = {};
+            patch[id] = ev.code;
+            for (const otherId of Object.keys(current)) {
+                if (otherId !== id && current[otherId] === ev.code) {
+                    patch[otherId] = oldCode;  // 交換
+                }
+            }
+            Save.writeSettings({ keybindings: patch });
+            renderSettingsScreen();
+        }
+        function cleanup() {
+            document.removeEventListener('keydown', onKey, true);
+            btn.classList.remove('is-capturing');
+            _kbCaptureCleanup = null;
+        }
+        _kbCaptureCleanup = cleanup;
+        document.addEventListener('keydown', onKey, true);
     }
 
     function attachSettingsListeners() {
@@ -1985,6 +2197,16 @@
                     medium: { buzzWindowMin: 0.75, buzzWindowMax: 0.90, answerThinkMin: 1200, answerThinkMax: 2500 },
                     hard:   { buzzWindowMin: 0.70, buzzWindowMax: 0.85, answerThinkMin: 1000, answerThinkMax: 2000 }
                 }});
+                renderSettingsScreen();
+            });
+        }
+        // 快速鍵：點擊任一格 → 進入「按下新鍵」捕捉狀態
+        _wireKeybindingsCapture();
+        const kbReset = document.getElementById('settings-keys-reset');
+        if (kbReset) {
+            kbReset.addEventListener('click', function () {
+                const def = (Save && Save.defaultKeybindings) ? Save.defaultKeybindings() : {};
+                Save.writeSettings({ keybindings: def });
                 renderSettingsScreen();
             });
         }
@@ -2106,6 +2328,7 @@
         attachGiveUpListeners();
         initHatChars();
         render();
+        if (_isMenuScreen(_currentScreen)) _focusFirstMenuItem(_currentScreen);
     }
 
     if (document.readyState === 'loading') {
