@@ -440,7 +440,7 @@
 
     // Sub-menu kinds:
     //   'difficulty'           { difficulty }   → family list, click starts practice
-    //   'duelDifficulty'       {}               → 初/中/高 + "修改模式..." (mode is sticky)
+    //   'duelDifficulty'       {}               → opponent toggle + 初/中/高 (mode is sticky)
     //   'duelFamily'           { difficulty }   → family list, click starts duel using saved mode
     //   'duelOpponentSetting'  {}               → PvP / PvE 易/中/難 picker, saves to
     //                                             settings.duelOpponent then returns to
@@ -503,8 +503,33 @@
         } else if (_subMenuContext.kind === 'duelDifficulty') {
             const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
             const currentOpp = settings.duelOpponent || 'aiMedium';
-            const oppLabel = { human: 'PvP（雙人）', aiEasy: 'PvE 易', aiMedium: 'PvE 中', aiHard: 'PvE 難' }[currentOpp] || currentOpp;
-            titleEl.textContent = '對決 — 選擇難度（目前對手：' + oppLabel + '）';
+            titleEl.textContent = '巫師對決';
+            const opponentRow = document.createElement('div');
+            opponentRow.className = 'v2-duel-mode-toggle';
+            const opponents = [
+                { key: 'human', label: 'PvP（雙人）' },
+                { key: 'aiEasy', label: 'PvE 易' },
+                { key: 'aiMedium', label: 'PvE 中' },
+                { key: 'aiHard', label: 'PvE 難' }
+            ];
+            for (let i = 0; i < opponents.length; i++) {
+                const op = opponents[i];
+                const btn = document.createElement('button');
+                btn.className = 'v2-duel-mode-option';
+                btn.type = 'button';
+                btn.textContent = op.label;
+                btn.setAttribute('aria-pressed', op.key === currentOpp ? 'true' : 'false');
+                if (op.key === currentOpp) btn.classList.add('is-active');
+                btn.addEventListener('click', function () {
+                    if (typeof Save !== 'undefined' && Save.writeSettings) {
+                        Save.writeSettings({ duelOpponent: op.key });
+                    }
+                    render();
+                });
+                opponentRow.appendChild(btn);
+            }
+            listEl.appendChild(opponentRow);
+
             const diffs = [
                 { key: 'beginner', label: '1. 初級' },
                 { key: 'intermediate', label: '2. 中級' },
@@ -520,35 +545,12 @@
                 });
                 listEl.appendChild(btn);
             }
-            const opponentRow = document.createElement('div');
-            opponentRow.className = 'v2-duel-opponent-row';
-            const opponents = [
-                { key: 'human', label: 'PvP（雙人）' },
-                { key: 'aiEasy', label: 'PvE 易' },
-                { key: 'aiMedium', label: 'PvE 中' },
-                { key: 'aiHard', label: 'PvE 難' }
-            ];
-            for (let i = 0; i < opponents.length; i++) {
-                const op = opponents[i];
-                const btn = document.createElement('button');
-                btn.className = 'v2-duel-opponent-card';
-                setMenuButtonContent(btn, '', op.label);
-                if (op.key === currentOpp) btn.classList.add('sub-cleared');
-                btn.addEventListener('click', function () {
-                    if (typeof Save !== 'undefined' && Save.writeSettings) {
-                        Save.writeSettings({ duelOpponent: op.key });
-                    }
-                    render();
-                });
-                opponentRow.appendChild(btn);
-            }
-            listEl.appendChild(opponentRow);
         } else if (_subMenuContext.kind === 'duelFamily') {
             const diff = _subMenuContext.difficulty;
             const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
             const opponent = settings.duelOpponent || 'aiMedium';
             const oppLabel = { human: 'PvP', aiEasy: 'PvE 易', aiMedium: 'PvE 中', aiHard: 'PvE 難' }[opponent] || opponent;
-            titleEl.textContent = diffName(diff) + ' 對決（' + oppLabel + '） — 選擇主題子關';
+            titleEl.textContent = diffName(diff) + ' 巫師對決（' + oppLabel + '） — 選擇主題子關';
             const familyKeys = Object.keys(Families).filter(k => Families[k].difficulties.indexOf(diff) !== -1);
             for (let i = 0; i < familyKeys.length; i++) {
                 const fk = familyKeys[i];
@@ -1387,7 +1389,6 @@
                     + '<img src="' + esc(img || '') + '" alt="">'
                     + '<div class="name-zh">' + esc(bank ? bank.content : ck) + '</div>'
                     + '<div class="box-indicator" title="卡片盒層級 ' + entry.box + '/5">' + boxDots + '</div>'
-                    + '<button type="button" class="v2-wrong-practice" data-wrong-practice="' + esc(groupTag + '|' + ck) + '">練習</button>'
                     + '<button type="button" class="v2-wrong-delete" data-wrong-delete="' + esc(groupTag + '|' + ck) + '" title="從錯題本移除">×</button>'
                 + '</div>';
             }
@@ -1419,12 +1420,6 @@
                 const parts = (btn.getAttribute('data-wrong-retrain') || '').split('|');
                 const keys = (btn.getAttribute('data-wrong-keys') || '').split(',').filter(Boolean);
                 startMode({ mode: 'practice', family: parts[0], difficulty: parts[1], opponent: 'human', queueSource: 'wrongOnly', wrongKeys: keys });
-            });
-        });
-        root.querySelectorAll('[data-wrong-practice]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                const parts = (btn.getAttribute('data-wrong-practice') || '').split('|');
-                startMode({ mode: 'practice', family: parts[0], difficulty: parts[1], opponent: 'human', queueSource: 'wrongOnly', wrongKeys: [parts[2]] });
             });
         });
         root.querySelectorAll('[data-wrong-delete]').forEach(function (btn) {

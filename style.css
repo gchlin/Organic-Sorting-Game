@@ -3143,16 +3143,6 @@ body.input-locked .v2-buzz button { pointer-events: none; }
     cursor: pointer;
 }
 .v2-wrong-card .v2-wrong-delete:hover { background: var(--hp-red-bright); }
-.v2-wrong-card .v2-wrong-practice {
-    margin-top: 8px;
-    padding: 5px 10px;
-    background: rgba(45, 90, 61, 0.75);
-    color: var(--hp-parchment);
-    border: 1px solid rgba(111,224,156,.7);
-    border-radius: 4px;
-    font-size: 0.78rem;
-}
-.v2-wrong-card .v2-wrong-practice:hover { background: #4a9166; }
 .v2-wrong-actions {
     display: flex;
     gap: 8px;

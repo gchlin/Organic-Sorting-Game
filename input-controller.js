@@ -91,16 +91,26 @@ const InputController = (function () {
         function _keyMaps() {
             const kb = _kb();
             const left = {};
-            left[kb.optionLeft0]  = 0;
-            left[kb.optionLeft1]  = 1;
-            left[kb.optionLeft2]  = 2;
-            left[kb.optionLeft3]  = 3;
+            _addKeyAlias(left, kb.optionLeft0, 0);
+            _addKeyAlias(left, kb.optionLeft1, 1);
+            _addKeyAlias(left, kb.optionLeft2, 2);
+            _addKeyAlias(left, kb.optionLeft3, 3);
             const right = {};
-            right[kb.optionRight0] = 0;
-            right[kb.optionRight1] = 1;
-            right[kb.optionRight2] = 2;
-            right[kb.optionRight3] = 3;
+            _addKeyAlias(right, kb.optionRight0, 0);
+            _addKeyAlias(right, kb.optionRight1, 1);
+            _addKeyAlias(right, kb.optionRight2, 2);
+            _addKeyAlias(right, kb.optionRight3, 3);
             return { left, right, buzzP1: kb.buzzP1, buzzP2: kb.buzzP2 };
+        }
+
+        function _addKeyAlias(map, code, optionIndex) {
+            if (!code) return;
+            map[code] = optionIndex;
+            if (code.indexOf('Digit') === 0) {
+                map['Numpad' + code.slice(5)] = optionIndex;
+            } else if (code.indexOf('Numpad') === 0) {
+                map['Digit' + code.slice(6)] = optionIndex;
+            }
         }
 
         function handleKeydown(e) {

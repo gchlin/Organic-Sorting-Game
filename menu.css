@@ -287,16 +287,40 @@
     color: var(--hp-parchment);
     border-style: solid;
 }
-.v2-duel-opponent-row {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: clamp(8px, 1vw, 12px);
+.v2-duel-mode-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 0;
     grid-column: 1 / -1;
+    width: min(100%, 720px);
+    margin: 0 auto clamp(4px, .8vh, 8px);
+    padding: 4px;
+    background: rgba(20,15,15,.72);
+    border: 1px solid rgba(212,175,55,.32);
+    border-radius: 10px;
 }
-.v2-sub-list .v2-duel-opponent-card {
+.v2-sub-list .v2-duel-mode-option {
+    min-height: 38px;
+    padding: 8px 12px;
+    background: transparent;
+    border: 0;
+    border-radius: 7px;
+    box-shadow: none;
+    color: var(--hp-parchment-dark);
     justify-content: center;
     text-align: center;
-    min-height: 54px;
+    font-size: clamp(.84rem, 1.7vh, .98rem);
+}
+.v2-sub-list .v2-duel-mode-option:hover,
+.v2-sub-list .v2-duel-mode-option:focus {
+    background: rgba(212,175,55,.08);
+    box-shadow: none;
+    transform: none;
+}
+.v2-sub-list .v2-duel-mode-option.is-active {
+    background: var(--hp-gold);
+    color: var(--hp-bg-dark);
+    font-weight: 800;
 }
 
 @media (orientation: landscape) and (min-width: 760px), (min-width: 1100px) {
@@ -307,7 +331,8 @@
 }
 
 @media (max-width: 900px) {
-    .v2-duel-opponent-row {
+    .v2-duel-mode-toggle {
+        display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     #screen-main-menu.is-active {
