@@ -2510,6 +2510,17 @@ body.v2-active .v2-root { display: block; }
     font-family: inherit;
 }
 .v2-back-btn:hover, .v2-back-btn-sm:hover { background: var(--hp-gold); color: var(--hp-bg-dark); }
+.v2-game-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+}
+.v2-game-actions .v2-back-btn-sm {
+    width: 100%;
+    margin: 0;
+    white-space: nowrap;
+}
 
 /* --- Game screen --- */
 .v2-hud {
