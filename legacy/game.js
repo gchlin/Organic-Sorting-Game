@@ -1155,9 +1155,9 @@ const Game = (function() {
     // --- 圖鑑 (Codex) ---
     function openCodex() {
         renderCodex();
-        switchCodexTab('levels');
+        switchCodexTab('molecules');
         if (UI.codexModal) UI.codexModal.classList.remove('hidden');
-        const firstTab = UI.codexModal ? UI.codexModal.querySelector('[data-codex-tab="levels"]') : null;
+        const firstTab = UI.codexModal ? UI.codexModal.querySelector('[data-codex-tab="molecules"]') : null;
         if (firstTab) try { firstTab.focus(); } catch(e) {}
     }
     function closeCodex() {

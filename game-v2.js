@@ -58,7 +58,7 @@
     let _tutorialState = null;  // { pages, idx, onDone, key }
     let _storyState = null;     // { lines, idx, playerName, onDone }
     let _wrongChosenMap = {};   // { compoundKey: chosenWrongAnswerKey } — per round
-    let _codexTab = 'levels';   // 'levels' | 'badges' | 'molecules' | 'story'
+    let _codexTab = 'molecules'; // 'molecules' | 'levels' | 'badges' | 'story'
 
     function dispatch(action) {
         _pendingDispatch.push(action);
@@ -1091,9 +1091,9 @@
         const badgesUnlocked = allDefs.filter(d => unlockedBadges.includes(d.id)).length;
 
         const TABS = [
+            { key: 'molecules', label: '分子',     count: molUnlockedTotal + '/' + molTotalAll },
             { key: 'levels',    label: '闖關進度', count: levelsCleared + '/' + levelsTotal },
             { key: 'badges',    label: '勳章',     count: badgesUnlocked + '/' + allDefs.length },
-            { key: 'molecules', label: '分子',     count: molUnlockedTotal + '/' + molTotalAll },
             { key: 'story',     label: '劇情',     count: storyUnlocked + '/' + storyTotal },
         ];
 

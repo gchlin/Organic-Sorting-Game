@@ -1014,12 +1014,12 @@ body.countdown-active .opt-btn {
 
 .codex-tabs {
     display: flex;
+    flex-wrap: wrap;
     align-items: stretch;
     padding: 0 clamp(14px, 2.5vw, 28px);
     background: rgba(20,15,15,.85);
     border-bottom: 1px solid rgba(212,175,55,.2);
     gap: clamp(4px, .8vw, 12px);
-    overflow-x: auto;
 }
 .codex-tabs .tab {
     background: transparent;
