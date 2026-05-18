@@ -22,6 +22,7 @@
 
     /* 遊戲參數 */
     --hp-height: 24px; 
+    --game-image-ratio: 4 / 3;
 }
 
 /* 全域設定 */
@@ -2513,7 +2514,7 @@ body.v2-active .v2-root { display: block; }
     padding: 12px;
     background: rgba(60, 47, 42, 0.4);
     border-radius: 8px;
-    margin-bottom: 16px;
+    margin-bottom: 0;
 }
 .player-area {
     display: flex;
@@ -2535,50 +2536,61 @@ body.v2-active .v2-root { display: block; }
 /* Practice mode hides p2 area */
 #screen-game.mode-practice .player-area[data-player="p2"] { display: none; }
 #screen-game.mode-practice #buzz-p1, #screen-game.mode-practice #buzz-p2 { display: none; }
+#screen-game.mode-duel #game-hint-bubble { display: none !important; }
 /* Duel PvE hides p2 buzz (AI doesn't press buttons) */
 #screen-game.mode-duel-pve #buzz-p2 { display: none; }
 
 .v2-opp-label { color: var(--hp-gold); font-size: 0.9rem; }
 /* Viewport-fit game screen: HUD + image + options + buzz all fit without scroll.
-   Image-frame flexes to take remaining space; options/buzz reserved at bottom. */
+   The molecule card keeps the same ratio as the generated SVG image. */
 #screen-game.is-active {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    max-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto minmax(0, 1fr);
+    grid-template-areas:
+        "hud"
+        "image"
+        "options"
+        "buzz"
+        "hint";
+    min-height: 100dvh;
+    max-height: 100dvh;
     padding: 12px;
     box-sizing: border-box;
     gap: 10px;
     overflow: hidden;
 }
-#screen-game #game-hud,
-#screen-game #game-options,
-#screen-game #game-buzz,
-#screen-game #game-hint-bubble,
-#screen-game #dev-quickwin-banner {
-    flex: 0 0 auto;
-}
+#screen-game #game-hud { grid-area: hud; }
+#screen-game #game-options { grid-area: options; }
+#screen-game #game-buzz { grid-area: buzz; }
+#screen-game #game-hint-bubble { grid-area: hint; }
 .v2-image-frame {
-    background: var(--hp-parchment);
+    grid-area: image;
+    align-self: start;
+    justify-self: center;
+    display: grid;
+    place-items: center;
+    width: min(760px, 100%, max(220px, calc(133.333dvh - 293px)));
+    aspect-ratio: var(--game-image-ratio);
     border: 2px solid var(--hp-gold);
     border-radius: 8px;
-    padding: 12px;
+    padding: clamp(10px, 2.4vw, 28px);
     margin: 0 auto;
-    width: 100%;
-    max-width: 600px;
-    min-height: 0;       /* allow shrink in flex column */
-    flex: 1 1 auto;      /* take remaining vertical space */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    /* Contain the dyn-zoom scale so it doesn't physically cover options/buzz below. */
+    min-height: 0;
+    background:
+        linear-gradient(180deg, rgba(245,239,222,.94), rgba(232,220,194,.96));
+    box-shadow: 0 16px 36px rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.42);
     overflow: hidden;
 }
 #game-image {
-    max-width: 100%;
-    max-height: 100%;
+    display: block;
+    width: min(100%, 640px);
+    height: auto;
+    aspect-ratio: var(--game-image-ratio);
     object-fit: contain;
     transform-origin: center;
+    background: #fff;
+    border-radius: 2px;
 }
 /* Dynamic variant: zoom — JS sets inline transform via onTick(elapsedMs).
    Static fallback only for no-JS state: */
@@ -2587,19 +2599,71 @@ body.v2-active .v2-root { display: block; }
 
 /* Landscape phone: similar layout but tighter margins. */
 @media (orientation: landscape) and (max-height: 520px) {
-    #screen-game.is-active { padding: 6px; gap: 6px; }
-    .v2-image-frame { padding: 6px; }
-    .v2-options { gap: 6px; max-width: 80vw; }
-    .option-btn { padding: 8px; font-size: 0.9rem; }
-    .v2-buzz button { padding: 8px; font-size: 0.9rem; }
+    #screen-game.is-active {
+        grid-template-columns: minmax(0, 1fr) minmax(190px, 270px);
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        grid-template-areas:
+            "hud hud"
+            "image options"
+            "buzz buzz";
+        padding: 6px;
+        gap: 6px;
+    }
+    .v2-hud { min-height: 42px; padding: 6px 8px; margin-bottom: 0; }
+    .v2-image-frame {
+        width: min(100%, max(220px, calc(133.333dvh - 168px)));
+        padding: 10px 14px;
+    }
+    #game-image {
+        width: 100%;
+        max-width: none;
+    }
+    #screen-game .v2-options {
+        align-self: stretch;
+        width: 100%;
+        grid-template-columns: 1fr;
+        align-content: start;
+        gap: 6px;
+        max-width: none;
+    }
+    #screen-game .option-btn { padding: 8px; font-size: 0.9rem; }
+    #screen-game .v2-buzz button { padding: 8px; font-size: 0.9rem; }
+}
+
+@media (orientation: portrait), (max-width: 520px) {
+    #screen-game.is-active {
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .v2-hud {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px;
+    }
+
+    .v2-image-frame {
+        width: min(100%, max(240px, calc(133.333dvh - 387px)));
+    }
+
+    #screen-game .v2-options {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #screen-game .option-btn {
+        min-height: 62px;
+    }
 }
 
 .v2-options {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, minmax(110px, 1fr));
     gap: 12px;
-    max-width: 600px;
+    width: min(860px, 100%);
+    max-width: none;
     margin: 0 auto;
+    align-self: start;
+    align-content: start;
     animation: v2-options-fade-in 0.4s ease-out;
 }
 @keyframes v2-options-fade-in {
@@ -2607,17 +2671,24 @@ body.v2-active .v2-root { display: block; }
     to   { opacity: 1; transform: translateY(0); }
 }
 .option-btn {
-    padding: 16px;
-    background: var(--hp-wood-dark);
+    min-height: 54px;
+    padding: 12px 16px;
+    background: linear-gradient(180deg, rgba(96,73,65,.82), rgba(44,34,32,.94));
     color: var(--hp-parchment);
     border: 2px solid var(--hp-gold);
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     font-family: inherit;
     font-size: 1.1rem;
-    transition: background 0.15s, transform 0.1s;
+    font-weight: 700;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 2px 0 rgba(0,0,0,.35);
+    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
 }
-.option-btn:hover { background: var(--hp-gold); color: var(--hp-bg-dark); }
+.option-btn:hover {
+    color: #fff5c0;
+    border-color: var(--hp-gold);
+    box-shadow: 0 0 16px rgba(212,175,55,.25);
+}
 .option-btn:active { transform: scale(0.98); }
 .option-btn.eliminated {
     text-decoration: line-through;
@@ -2738,8 +2809,9 @@ body.input-locked .v2-buzz button { pointer-events: none; }
 .v2-dev-banner {
     position: fixed;
     bottom: 8px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 12px;
+    transform: none;
+    max-width: min(320px, calc(100vw - 24px));
     background: var(--hp-red-bright);
     color: white;
     padding: 6px 16px;

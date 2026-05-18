@@ -27,7 +27,6 @@
                 <div class="hud-title">
                     <span class="hud-mode">自我修煉</span>
                     <div class="hud-mainline">
-                        <strong>炔類辨識</strong>
                         <span class="hud-question">這個分子主要屬於哪一類？</span>
                     </div>
                 </div>
@@ -65,11 +64,34 @@
                 </figure>
             </section>
 
-            <section class="answer-dock" aria-label="answer choices">
+            <section class="answer-dock answer-dock-p1" aria-label="P1 answer choices">
+                <article class="duel-player p1 answer-player">
+                    <div class="portrait">P1</div>
+                    <div>
+                        <span>分類師</span>
+                        <strong>120</strong>
+                    </div>
+                </article>
+                <span class="answer-owner">P1 選項</span>
                 <button type="button" class="answer-btn is-correct">芳香烴</button>
                 <button type="button" class="answer-btn">烷類</button>
                 <button type="button" class="answer-btn">炔類</button>
                 <button type="button" class="answer-btn is-wrong">烯類</button>
+            </section>
+
+            <section class="answer-dock answer-dock-p2" aria-label="P2 answer choices">
+                <article class="duel-player p2 answer-player">
+                    <div class="portrait">AI</div>
+                    <div>
+                        <span>魔藥學徒</span>
+                        <strong>90</strong>
+                    </div>
+                </article>
+                <span class="answer-owner">P2 選項</span>
+                <button type="button" class="answer-btn">芳香烴</button>
+                <button type="button" class="answer-btn is-correct">烷類</button>
+                <button type="button" class="answer-btn is-wrong">炔類</button>
+                <button type="button" class="answer-btn">烯類</button>
             </section>
 
             <aside class="coach-card">
@@ -100,12 +122,14 @@
 
     <script>
         const screen = document.getElementById('level-demo');
+        const modeLabel = screen.querySelector('.hud-mode');
         document.querySelectorAll('[data-demo-mode]').forEach((button) => {
             button.addEventListener('click', () => {
                 document.querySelectorAll('[data-demo-mode]').forEach((b) => b.classList.remove('is-active'));
                 button.classList.add('is-active');
                 screen.classList.toggle('mode-duel', button.dataset.demoMode === 'duel');
                 screen.classList.toggle('mode-practice', button.dataset.demoMode === 'practice');
+                modeLabel.textContent = button.dataset.demoMode === 'duel' ? '雙人決鬥' : '自我修煉';
             });
         });
         document.querySelectorAll('[data-feedback]').forEach((button) => {
