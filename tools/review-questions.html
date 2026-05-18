@@ -382,8 +382,13 @@
         </div>
     </div>
 
-    <script src="data.js"></script>
+    <script src="../data.js"></script>
     <script>
+        // 因為 review-questions.html 在 tools/ 目錄，需要調整圖片路徑
+        function imagePath(assetPath) {
+            return '../' + assetPath;
+        }
+
         // 調試：檢查數據加載
         console.log('QuestionImages:', QuestionImages ? QuestionImages.length : 'undefined');
         console.log('Families:', Object.keys(Families || {}).length);
@@ -525,7 +530,7 @@
                     items.forEach(item => {
                         html += `
                             <div class="question-item">
-                                <img src="${item.compound.src}" alt="molecule" class="question-img">
+                                <img src="${imagePath(item.compound.src)}" alt="molecule" class="question-img">
                                 <div class="answer">✓ ${item.answer.content}</div>
                             </div>
                         `;
@@ -616,7 +621,7 @@
                         <div style="color: #666; font-size: 0.85em; margin-bottom: 8px;">
                             ${result.familyName} / ${diffLabel[result.difficulty]}
                         </div>
-                        <img src="${result.compound.src}" alt="molecule" class="question-img" style="max-width: 150px;">
+                        <img src="${imagePath(result.compound.src)}" alt="molecule" class="question-img" style="max-width: 150px;">
                         <div style="margin-top: 10px; color: #333; font-size: 0.9em;">
                             <strong>化合物：</strong> ${result.compoundName}
                         </div>
