@@ -1169,6 +1169,9 @@
         html += '<section class="codex-panel' + (_codexTab === 'badges' ? ' active' : '') + '" data-codex-panel="badges">' + badgesHTML + '</section>';
 
         // ---- Panel: molecules (per-family sections) ----
+        const CAT_LABEL_ZH = { alkane:'烷類', alkene:'烯類', alkyne:'炔類', alcohol:'醇',
+            ether:'醚', aldehyde:'醛', ketone:'酮', carboxylic:'羧酸',
+            ester:'酯', amine:'胺', halide:'鹵化物', aromatic:'芳香烴', phenol:'酚' };
         let molHTML = '';
         let famIdx = 0;
         for (const fk of famKeys) {
@@ -1189,9 +1192,14 @@
                 const ab = AnswerBank[it.ck];
                 const nameZh = (ab && ab.content) ? ab.content : it.ck;
                 if (u) {
+                    const catZh = ab ? (CAT_LABEL_ZH[ab.category] || ab.category || '') : '';
+                    const factText = (typeof CompoundFacts !== 'undefined' && CompoundFacts[it.ck]) ? CompoundFacts[it.ck] : '';
                     molHTML += '<button type="button" class="codex-mol-card" data-mol="' + esc(it.ck) + '">'
                         + '<img class="codex-mol-img" src="' + esc(it.src) + '" alt="' + esc(nameZh) + '" loading="lazy">'
                         + '<div class="codex-mol-name">' + esc(nameZh) + '</div>'
+                        + '<div class="codex-mol-en">' + esc(it.ck) + '</div>'
+                        + '<div class="codex-mol-stamps"><span class="codex-mol-stamp">' + esc(catZh) + '</span></div>'
+                        + (factText ? '<div class="codex-mol-fact">' + esc(factText) + '</div>' : '')
                       + '</button>';
                 } else {
                     molHTML += '<div class="codex-mol-card locked">'
@@ -1235,6 +1243,15 @@
                 _codexTab = k;
                 root.querySelectorAll('[data-codex-tab]').forEach(b => b.classList.toggle('active', b === btn));
                 root.querySelectorAll('[data-codex-panel]').forEach(p => p.classList.toggle('active', p.getAttribute('data-codex-panel') === k));
+            });
+        });
+
+        // Wire molecule card clicks — toggle open/closed.
+        root.querySelectorAll('.codex-mol-card:not(.locked)').forEach(card => {
+            card.addEventListener('click', () => {
+                const isOpen = card.classList.contains('open');
+                root.querySelectorAll('.codex-mol-card.open').forEach(c => c.classList.remove('open'));
+                if (!isOpen) card.classList.add('open');
             });
         });
 
