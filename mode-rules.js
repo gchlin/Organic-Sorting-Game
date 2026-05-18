@@ -173,12 +173,12 @@ const ModeRulesV2 = {
     'duel.buzzOpen.BUZZ': (s, a) => s.buzz.eligible.has(a.player)
         ? { nextPhase: 'buzzed',
             // buzz.timerStartedAt lets the render layer compute the integer
-            // countdown shown to the player (5 → 1). Read-only for the reducer.
+            // countdown shown to the player (7 → 1). Read-only for the reducer.
             stateDiff: { 'buzz.owner': a.player, 'buzz.timerStartedAt': Date.now() },
             effects: [{ type: 'sound', name: 'buzz' },
                       { type: 'anim', name: 'pauseDynamic' },
                       { type: 'render', target: 'showOptionsTo', player: a.player },
-                      { type: 'timer', ms: 5000, onTimeout: { type: 'ANSWER_TIMEOUT', player: a.player } }] }
+                      { type: 'timer', ms: 7000, onTimeout: { type: 'ANSWER_TIMEOUT', player: a.player } }] }
         : { nextPhase: 'buzzOpen', stateDiff: {}, effects: [] },  // ignore (same-race)
 
     'duel.buzzOpen.DYNAMIC_COMPLETE': (s) => ({
@@ -221,7 +221,7 @@ const ModeRulesV2 = {
         stateDiff: { 'question.failedPlayersThisCycle': new Set([...s.question.failedPlayersThisCycle, a.player]),
                      'question.lastResolveReason': 'timeout' },
         // 不加入 eliminatedWrongKeys、不設 lastChosenWrongKey —— 逾時 ≠ 選錯
-        effects: [{ type: 'sound', name: 'timeout' }],
+        effects: [{ type: 'sound', name: 'wrong' }],
     }),
 
     // 玩家主動放棄作答（按 G 或 ⊘ 按鈕）。語意同 ANSWER_TIMEOUT，但不浪費時間。
@@ -269,7 +269,7 @@ const ModeRulesV2 = {
                  effects: [{ type: 'sound', name: 'buzz' },
                            { type: 'anim', name: 'lockoutLoser' },
                            { type: 'render', target: 'showOptionsTo', player: other },
-                           { type: 'timer', ms: 5000, onTimeout: { type: 'ANSWER_TIMEOUT', player: other } }] };
+                           { type: 'timer', ms: 7000, onTimeout: { type: 'ANSWER_TIMEOUT', player: other } }] };
     },
 
     // Stage 1: Dynamic finished playing to completion. Now move to 'revealed' so

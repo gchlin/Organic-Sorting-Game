@@ -691,10 +691,43 @@
         _checkComboPopup();
     }
 
-    // ---- Audio feedback (Web Audio API beeps — no asset files needed) ----
-    // First call creates AudioContext. Modern browsers require a user gesture
-    // before audio plays; the menu click that started the game counts.
+    // ---- Audio feedback ---------------------------------------------------
+    // Prefer short audio assets from /sound; keep synthesized tones as fallback.
+    const _soundFiles = {
+        correct: 'sound/correct.mp3',
+        wrong: 'sound/incorrect.mp3',
+        timeout: 'sound/timeout.mp3',
+        buzz: 'sound/bell.mp3'
+    };
+    const _musicFiles = {
+        menu: 'sound/menu.mp3',
+        game: 'sound/game.mp3'
+    };
+    const _soundCache = {};
+    const _musicCache = {};
+    let _currentMusicName = '';
     let _audioCtx = null;
+    function _playSoundFile(name) {
+        const src = _soundFiles[name];
+        if (!src || typeof Audio === 'undefined') return false;
+        try {
+            if (!_soundCache[name]) {
+                const audio = new Audio(src);
+                audio.preload = 'auto';
+                _soundCache[name] = audio;
+            }
+            const audio = _soundCache[name];
+            audio.pause();
+            audio.currentTime = 0;
+            const played = audio.play();
+            if (played && typeof played.catch === 'function') {
+                played.catch(function () { _playSynthBeep(name); });
+            }
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
     function _getAudioCtx() {
         if (_audioCtx) return _audioCtx;
         try {
@@ -704,9 +737,7 @@
             return _audioCtx;
         } catch (e) { return null; }
     }
-    function _beep(name) {
-        const soundSettings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
-        if (soundSettings.soundEnabled === false) return;
+    function _playSynthBeep(name) {
         const ctx = _getAudioCtx();
         if (!ctx) return;
         try {
@@ -743,6 +774,71 @@
             }
         } catch (e) { /* fail silent */ }
     }
+    function _beep(name) {
+        const soundSettings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
+        if (soundSettings.soundEnabled === false) return;
+        if (!soundSettings.devUseLegacySounds && _playSoundFile(name)) return;
+        _playSynthBeep(name);
+    }
+    function _stopMusic() {
+        Object.keys(_musicCache).forEach(function (key) {
+            const audio = _musicCache[key];
+            try {
+                audio.pause();
+                audio.currentTime = 0;
+            } catch (e) {}
+        });
+        _currentMusicName = '';
+    }
+    function _playMusic(name) {
+        const soundSettings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
+        if (soundSettings.soundEnabled === false) {
+            _stopMusic();
+            return;
+        }
+        const src = _musicFiles[name];
+        if (!src || typeof Audio === 'undefined') {
+            _stopMusic();
+            return;
+        }
+        if (_currentMusicName === name) return;
+        _stopMusic();
+        try {
+            if (!_musicCache[name]) {
+                const audio = new Audio(src);
+                audio.loop = true;
+                audio.preload = 'auto';
+                audio.volume = 0.42;
+                _musicCache[name] = audio;
+            }
+            _currentMusicName = name;
+            const played = _musicCache[name].play();
+            if (played && typeof played.catch === 'function') {
+                played.catch(function () {
+                    if (_currentMusicName === name) _currentMusicName = '';
+                });
+            }
+        } catch (e) {
+            _currentMusicName = '';
+        }
+    }
+    function _syncMusicForScreen(screenId) {
+        if (screenId === 'game') _playMusic('game');
+        else _playMusic('menu');
+    }
+    function _armMusicUnlock() {
+        if (typeof document === 'undefined') return;
+        let armed = true;
+        function unlock() {
+            if (!armed) return;
+            armed = false;
+            document.removeEventListener('pointerdown', unlock, true);
+            document.removeEventListener('keydown', unlock, true);
+            _syncMusicForScreen(_currentScreen);
+        }
+        document.addEventListener('pointerdown', unlock, true);
+        document.addEventListener('keydown', unlock, true);
+    }
 
     // Show/hide the big center "答對 / 答錯 / 逾時 / 放棄" overlay based on phase.
     // For resolvingWrong, distinguish wrong-pick vs timeout vs give-up via
@@ -769,20 +865,27 @@
     // ---- Buzz countdown + handoff overlay (rAF loop) --------------------
     // render() only fires on dispatch, so a per-second countdown would tick
     // jerkily. We run a lightweight rAF loop while phase===buzzed that updates
-    // #buzz-countdown (5→1, big red number) and fades #handoff-overlay.
+    // #buzz-countdown (7→1, big red number) and fades #handoff-overlay.
     // Loop self-terminates when phase leaves 'buzzed'.
     let _buzzedTickRafId = null;
+    let _lastBuzzCountdownSoundKey = '';
     function _startBuzzedTickLoop() {
         if (_buzzedTickRafId !== null) return;
         function tick() {
             if (!state || state.phase !== 'buzzed' || !state.buzz || !state.buzz.timerStartedAt) {
                 _buzzedTickRafId = null;
+                _lastBuzzCountdownSoundKey = '';
                 _hideBuzzedUI();
                 return;
             }
             const elapsed = Date.now() - state.buzz.timerStartedAt;
-            const remaining = Math.max(0, 5000 - elapsed);
+            const remaining = Math.max(0, 7000 - elapsed);
             const sec = Math.ceil(remaining / 1000);
+            const countdownSoundKey = state.buzz.timerStartedAt + ':' + sec;
+            if (sec > 0 && sec <= 3 && countdownSoundKey !== _lastBuzzCountdownSoundKey) {
+                _lastBuzzCountdownSoundKey = countdownSoundKey;
+                _beep('timeout');
+            }
             const cd = document.getElementById('buzz-countdown');
             const side = state.buzz.owner === 'p1' ? 'left' : 'right';
             if (cd) {
@@ -1382,6 +1485,7 @@
         _setChecked('settings-dev-quickwin-show-indicator', settings.devQuickWin && settings.devQuickWin.showIndicator);
         _setChecked('settings-dev-show-fps', settings.devShowFps);
         _setChecked('settings-dev-log-actions', settings.devLogActions);
+        _setChecked('settings-dev-use-legacy-sounds', settings.devUseLegacySounds);
         // PvE AI params
         var pveAI = (settings && settings.pveAI) ? settings.pveAI : {};
         ['easy', 'medium', 'hard'].forEach(function (diff) {
@@ -1813,6 +1917,7 @@
     function goToScreen(screenId) {
         _currentScreen = screenId;
         render();
+        _syncMusicForScreen(screenId);
         if (_isMenuScreen(screenId)) _focusFirstMenuItem(screenId);
     }
 
@@ -2157,6 +2262,7 @@
         const map = [
             ['settings-sound-enabled', 'checkbox', function (v) {
                 Save.writeSettings({ soundEnabled: v });
+                _syncMusicForScreen(_currentScreen);
             }],
             ['settings-dev-quickwin-enabled', 'checkbox', function (v) {
                 Save.writeSettings({ devQuickWin: { enabled: v } });
@@ -2172,6 +2278,9 @@
             }],
             ['settings-dev-log-actions', 'checkbox', function (v) {
                 Save.writeSettings({ devLogActions: v });
+            }],
+            ['settings-dev-use-legacy-sounds', 'checkbox', function (v) {
+                Save.writeSettings({ devUseLegacySounds: v });
             }],
         ];
         for (let i = 0; i < map.length; i++) {
@@ -2344,6 +2453,7 @@
         attachSettingsListeners();
         attachGiveUpListeners();
         initHatChars();
+        _armMusicUnlock();
         render();
         if (_isMenuScreen(_currentScreen)) _focusFirstMenuItem(_currentScreen);
     }
