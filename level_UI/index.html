@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level UI Prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../sorting-hat.css">
+    <link rel="stylesheet" href="level-ui.css">
+</head>
+<body>
+    <main class="prototype-shell">
+        <nav class="prototype-toolbar" aria-label="prototype controls">
+            <button type="button" data-demo-mode="practice" class="is-active">Practice</button>
+            <button type="button" data-demo-mode="duel">Duel</button>
+            <button type="button" data-feedback="correct">答對</button>
+            <button type="button" data-feedback="wrong">答錯</button>
+            <button type="button" data-feedback="clear">清除</button>
+        </nav>
+
+        <section id="level-demo" class="level-screen mode-practice">
+            <header class="level-hud">
+                <button type="button" class="hud-back" data-icon="back">返回大廳</button>
+                <div class="hud-title">
+                    <span class="hud-mode">自我修煉</span>
+                    <div class="hud-mainline">
+                        <strong>炔類辨識</strong>
+                        <span class="hud-question">這個分子主要屬於哪一類？</span>
+                    </div>
+                </div>
+                <div class="hud-stats">
+                    <span>題數 <strong>2 / 10</strong></span>
+                    <span>連對 <strong>2</strong></span>
+                </div>
+            </header>
+
+            <section class="duel-strip" aria-label="duel status">
+                <article class="duel-player p1">
+                    <div class="portrait">P1</div>
+                    <div>
+                        <span>分類師</span>
+                        <strong>120</strong>
+                    </div>
+                </article>
+                <div class="duel-vs">VS</div>
+                <article class="duel-player p2">
+                    <div class="portrait">AI</div>
+                    <div>
+                        <span>魔藥學徒</span>
+                        <strong>90</strong>
+                    </div>
+                </article>
+            </section>
+
+            <section class="question-stage">
+                <div class="stage-caption">
+                    <span class="stage-kicker">Question</span>
+                    <strong>這個分子主要屬於哪一類？</strong>
+                </div>
+                <figure class="molecule-card">
+                    <img src="../assets/images/03_alkyne/03_alkyne_ethyne.svg" alt="ethyne molecule">
+                </figure>
+            </section>
+
+            <section class="answer-dock" aria-label="answer choices">
+                <button type="button" class="answer-btn is-correct">芳香烴</button>
+                <button type="button" class="answer-btn">烷類</button>
+                <button type="button" class="answer-btn">炔類</button>
+                <button type="button" class="answer-btn is-wrong">烯類</button>
+            </section>
+
+            <aside class="coach-card">
+                <div class="hat-char thinking" aria-hidden="true">
+                    <div class="hat-img"></div>
+                    <div class="brow left"></div><div class="brow right"></div>
+                    <div class="eye left"><div class="pupil"></div></div>
+                    <div class="eye right"><div class="pupil"></div></div>
+                    <div class="mouth"></div>
+                </div>
+                <p>看到 C≡C 三鍵時，先把它當成最醒目的線索。</p>
+            </aside>
+
+            <div class="feedback-band feedback-correct" aria-hidden="true">
+                <span>Correct</span>
+                <strong>答對</strong>
+                <small>連續答對 2 題</small>
+            </div>
+            <div class="feedback-band feedback-wrong" aria-hidden="true">
+                <span>Wrong</span>
+                <strong>答錯</strong>
+                <small>正解：炔類</small>
+            </div>
+
+            <div class="dev-pill">測試模式：答對 2 題即結算</div>
+        </section>
+    </main>
+
+    <script>
+        const screen = document.getElementById('level-demo');
+        document.querySelectorAll('[data-demo-mode]').forEach((button) => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('[data-demo-mode]').forEach((b) => b.classList.remove('is-active'));
+                button.classList.add('is-active');
+                screen.classList.toggle('mode-duel', button.dataset.demoMode === 'duel');
+                screen.classList.toggle('mode-practice', button.dataset.demoMode === 'practice');
+            });
+        });
+        document.querySelectorAll('[data-feedback]').forEach((button) => {
+            button.addEventListener('click', () => {
+                screen.classList.remove('show-correct', 'show-wrong');
+                if (button.dataset.feedback === 'correct') screen.classList.add('show-correct');
+                if (button.dataset.feedback === 'wrong') screen.classList.add('show-wrong');
+            });
+        });
+    </script>
+</body>
+</html>
