@@ -311,7 +311,6 @@
             if (effect.name === 'pauseDynamic') {
                 if (state.dynamic) state.dynamic.phase = 'paused';
                 EffectManager.cancelAllEffects('dynamic-pause');
-                dispatch({ type: 'EFFECT_COMPLETE', effectId: -1 });
                 return;
             }
             if (effect.name === 'resumeDynamic') {
@@ -346,7 +345,6 @@
             }
             if (effect.name === 'freezeAtCompleteState') {
                 if (state.dynamic) { state.dynamic.phase = 'completed'; state.dynamic.completeStateReached = true; }
-                dispatch({ type: 'EFFECT_COMPLETE', effectId: -1 });
                 return;
             }
             // Other anim names (markChosen, correctHighlight, revealCorrect, lockoutLoser):
