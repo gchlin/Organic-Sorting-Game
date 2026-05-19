@@ -72,6 +72,7 @@
     let _pendingConfirm = null; // { onYes, onNo, text }
     let _tutorialState = null;  // { pages, idx, onDone, key }
     let _storyState = null;     // { lines, idx, playerName, onDone }
+    let _quickHintOpen = false;
     let _wrongChosenMap = {};   // { compoundKey: chosenWrongAnswerKey } — per round
     let _codexTab = 'molecules'; // 'molecules' | 'levels' | 'badges' | 'story'
     let _wrongBookTab = 'category'; // 'category' | 'all' | 'box1' | 'box2' | 'box3' | 'mastered'
@@ -380,7 +381,8 @@
         const buzz = document.getElementById('game-buzz');
         if (buzz) buzz.classList.remove('buzz-open', 'buzz-owner-p1', 'buzz-owner-p2');
         const hint = document.getElementById('game-hint-bubble');
-        if (hint) { hint.classList.remove('visible'); hint.textContent = ''; }
+        _quickHintOpen = false;
+        if (hint) { hint.classList.remove('visible', 'quick-hint'); hint.textContent = ''; }
         const img = document.getElementById('game-image');
         if (img) img.classList.remove('dyn-zoom', 'dyn-playing', 'dyn-paused', 'dyn-completing', 'dyn-complete');
         const fb = document.getElementById('feedback-overlay');
@@ -634,6 +636,7 @@
             const total = state.round && state.round.size ? state.round.size : Math.max(asked, asked + (state.queue ? state.queue.length : 0));
             progressEl.textContent = Math.min(asked, total) + ' / ' + total;
         }
+        _renderQuickHint();
 
         // Question image
         const imgEl = document.getElementById('game-image');
@@ -916,6 +919,40 @@
         } else {
             el.textContent = '';
         }
+    }
+
+    function _tutorialPagesFor(family, difficulty) {
+        if (!family || !difficulty || typeof LevelTutorials === 'undefined') return null;
+        const tut = LevelTutorials[family + '-' + difficulty];
+        return (tut && Array.isArray(tut.pages)) ? tut.pages
+             : (tut && Array.isArray(tut)) ? tut
+             : null;
+    }
+    function _quickHintText() {
+        if (!state || !state.family || !state.difficulty) return '';
+        const pages = _tutorialPagesFor(state.family, state.difficulty);
+        if (pages && pages.length > 0) {
+            const page = pages[0] || {};
+            const title = page.title ? String(page.title) : '';
+            const text = page.text ? String(page.text) : '';
+            return title && text ? (title + '：' + text) : (text || title);
+        }
+        return state.mode === 'duel'
+            ? '看清楚分子特徵後再搶答；搶答後只有目前搶答方可以作答。'
+            : '先找最明顯的官能基，再比對選項；答錯可以再觀察一次。';
+    }
+    function _renderQuickHint() {
+        const hint = document.getElementById('game-hint-bubble');
+        if (!hint) return;
+        const text = _quickHintOpen ? _quickHintText() : '';
+        hint.classList.toggle('visible', !!text);
+        hint.classList.toggle('quick-hint', !!text);
+        hint.setAttribute('aria-live', 'polite');
+        hint.textContent = text;
+    }
+    function _toggleQuickHint() {
+        _quickHintOpen = !_quickHintOpen;
+        _renderQuickHint();
     }
 
     // ---- Buzz countdown + handoff overlay (rAF loop) --------------------
@@ -2306,6 +2343,10 @@
                     break;
                 case 'show-tutorial':
                     if (state && state.family && state.difficulty) {
+                        if (_currentScreen === 'game') {
+                            _toggleQuickHint();
+                            break;
+                        }
                         const tutKey = state.family + '-' + state.difficulty;
                         const tut = (typeof LevelTutorials !== 'undefined') ? LevelTutorials[tutKey] : null;
                         const pages = (tut && Array.isArray(tut.pages)) ? tut.pages

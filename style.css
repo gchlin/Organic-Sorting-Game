@@ -3263,6 +3263,9 @@ body.input-locked .v2-buzz button { pointer-events: none; }
     display: none;
 }
 .v2-hint-bubble.visible { display: block; }
+#screen-game.mode-duel #game-hint-bubble.quick-hint.visible {
+    display: block !important;
+}
 
 .v2-dev-banner {
     position: fixed;
