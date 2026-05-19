@@ -117,19 +117,22 @@ const Save = (function () {
 
     function defaultKeybindings() {
         return {
-            // 左側 / P1 / Practice 單人：4 個選項
-            optionLeft0:  'KeyA',
-            optionLeft1:  'KeyF',
-            optionLeft2:  'KeyZ',
-            optionLeft3:  'KeyC',
-            // 右側 / P2（PvP）/ Practice & PvE 替代輸入：4 個選項
-            optionRight0: 'Digit4',
+            // 左方答題（由上至下）
+            optionLeft0:  'KeyQ',
+            optionLeft1:  'KeyA',
+            optionLeft2:  'KeyS',
+            optionLeft3:  'KeyX',
+            // 右方答題（由上至下）
+            optionRight0: 'Digit9',
             optionRight1: 'Digit6',
-            optionRight2: 'Digit1',
-            optionRight3: 'Digit3',
+            optionRight2: 'Digit5',
+            optionRight3: 'Digit2',
             // 搶答
             buzzP1: 'Space',
-            buzzP2: 'Enter'
+            buzzP2: 'Enter',
+            // 取消搶答（各自觸發，只對自己的回合有效）
+            giveUpP1: 'KeyV',
+            giveUpP2: 'Backslash'
         };
     }
 

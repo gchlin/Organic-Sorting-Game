@@ -1624,8 +1624,12 @@
             { id: 'optionRight3', label: '右下' }
         ]},
         { title: '搶答', layout: 'row2', rows: [
-            { id: 'buzzP1', label: 'P1 搶答' },
-            { id: 'buzzP2', label: 'P2 搶答' }
+            { id: 'buzzP1', label: '左方 搶答' },
+            { id: 'buzzP2', label: '右方 搶答' }
+        ]},
+        { title: '取消搶答（只對自己回合有效）', layout: 'row2', rows: [
+            { id: 'giveUpP1', label: '左方 取消' },
+            { id: 'giveUpP2', label: '右方 取消' }
         ]}
     ];
 
@@ -1636,8 +1640,7 @@
             { label: '啟動所選項', code: 'Enter / Space' }
         ]},
         { title: '畫面導航（不可改）', layout: 'row2', rows: [
-            { label: '返回 / 離開', code: 'Esc / M' },
-            { label: '投降（對決搶答中）', code: 'G' }
+            { label: '返回 / 離開', code: 'Esc / M' }
         ]},
         { title: '劇情播放（不可改）', layout: 'row2', rows: [
             { label: '推進對話', code: 'Space / Enter' },
@@ -2187,6 +2190,13 @@
         dispatch({ type: 'GIVE_UP', player: state.buzz.owner });
         return true;
     }
+    function _dispatchGiveUpFor(player) {
+        if (!state || state.mode !== 'duel' || state.phase !== 'buzzed') return false;
+        if (!state.buzz || state.buzz.owner !== player) return false;
+        if (state.opponent !== 'human' && player === 'p2') return false;
+        dispatch({ type: 'GIVE_UP', player });
+        return true;
+    }
     function attachGiveUpListeners() {
         const btn = document.getElementById('btn-giveup');
         if (btn) {
@@ -2196,8 +2206,13 @@
             });
         }
         document.addEventListener('keydown', function (e) {
-            if (e.code !== 'KeyG') return;
-            if (_dispatchGiveUpIfBuzzed()) e.preventDefault();
+            const kb = (typeof Save !== 'undefined' && Save.readSettings)
+                ? (Save.readSettings().keybindings || {}) : {};
+            if (e.code === (kb.giveUpP1 || 'KeyV')) {
+                if (_dispatchGiveUpFor('p1')) e.preventDefault();
+            } else if (e.code === (kb.giveUpP2 || 'Backslash')) {
+                if (_dispatchGiveUpFor('p2')) e.preventDefault();
+            }
         });
     }
 
