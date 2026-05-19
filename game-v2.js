@@ -2131,8 +2131,9 @@
     function _onEnterSettling() {
         // Persistence: mark sub-level cleared / record round accuracy / dispatch badge unlocks
         if (state.mode !== 'practice') return;
-        const acc = state.players.p1.totalAsked > 0
-            ? state.players.p1.correctCount / state.players.p1.totalAsked
+        const attempts = (state.players.p1.correctCount || 0) + (state.players.p1.wrongCount || 0);
+        const acc = attempts > 0
+            ? state.players.p1.correctCount / attempts
             : null;
         if (typeof Save !== 'undefined') {
             if (acc !== null && Save.recordSubLevelRound) {

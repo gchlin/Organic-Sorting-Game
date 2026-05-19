@@ -237,7 +237,9 @@ const ModeRulesV2 = {
     'duel.buzzed.ANSWER_TIMEOUT': (s, a) => ({
         nextPhase: 'resolvingWrong',
         stateDiff: { 'question.failedPlayersThisCycle': new Set([...s.question.failedPlayersThisCycle, a.player]),
-                     'question.lastResolveReason': 'timeout' },
+                     'question.lastResolveReason': 'timeout',
+                     [`players.${a.player}.wrongCount`]: (s.players[a.player].wrongCount || 0) + 1,
+                     [`players.${a.player}.correctStreak`]: 0 },
         // 不加入 eliminatedWrongKeys、不設 lastChosenWrongKey —— 逾時 ≠ 選錯
         effects: [{ type: 'sound', name: 'wrong' }],
     }),
@@ -248,7 +250,9 @@ const ModeRulesV2 = {
     'duel.buzzed.GIVE_UP': (s, a) => ({
         nextPhase: 'resolvingWrong',
         stateDiff: { 'question.failedPlayersThisCycle': new Set([...s.question.failedPlayersThisCycle, a.player]),
-                     'question.lastResolveReason': 'giveup' },
+                     'question.lastResolveReason': 'giveup',
+                     [`players.${a.player}.wrongCount`]: (s.players[a.player].wrongCount || 0) + 1,
+                     [`players.${a.player}.correctStreak`]: 0 },
         effects: [{ type: 'timer.clear' },
                   { type: 'sound', name: 'timeout' },
                   { type: 'anim', name: 'giveUp', ms: 300 }],
