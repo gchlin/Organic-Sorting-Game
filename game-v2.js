@@ -372,7 +372,7 @@
         const fb = document.getElementById('feedback-overlay');
         if (fb) { fb.classList.remove('show-correct', 'show-wrong'); fb.textContent = ''; }
         // Stop buzz countdown + clear handoff overlay
-        _hideBuzzedUI();
+        _stopBuzzedTickLoop();
         if (state && state.buzz) { state.buzz.timerStartedAt = 0; state.buzz._isHandoff = false; }
     }
 
@@ -683,7 +683,6 @@
                         btns[i].classList.toggle('wrong-chosen',
                             feedbackApplies && opt.key === state.question.lastChosenWrongKey);
                         btns[i].classList.toggle('correct-reveal',
-                            feedbackApplies &&
                             (state.phase === 'revealing' || state.phase === 'revealed')
                             && opt.key === state.question.correctKey);
                         btns[i].classList.toggle('correct-chosen',
@@ -717,7 +716,7 @@
         if (state.phase === 'buzzed') {
             _startBuzzedTickLoop();
         } else {
-            _hideBuzzedUI();
+            _stopBuzzedTickLoop();
         }
 
         _updateFeedbackOverlay();
@@ -960,6 +959,13 @@
             _buzzedTickRafId = requestAnimationFrame(tick);
         }
         _buzzedTickRafId = requestAnimationFrame(tick);
+    }
+    function _stopBuzzedTickLoop() {
+        if (_buzzedTickRafId !== null) {
+            cancelAnimationFrame(_buzzedTickRafId);
+            _buzzedTickRafId = null;
+        }
+        _hideBuzzedUI();
     }
     function _hideBuzzedUI() {
         const cd = document.getElementById('buzz-countdown');
