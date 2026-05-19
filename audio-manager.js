@@ -133,6 +133,20 @@ const AudioManager = (function () {
             } else if (name === 'buzz') {
                 note(880, 'square', 0, 110, 0.14);
                 note(1175, 'square', 70, 160, 0.12);
+            } else if (name === 'comboGood') {
+                note(523, 'triangle', 0, 110, 0.10);
+                note(659, 'triangle', 85, 130, 0.10);
+                note(784, 'triangle', 180, 190, 0.11);
+            } else if (name === 'comboGreat') {
+                note(587, 'sine', 0, 95, 0.10);
+                note(740, 'sine', 70, 120, 0.10);
+                note(880, 'sine', 150, 150, 0.11);
+                note(1175, 'sine', 250, 210, 0.09);
+            } else if (name === 'comboBrilliant') {
+                note(659, 'triangle', 0, 90, 0.10);
+                note(880, 'triangle', 60, 115, 0.10);
+                note(1047, 'triangle', 135, 145, 0.11);
+                note(1319, 'triangle', 230, 230, 0.10);
             }
         } catch (e) {}
     }

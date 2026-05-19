@@ -983,6 +983,11 @@
         if (label === '厲害') return 'good';
         return '';
     }
+    const _comboSoundByTier = {
+        good: 'comboGood',
+        great: 'comboGreat',
+        brilliant: 'comboBrilliant'
+    };
 
     // Combo popup: large floating text near the player when combo level crosses
     // a threshold upward. Tracks previous combo per player so a sustained streak
@@ -1023,6 +1028,7 @@
                 const newTier = _comboTier(newLabel);
                 const tierOrder = { good: 1, great: 2, brilliant: 3 };
                 if ((tierOrder[newTier] || 0) > (tierOrder[prevTier] || 0)) {
+                    _beep(_comboSoundByTier[newTier]);
                     _spawnComboPopup(newLabel, p);
                 }
             }
