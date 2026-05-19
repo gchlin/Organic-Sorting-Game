@@ -47,7 +47,9 @@
                         <h3 class="v2-section-title" data-icon="swords">巫師對決</h3>
                         <span class="v2-section-sub">Duel</span>
                     </div>
-                    <button class="v2-menu-btn v2-duel-btn" data-icon="swords" data-action="enter-duel-menu"><span class="level-name">選擇對決難度</span></button>
+                    <button class="v2-menu-btn v2-duel-btn" data-action="enter-duel-menu" data-arg="beginner"><span class="level-tag">L1</span><span class="level-name">初級</span></button>
+                    <button class="v2-menu-btn v2-duel-btn" data-action="enter-duel-menu" data-arg="intermediate"><span class="level-tag">L3</span><span class="level-name">中級</span></button>
+                    <button class="v2-menu-btn v2-duel-btn v2-boss-btn" data-action="enter-duel-menu" data-arg="advanced"><span class="level-tag">L6</span><span class="level-name">高級</span></button>
                 </div>
                 <div class="v2-menu-section">
                     <div class="v2-section-head">
@@ -84,11 +86,16 @@
                     <span class="streak" data-field="streak"></span>
                     <span class="combo-level" data-field="combo-level"></span>
                 </div>
-                <div id="opponent-label" class="v2-opp-label"></div>
-                <div class="v2-game-actions">
-                    <button class="v2-back-btn v2-back-btn-sm" data-action="back-to-menu" title="Esc">返回大廳</button>
-                    <button class="v2-back-btn v2-back-btn-sm v2-game-tutorial-btn" data-action="show-tutorial" data-icon="quill">看教學</button>
+                <div class="v2-duel-hud-title" aria-live="polite">
+                    <button class="v2-back-btn v2-back-btn-sm" data-action="back-to-menu" data-icon="back" title="返回大廳" aria-label="返回大廳">返回大廳</button>
+                    <div class="v2-hud-title-text">
+                        <span id="game-mode-label" class="v2-duel-mode-label">雙人決鬥</span>
+                        <strong id="game-question-label">這是甚麼類別的有機分子?</strong>
+                    </div>
+                    <button class="v2-back-btn v2-back-btn-sm v2-game-tutorial-btn" data-action="show-tutorial" data-icon="quill" title="看教學" aria-label="看教學">看教學</button>
                 </div>
+                <div id="game-question-progress" class="v2-question-progress">1 / 10</div>
+                <div id="opponent-label" class="v2-opp-label"></div>
             </div>
 
             <div id="game-image-container" class="v2-image-frame">

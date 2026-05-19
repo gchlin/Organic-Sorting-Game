@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duel Level UI Prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap">
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100dvh;
+            display: grid;
+            place-items: center;
+            padding: 8px;
+            background:
+                radial-gradient(circle at 20% 0%, rgba(127,9,9,.24), transparent 34%),
+                radial-gradient(circle at 82% 10%, rgba(38,125,54,.18), transparent 30%),
+                linear-gradient(180deg, #101116, #17161c 58%, #111116);
+            color: var(--hp-parchment);
+            font-family: Georgia, serif;
+        }
+        .duel-level {
+            position: relative;
+            width: min(100%, 960px);
+            height: min(100dvh - 16px, 560px);
+            min-height: 340px;
+            display: grid;
+            grid-template-columns: clamp(118px, 21vw, 178px) minmax(220px, 1fr) clamp(118px, 21vw, 178px);
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            grid-template-areas:
+                "hud hud hud"
+                "p1 stage p2"
+                "buzz buzz buzz";
+            gap: 8px;
+            padding: 8px;
+            background: rgba(7,8,12,.72);
+            border: 1px solid rgba(212,175,55,.28);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 20px 48px rgba(0,0,0,.36);
+        }
+        .duel-hud {
+            grid-area: hud;
+            position: relative;
+            display: grid;
+            grid-template-columns: clamp(118px, 21vw, 178px) minmax(220px, 1fr) clamp(118px, 21vw, 178px);
+            grid-template-areas:
+                "p1 title p2"
+                "p1 progress p2";
+            gap: 5px 8px;
+            min-height: 64px;
+            padding: 6px 8px;
+            background: rgba(18,15,16,.86);
+            border: 1px solid rgba(212,175,55,.18);
+            border-radius: 8px;
+        }
+        .hud-actions {
+            display: flex;
+        }
+        .hud-icon {
+            width: 34px;
+            height: 34px;
+            display: inline-grid;
+            place-items: center;
+            padding: 0;
+            color: var(--hp-gold);
+            background: rgba(47,36,32,.9);
+            border: 1px solid var(--hp-gold);
+            border-radius: 7px;
+            cursor: pointer;
+        }
+        .hud-icon::before { margin: 0; font-size: 18px; }
+        .score-card {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+            padding: 5px 8px;
+            background: rgba(0,0,0,.36);
+            border: 1px solid rgba(212,175,55,.24);
+            border-radius: 7px;
+        }
+        .score-card.p1 {
+            grid-area: p1;
+            border-color: rgba(190,33,30,.78);
+        }
+        .score-card.p2 {
+            grid-area: p2;
+            border-color: rgba(38,125,54,.78);
+        }
+        .score-card span {
+            color: var(--hp-gold);
+            font: 800 .88rem "Cinzel", Georgia, serif;
+        }
+        .score-card .bar {
+            position: relative;
+            width: 100%;
+            height: 10px;
+            border-radius: 999px;
+            overflow: hidden;
+            background: linear-gradient(to bottom, var(--hp-gold-light), var(--hp-gold) 50%, var(--hp-gold-deep));
+            box-shadow: inset 0 1px 2px rgba(255,245,200,.65), inset 0 -2px 4px rgba(0,0,0,.35), 0 0 8px rgba(212,175,55,.45);
+        }
+        .score-card .bar::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+            animation: hp-shimmer 3.5s linear infinite;
+        }
+        .score-card strong {
+            color: #fff5c0;
+            font: 900 1rem "Cinzel", Georgia, serif;
+            line-height: 1;
+        }
+        .hud-title {
+            grid-area: title;
+            align-self: end;
+            display: grid;
+            grid-template-columns: 36px minmax(0, 1fr) 36px;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            text-align: center;
+        }
+        .hud-title span {
+            display: block;
+            color: var(--hp-gold);
+            font: 800 clamp(.72rem, 1.7vh, .88rem) "Cinzel", Georgia, serif;
+            letter-spacing: .08em;
+        }
+        .hud-title strong {
+            display: block;
+            overflow: hidden;
+            color: #fff5c0;
+            font-size: clamp(.84rem, 2.1vh, 1.04rem);
+            line-height: 1.25;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .progress {
+            grid-area: progress;
+            justify-self: end;
+            color: #fff5c0;
+            font: 800 clamp(.88rem, 2vh, 1.05rem) "Cinzel", Georgia, serif;
+        }
+        .answers {
+            display: grid;
+            grid-template-columns: 1fr;
+            align-content: start;
+            gap: 6px;
+            min-width: 0;
+        }
+        .answers.p1 { grid-area: p1; }
+        .answers.p2 { grid-area: p2; }
+        .answer-btn {
+            min-height: 40px;
+            padding: 7px 8px;
+            color: var(--hp-parchment);
+            background: linear-gradient(180deg, rgba(96,73,65,.82), rgba(44,34,32,.94));
+            border: 2px solid rgba(212,175,55,.72);
+            border-radius: 7px;
+            font: 700 .95rem Georgia, serif;
+        }
+        .stage {
+            grid-area: stage;
+            display: grid;
+            place-items: center;
+            min-width: 0;
+            min-height: 0;
+            padding: 7px 10px;
+            background: linear-gradient(180deg, rgba(245,239,222,.94), rgba(232,220,194,.96));
+            border: 2px solid var(--hp-gold);
+            border-radius: 8px;
+            box-shadow: 0 16px 36px rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.42);
+        }
+        .stage img {
+            display: block;
+            width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            background: #fff;
+        }
+        .buzz {
+            grid-area: buzz;
+            display: grid;
+            grid-template-columns: clamp(118px, 21vw, 178px) minmax(220px, 1fr) clamp(118px, 21vw, 178px);
+            gap: 8px;
+        }
+        .buzz button {
+            min-height: 42px;
+            color: #fff5c0;
+            background: linear-gradient(180deg, rgba(127,9,9,.96), rgba(88,8,8,.96));
+            border: 2px solid var(--hp-gold);
+            border-radius: 7px;
+            font: 800 .9rem Georgia, serif;
+            box-shadow: 0 0 12px rgba(212,175,55,.25);
+        }
+        .buzz .p2-buzz { grid-column: 3; }
+        .countdown {
+            position: absolute;
+            top: 78px;
+            left: 10px;
+            width: 44px;
+            height: 44px;
+            display: grid;
+            place-items: center;
+            color: var(--hp-parchment);
+            background: rgba(0,0,0,.65);
+            border: 3px solid var(--hp-gold);
+            border-radius: 50%;
+            font: 900 1.55rem "Cinzel", Georgia, serif;
+            pointer-events: none;
+        }
+        .orientation-lock { display: none; }
+        @media (orientation: portrait), (max-width: 520px) {
+            .duel-level > :not(.orientation-lock) { display: none; }
+            .duel-level {
+                display: grid;
+                place-items: center;
+                height: min(100dvh - 16px, 520px);
+                grid-template: 1fr / 1fr;
+            }
+            .orientation-lock {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                width: min(88vw, 360px);
+                min-height: 180px;
+                padding: 24px;
+                color: var(--hp-parchment);
+                background: rgba(20,15,15,.86);
+                border: 1px solid rgba(212,175,55,.55);
+                border-radius: 10px;
+                text-align: center;
+                overflow: hidden;
+            }
+            .orientation-lock::before {
+                content: "";
+                width: 76px;
+                height: 46px;
+                border: 3px solid var(--hp-gold);
+                border-radius: 10px;
+                animation: duel-phone-rotate 1.8s ease-in-out infinite;
+            }
+            .orientation-lock strong {
+                color: var(--hp-gold);
+                font: 800 1.35rem "Cinzel", Georgia, serif;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="duel-level">
+        <header class="duel-hud">
+            <article class="score-card p1">
+                <span>P1</span>
+                <div class="bar"></div>
+                <strong>3</strong>
+            </article>
+            <div class="hud-title">
+                <button class="hud-icon" data-icon="back" aria-label="返回大廳" title="返回大廳"></button>
+                <div>
+                    <span>雙人決鬥</span>
+                    <strong>這是甚麼類別的有機分子?</strong>
+                </div>
+                <button class="hud-icon" data-icon="quill" aria-label="看教學" title="看教學"></button>
+            </div>
+            <div class="progress">4 / 10</div>
+            <article class="score-card p2">
+                <span>P2</span>
+                <div class="bar"></div>
+                <strong>2</strong>
+            </article>
+        </header>
+        <div class="countdown">5</div>
+
+        <section class="answers p1" aria-label="P1 options">
+            <button class="answer-btn">烷類</button>
+            <button class="answer-btn">烯類</button>
+            <button class="answer-btn">炔類</button>
+            <button class="answer-btn">芳香烴</button>
+        </section>
+
+        <figure class="stage">
+            <img src="../assets/images/03_alkyne/03_alkyne_ethyne.svg" alt="ethyne molecule">
+        </figure>
+
+        <section class="answers p2" aria-label="P2 options">
+            <button class="answer-btn">Alkane</button>
+            <button class="answer-btn">Alkene</button>
+            <button class="answer-btn">Alkyne</button>
+            <button class="answer-btn">Aromatic</button>
+        </section>
+
+        <section class="buzz" aria-label="buzz controls">
+            <button>P1 搶答 (SPACE)</button>
+            <button class="p2-buzz">P2 搶答 (ENTER)</button>
+        </section>
+
+        <section class="orientation-lock" aria-label="orientation lock">
+            <strong>請旋轉裝置</strong>
+            <span>巫師對決限橫向螢幕遊玩</span>
+        </section>
+    </main>
+</body>
+</html>

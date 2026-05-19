@@ -454,11 +454,9 @@
 
     // Sub-menu kinds:
     //   'difficulty'           { difficulty }   → family list, click starts practice
-    //   'duelDifficulty'       {}               → opponent toggle + 初/中/高 (mode is sticky)
     //   'duelFamily'           { difficulty }   → family list, click starts duel using saved mode
     //   'duelOpponentSetting'  {}               → PvP / PvE 易/中/難 picker, saves to
-    //                                             settings.duelOpponent then returns to
-    //                                             duelDifficulty. NOT in the start-game flow.
+    //                                             settings.duelOpponent. NOT in the start-game flow.
     function renderSubMenu() {
         const titleEl = document.getElementById('sub-menu-title');
         const listEl = document.getElementById('sub-menu-list');
@@ -521,54 +519,11 @@
                 });
                 listEl.appendChild(btn);
             }
-        } else if (_subMenuContext.kind === 'duelDifficulty') {
-            const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
-            const currentOpp = settings.duelOpponent || 'aiMedium';
-            titleEl.textContent = '巫師對決';
-            const opponentRow = document.createElement('div');
-            opponentRow.className = 'v2-duel-mode-toggle';
-            const opponents = [
-                { key: 'human', label: 'PvP（雙人）' },
-                { key: 'aiEasy', label: 'PvE 易' },
-                { key: 'aiMedium', label: 'PvE 中' },
-                { key: 'aiHard', label: 'PvE 難' }
-            ];
-            for (let i = 0; i < opponents.length; i++) {
-                const op = opponents[i];
-                const btn = document.createElement('button');
-                btn.className = 'v2-duel-mode-option';
-                btn.type = 'button';
-                btn.textContent = op.label;
-                btn.setAttribute('aria-pressed', op.key === currentOpp ? 'true' : 'false');
-                if (op.key === currentOpp) btn.classList.add('is-active');
-                btn.addEventListener('click', function () {
-                    if (typeof Save !== 'undefined' && Save.writeSettings) {
-                        Save.writeSettings({ duelOpponent: op.key });
-                    }
-                    render();
-                });
-                opponentRow.appendChild(btn);
-            }
-            listEl.appendChild(opponentRow);
-
-            const diffs = [
-                { key: 'beginner', tag: 'L1' },
-                { key: 'intermediate', tag: 'L3' },
-                { key: 'advanced', tag: 'L6' }
-            ];
-            for (let i = 0; i < diffs.length; i++) {
-                const d = diffs[i];
-                appendDifficultyButton(d.key, d.tag, function () {
-                    _subMenuContext = { kind: 'duelFamily', difficulty: d.key };
-                    render();
-                });
-            }
         } else if (_subMenuContext.kind === 'duelFamily') {
             const diff = _subMenuContext.difficulty;
             const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
             const opponent = settings.duelOpponent || 'aiMedium';
-            const oppLabel = { human: 'PvP', aiEasy: 'PvE 易', aiMedium: 'PvE 中', aiHard: 'PvE 難' }[opponent] || opponent;
-            titleEl.textContent = diffName(diff) + ' 巫師對決（' + oppLabel + '） — 選擇主題子關';
+            titleEl.textContent = diffName(diff) + ' 巫師對決 — 選擇主題子關';
             const familyKeys = Object.keys(Families).filter(k => Families[k].difficulties.indexOf(diff) !== -1);
             for (let i = 0; i < familyKeys.length; i++) {
                 const fk = familyKeys[i];
@@ -597,8 +552,7 @@
                     if (typeof Save !== 'undefined' && Save.writeSettings) {
                         Save.writeSettings({ duelOpponent: op.key });
                     }
-                    _subMenuContext = { kind: 'duelDifficulty' };
-                    render();
+                    goToScreen('main-menu');
                 });
                 listEl.appendChild(btn);
             }
@@ -642,6 +596,23 @@
             } else {
                 oppEl.textContent = '';
             }
+        }
+
+        const modeLabel = document.getElementById('game-mode-label');
+        const questionLabel = document.getElementById('game-question-label');
+        const progressEl = document.getElementById('game-question-progress');
+        if (modeLabel) modeLabel.textContent = state.mode === 'duel' ? '雙人決鬥' : '自我修煉';
+        if (questionLabel) {
+            const diff = (typeof Difficulties !== 'undefined') ? Difficulties[state.difficulty] : null;
+            const answerType = diff ? diff.answerType : 'categoryZh';
+            questionLabel.textContent = answerType === 'compound'
+                ? '這個有機分子的化學式是甚麼?'
+                : '這是甚麼類別的有機分子?';
+        }
+        if (progressEl) {
+            const asked = Math.max(1, state.players && state.players.p1 ? (state.players.p1.totalAsked || 1) : 1);
+            const total = state.round && state.round.size ? state.round.size : Math.max(asked, asked + (state.queue ? state.queue.length : 0));
+            progressEl.textContent = Math.min(asked, total) + ' / ' + total;
         }
 
         // Question image
@@ -1899,6 +1870,7 @@
                 });
             }
         }
+        state.round.size = state.queue ? state.queue.length : 0;
 
         state.dynamic.variant = (opts.mode === 'duel') ? 'zoom' : null;
 
@@ -2114,7 +2086,7 @@
                     goToScreen('sub-menu');
                     break;
                 case 'enter-duel-menu':
-                    _subMenuContext = { kind: 'duelDifficulty' };
+                    _subMenuContext = { kind: 'duelFamily', difficulty: arg || 'beginner' };
                     goToScreen('sub-menu');
                     break;
                 case 'enter-tutorial':
@@ -2140,14 +2112,9 @@
                 case 'back-to-main':
                 case 'back-to-menu':
                     if (aiController) { try { aiController.stop(); } catch (err) {} aiController = null; }
-                    // 在 duel 子樹裡先逐層退回，全部退完才回主選單
+                    // Duel 子關選單現在直接回主選單。
                     if (_currentScreen === 'sub-menu' && _subMenuContext) {
-                        if (_subMenuContext.kind === 'duelOpponentSetting'
-                         || _subMenuContext.kind === 'duelFamily') {
-                            _subMenuContext = { kind: 'duelDifficulty' };
-                            render();
-                            break;
-                        }
+                        if (_subMenuContext.kind === 'duelOpponentSetting') goToScreen('main-menu');
                     }
                     goToScreen('main-menu');
                     break;
@@ -2234,8 +2201,7 @@
                 if (_currentScreen === 'sub-menu' && _subMenuContext) {
                     if (_subMenuContext.kind === 'duelOpponentSetting'
                      || _subMenuContext.kind === 'duelFamily') {
-                        _subMenuContext = { kind: 'duelDifficulty' };
-                        render(); e.preventDefault(); return;
+                        goToScreen('main-menu'); e.preventDefault(); return;
                     }
                 }
                 goToScreen('main-menu');
