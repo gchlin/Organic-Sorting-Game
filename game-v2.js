@@ -760,13 +760,19 @@
         }
     }
     function _getAudioCtx() {
-        if (_audioCtx) return _audioCtx;
+        if (_audioCtx) {
+            if (_audioCtx.state === 'suspended') _audioCtx.resume();
+            return _audioCtx;
+        }
         try {
             const Ctx = window.AudioContext || window.webkitAudioContext;
             if (!Ctx) return null;
             _audioCtx = new Ctx();
             return _audioCtx;
         } catch (e) { return null; }
+    }
+    function _teardownAudio() {
+        if (_audioCtx) { _audioCtx.close(); _audioCtx = null; }
     }
     function _playSynthBeep(name) {
         const ctx = _getAudioCtx();
@@ -1958,6 +1964,7 @@
     function beginMode(opts) {
         // Tear down any prior AI
         if (aiController) { try { aiController.stop(); } catch (e) {} aiController = null; }
+        _teardownAudio();
 
         _wrongChosenMap = {};
         _prevCombo.p1 = '';
