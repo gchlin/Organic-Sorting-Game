@@ -766,158 +766,26 @@
     }
 
     // ---- Audio feedback ---------------------------------------------------
-    // Prefer short audio assets from /sound; keep synthesized tones as fallback.
-    const _soundFiles = {
-        correct: 'sound/correct.mp3',
-        wrong: 'sound/incorrect.mp3',
-        timeout: 'sound/timeout.mp3',
-        buzz: 'sound/bell.mp3'
-    };
-    const _musicFiles = {
-        menu: 'sound/menu.mp3',
-        game: 'sound/game.mp3'
-    };
-    const _soundCache = {};
-    const _musicCache = {};
-    let _currentMusicName = '';
-    let _audioCtx = null;
-    function _playSoundFile(name) {
-        const src = _soundFiles[name];
-        if (!src || typeof Audio === 'undefined') return false;
-        try {
-            if (!_soundCache[name]) {
-                const audio = new Audio(src);
-                audio.preload = 'auto';
-                _soundCache[name] = audio;
-            }
-            const audio = _soundCache[name];
-            audio.pause();
-            audio.currentTime = 0;
-            const played = audio.play();
-            if (played && typeof played.catch === 'function') {
-                played.catch(function () { _playSynthBeep(name); });
-            }
-            return true;
-        } catch (e) {
-            return false;
+    // Thin compatibility wrappers while gameplay migrates to AudioManager.
+    function _beep(name) {
+        if (typeof AudioManager !== 'undefined' && AudioManager.playSound) {
+            AudioManager.playSound(name);
         }
-    }
-    function _getAudioCtx() {
-        if (_audioCtx) {
-            if (_audioCtx.state === 'suspended') _audioCtx.resume();
-            return _audioCtx;
-        }
-        try {
-            const Ctx = window.AudioContext || window.webkitAudioContext;
-            if (!Ctx) return null;
-            _audioCtx = new Ctx();
-            return _audioCtx;
-        } catch (e) { return null; }
     }
     function _teardownAudio() {
-        if (_audioCtx) { _audioCtx.close(); _audioCtx = null; }
-    }
-    function _playSynthBeep(name) {
-        const ctx = _getAudioCtx();
-        if (!ctx) return;
-        try {
-            const t0 = ctx.currentTime;
-            function note(freq, type, startMs, durMs, peakGain) {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = type || 'sine';
-                osc.frequency.value = freq;
-                const start = t0 + startMs / 1000;
-                const stop = start + durMs / 1000;
-                gain.gain.setValueAtTime(0.0001, start);
-                gain.gain.exponentialRampToValueAtTime(peakGain || 0.12, start + 0.01);
-                gain.gain.exponentialRampToValueAtTime(0.0001, stop);
-                osc.connect(gain); gain.connect(ctx.destination);
-                osc.start(start); osc.stop(stop);
-            }
-            if (name === 'correct') {
-                // Pleasant two-note ding (C5 → G5)
-                note(523, 'sine', 0,  150, 0.12);
-                note(784, 'sine', 80, 280, 0.10);
-            } else if (name === 'wrong') {
-                // Harsh low buzz (A2 sawtooth)
-                note(110, 'sawtooth', 0, 350, 0.15);
-            } else if (name === 'timeout') {
-                // Falling tone (G3 → D3)
-                note(196, 'triangle', 0,   200, 0.12);
-                note(147, 'triangle', 200, 300, 0.12);
-            } else if (name === 'buzz') {
-                // Game-show style two-note buzz (A5 → D6) — louder than other beeps
-                // so it cuts through and clearly marks "someone grabbed the buzzer".
-                note(880, 'square', 0,  110, 0.14);
-                note(1175, 'square', 70, 160, 0.12);
-            }
-        } catch (e) { /* fail silent */ }
-    }
-    function _beep(name) {
-        const soundSettings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
-        if (soundSettings.soundEnabled === false) return;
-        if (!soundSettings.devUseLegacySounds && _playSoundFile(name)) return;
-        _playSynthBeep(name);
-    }
-    function _stopMusic() {
-        Object.keys(_musicCache).forEach(function (key) {
-            const audio = _musicCache[key];
-            try {
-                audio.pause();
-                audio.currentTime = 0;
-            } catch (e) {}
-        });
-        _currentMusicName = '';
-    }
-    function _playMusic(name) {
-        const soundSettings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
-        if (soundSettings.soundEnabled === false) {
-            _stopMusic();
-            return;
-        }
-        const src = _musicFiles[name];
-        if (!src || typeof Audio === 'undefined') {
-            _stopMusic();
-            return;
-        }
-        if (_currentMusicName === name) return;
-        _stopMusic();
-        try {
-            if (!_musicCache[name]) {
-                const audio = new Audio(src);
-                audio.loop = true;
-                audio.preload = 'auto';
-                audio.volume = 0.42;
-                _musicCache[name] = audio;
-            }
-            _currentMusicName = name;
-            const played = _musicCache[name].play();
-            if (played && typeof played.catch === 'function') {
-                played.catch(function () {
-                    if (_currentMusicName === name) _currentMusicName = '';
-                });
-            }
-        } catch (e) {
-            _currentMusicName = '';
+        if (typeof AudioManager !== 'undefined' && AudioManager.teardown) {
+            AudioManager.teardown();
         }
     }
     function _syncMusicForScreen(screenId) {
-        if (screenId === 'game') _playMusic('game');
-        else _playMusic('menu');
+        if (typeof AudioManager !== 'undefined' && AudioManager.syncMusicForScreen) {
+            AudioManager.syncMusicForScreen(screenId);
+        }
     }
     function _armMusicUnlock() {
-        if (typeof document === 'undefined') return;
-        let armed = true;
-        function unlock() {
-            if (!armed) return;
-            armed = false;
-            document.removeEventListener('pointerdown', unlock, true);
-            document.removeEventListener('keydown', unlock, true);
-            _syncMusicForScreen(_currentScreen);
+        if (typeof AudioManager !== 'undefined' && AudioManager.armUnlock) {
+            AudioManager.armUnlock(function () { return _currentScreen; });
         }
-        document.addEventListener('pointerdown', unlock, true);
-        document.addEventListener('keydown', unlock, true);
     }
 
     // Show/hide the big center "答對 / 答錯 / 逾時 / 放棄" overlay based on phase.
@@ -2779,6 +2647,9 @@
         attachSettingsListeners();
         attachGiveUpListeners();
         initHatChars();
+        if (typeof AudioManager !== 'undefined' && AudioManager.preload) {
+            AudioManager.preload();
+        }
         _armMusicUnlock();
         render();
         if (_isMenuScreen(_currentScreen)) _focusFirstMenuItem(_currentScreen);
