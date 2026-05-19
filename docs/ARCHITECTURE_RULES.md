@@ -41,17 +41,26 @@
 
 Reducer 只描述要做什麼，不執行它。
 
-推薦 effect 類型：
+推薦 effect 類型 (`effect.type`)：
 
 - `sound`
 - `anim`
 - `timer`
 - `timer.clear`
-- `dynamic.pause`
-- `dynamic.resume`
-- `dynamic.play`
 - `persist`
 - `render`
+
+Dynamic gameplay 透過 `{ type: 'anim', name: ... }` 派發。目前 `game-v2.js` 認得的 `name`：
+
+- `startDynamic`
+- `pauseDynamic`
+- `resumeDynamic`
+- `playDynamicToCompleteState`
+- `freezeAtCompleteState`
+
+`EffectManager.runDynamicEffect()` 內部使用 `{ op: 'play' | 'pause' | 'resume' | 'playToComplete' }`。Reducer 不直接 emit `{ type: 'dynamic', op: ... }`，而是 emit `{ type: 'anim', name: ... }`，再由 `game-v2.js` 轉譯。
+
+不要 emit `dynamic.pause` / `dynamic.resume` / `dynamic.play` 作為 effect type；runtime 目前不認得這些名稱。
 
 ### Save Side Effects
 
@@ -79,6 +88,9 @@ Duel 搶答後暫停 dynamic 是正式遊戲規則，不是 modal pause，也不
 - 回合結束、換人或 reveal 時，dynamic 必須由明確 effect 恢復或播放到 complete state。
 - `EffectManager` 應保證被 pause/cancel 的 dynamic effect 不會漏出舊的 `EFFECT_COMPLETE`。
 - 不應依賴 `duel.buzzed.EFFECT_COMPLETE` 的 Band-aid 長期吞事件。
+- 必須驗證 `duel.buzzed.EFFECT_COMPLETE` no-op handler 是否仍必要：
+  - 若 `_blacklistedEffects` 已能阻止舊 effect completion，刪除該 no-op handler。
+  - 若仍必要，文件必須寫明是哪一個 event source 繞過 blacklist。
 
 目標：
 
@@ -93,6 +105,11 @@ Duel 搶答後暫停 dynamic 是正式遊戲規則，不是 modal pause，也不
 - 教學關卡可以 data-driven，像一般關卡一樣運作。
 - 正式關卡內只顯示 quick hint。
 - quick hint 是純 UI 浮層，不改 phase、不停 timer、不碰 AI、不進 `_tutorialState`。
+- quick hint 是 non-modal：
+  - 不做 focus trap。
+  - 不設定 `aria-modal="true"`。
+  - keyboard input 仍交給遊戲流程。
+  - 若需要 screen reader 提示，使用非阻塞的 `aria-live` 或一般可見文字。
 
 ## UI Rendering
 
@@ -124,6 +141,8 @@ Duel 搶答後暫停 dynamic 是正式遊戲規則，不是 modal pause，也不
 
 `style.css` 已經因多次設計變更變大，後續不要再把樣式散進 JS。
 
+CSS 不應推導 gameplay 邏輯。JS / runtime 應先算好 phase、mode、owner、visibility 等狀態，再用 class、`data-*` 或 CSS variables 表達；CSS 只負責呈現這些狀態。
+
 JS 可以做：
 
 - add/remove/toggle class
@@ -144,6 +163,8 @@ JS 不應做：
 
 - canvas / WebGL。
 - runtime 進度值，例如 `--score-fill`、`--dyn-scale`、`--dyn-blur`。
+
+Dynamic image 的 runtime values 由 rAF 每 frame 更新。不要在 dynamic image 或其 transform/filter 上加 CSS transition，否則會出現雙重 easing 與可見延遲。
 
 推薦模式：
 
@@ -252,4 +273,3 @@ el.style.setProperty('--progress', String(progress));
 4. 是否把固定樣式寫進 JS？
 5. 是否讓 reducer 直接碰到時間、DOM、Save、audio？
 6. 是否需要補一個小測試或手動驗證步驟？
-

@@ -48,6 +48,7 @@
    - 現況：同一 compound 在同一輪再次出現時，後一次錯選會沿用第一次記錄
    - 影響：錯題結算顯示可能錯誤
    - 判斷：中優先級，尤其 wrong-book retrain 題池可能重複時要修
+   - 實作前必須先確認 reset boundary：目前是 per-round 還是 per-question；確認後再決定用 `(compoundKey + questionIndex)` 或改成每題清除。
 
 6. **Combo popup 清理使用 stale DOM reference**
    - 位置：`game-v2.js` 的 `_spawnComboPopup`
@@ -117,9 +118,11 @@
    - 若來源是 `game`：回到 `game`
    - 若來源是 `settle`：回到 `settle`
    - 其他來源：回到來源畫面或只 `render()`
-3. 避免把「看過教學」和「完成關卡」綁在一起；`markTutorialSeenV2()` 可以保留，但不應觸發 `_onEnterSettling()`
+3. bug 來源是 `show-tutorial` 內 hard-coded `onDone: goToScreen('settle')`；`markTutorialSeenV2()` 本身不是觸發結算的原因，可以保留。
 4. 中期：正式關卡中的 `show-tutorial` 改成 `show-quick-hint`
 5. 完整教學只從主選單、教學關卡、結算頁或圖鑑/錯題本 help 入口進入
+
+若 Phase 2 與 Phase 1 同一輪 land，可直接跳到 Phase 2，省略步驟 1-2 的 returnScreen 表，避免寫一段隨即被刪的程式。
 
 驗證：
 
@@ -127,51 +130,25 @@
 2. 進入 settle 畫面按教學，完成後回 settle
 3. `Save.isSubLevelCleared()` 不應因看教學而改變
 
-### Phase 2：暫停教學期間的遊戲時間
+### Phase 2：移除正式關卡內的完整教學 modal
 
-目標：如果短期仍允許完整教學 modal 從遊戲中開啟，玩家不會被 duel 倒數、dynamic reveal、AI action 影響。
+目標：不要在正式 game loop 中加入第二套 modal pause 系統。
 
-若 Phase 0 完成，正式關卡內不再開完整教學 modal，這個 Phase 可以大幅縮小，甚至不需要實作完整 pause/resume。只需確認快速提示浮層不會改變 state，也不阻擋輸入或 timer。
+決策：
 
-建議實作：
+- 正式關卡內不開完整 tutorial modal。
+- 正式關卡內的教學按鈕改成 quick hint。
+- quick hint 不改 phase、不停 timer、不碰 AI、不進 `_tutorialState`。
+- 若任何完整 tutorial modal 嘗試從 `game` screen 開啟，runtime 應阻止或轉成 quick hint。
 
-1. 新增 modal pause 狀態：
-   - `_modalPause = { active, startedAt, reason, returnScreen, buzzRemainingMs }`
-2. `show-tutorial` 從 `game` 開啟時：
-   - 停止 `_startBuzzedTickLoop()` 的 rAF
-   - 若 phase 是 `buzzed`，計算 `buzzRemainingMs = max(0, 7000 - (Date.now() - state.buzz.timerStartedAt))`
-   - 呼叫 `EffectManager.cancelAllEffects('modal-pause')`
-   - 清空 `state.effects.activeIds`
-   - 若有 AI controller，暫停或 stop；至少要避免 AI 在 modal 中送出答案
-3. 關閉教學回 game 時：
-   - 若原本 phase 是 `buzzed`，重設 `state.buzz.timerStartedAt = Date.now()`
-   - 用 `EffectManager.runEffect({ type: 'timer', ms: buzzRemainingMs, onTimeout: { type: 'ANSWER_TIMEOUT', player: state.buzz.owner } }, callback)` 重掛 timer
-   - 重新 `_startBuzzedTickLoop()`
-   - 若 dynamic 原本是 `playing`，從 `state.dynamic.elapsedMs` 呼叫既有 `resumeDynamic`
-
-注意：
-
-- 不要使用 `duration`；`EffectManager.runEffect()` 讀的是 `ms`
-- 不要在 `_gamePausedAt = 0` 後再用它計算剩餘時間
-- 暫停功能應先只支援 tutorial modal，避免一次擴大到所有 modal
+這會刪掉原本需要設計的 modal pause/resume 工作。Duel 搶答後暫停 dynamic 仍是核心玩法，另由 dynamic pause cleanup 處理，不和 tutorial modal 混在一起。
 
 驗證：
 
-1. Duel 搶答後打開教學，等待超過 7 秒，關閉後不應立即逾時
-2. 關閉後倒數從暫停前的剩餘秒數附近繼續
-3. AI 不應在教學畫面中自動作答
-
-替代方案：
-
-- 若決定正式關卡內只用快速提示，則不要新增複雜 pause/resume。
-- 直接移除遊戲中完整 tutorial modal 入口，或把該按鈕改成 quick hint。
-- 完整教學關卡作為獨立 mode/flow，不需要暫停正式關卡。
-
-實際建議：
-
-- Phase 2 不做完整 pause/resume 系統。
-- 只做一個保護：如果仍有任何完整 modal 從 game 開啟，先阻止它或導到 quick hint。
-- 等未來真的有「必須暫停正式對局」的需求，再設計正式 runtime pause。
+1. Practice / Duel 中按教學只開 quick hint。
+2. quick hint 開啟時，遊戲 phase 不變。
+3. Duel countdown / AI / dynamic effect 不因 quick hint 建立額外 pause path。
+4. quick hint 是 non-modal：不 focus trap，不設定 `aria-modal="true"`，遊戲鍵盤輸入仍照常運作。
 
 ### Phase 3：修正 Duel 逾時/放棄統計
 
@@ -183,16 +160,53 @@
    - ``[`players.${a.player}.wrongCount`]``
    - ``[`players.${a.player}.correctStreak`] = 0``
 2. 在 `duel.buzzed.GIVE_UP` 做同樣處理
-3. 確認 `totalAsked` 的語意：
-   - 目前 `_enrichQuestionState()` 每題開始就對 p1/p2 各加一次 `totalAsked`
-   - 若結算準確率要表達「每題正確率」，用 `totalAsked`
-   - 若要表達「提交/失敗行為正確率」，用 `correctCount + wrongCount`
-   - 兩者不能混用
+3. 固定統計語意：
+   - `totalAsked` 只代表題目進度 / 題目數。
+   - accuracy 使用 `correctCount / (correctCount + wrongCount)`。
+   - `Save.recordSubLevelRound()` 與 settle screen 都使用同一個 accuracy 分母。
+   - 若 `correctCount + wrongCount === 0`，accuracy 為 `null`。
 
-建議：
+理由：
 
-- 結算畫面顯示「題目正確率」和「作答命中率」其中一種即可，避免玩家困惑
-- Practice 目前答錯可重答，因此 `totalAsked` 與 `wrongCount` 的語意更需要明確命名
+- Practice 可以答錯後重答；用 `correctCount / totalAsked` 會把多次錯誤隱藏掉。
+- Duel timeout / give-up 是失敗嘗試，應計入 `wrongCount`。
+
+驗證：
+
+1. Practice 10 題全答對且無錯：accuracy 100%。
+2. Practice 10 題最後都答對，但中間錯 5 次：accuracy 10 / 15。
+3. Duel timeout / give-up 會增加 wrongCount，accuracy 不會被高估。
+
+### Phase 3b：清理 reducer 時間來源
+
+目標：在碰任何 buzz timing、dynamic score percentage 或 future pause 前，先把 reducer 裡的 direct `Date.now()` 移出。
+
+做法：
+
+1. runtime dispatch gameplay action 時補 `now`：
+   - `{ type: 'BUZZ', player, now }`
+   - handoff 產生的 next state 也使用 action/effect 提供的 `now`
+2. `mode-rules.js` 的 `BUZZ` / handoff 不再直接呼叫 `Date.now()`。
+3. `_startBuzzedTickLoop()` 仍可用 wall-clock 顯示倒數，但 reducer state 的時間戳由 action 提供。
+
+驗證：
+
+1. BUZZ 後 `buzz.timerStartedAt` 來自 action.now。
+2. handoff 後新的 `buzz.timerStartedAt` 來自 action/effect 注入時間。
+3. 既有 Duel countdown 行為不變。
+
+### Phase 3c：驗證 dynamic pause no-op handler
+
+目標：解決 `duel.buzzed.EFFECT_COMPLETE` Band-aid 是否仍必要。
+
+做法：
+
+1. 檢查 `EffectManager._blacklistedEffects` 是否已能阻止 pause/cancel 後的 dynamic completion。
+2. 暫時移除 `duel.buzzed.EFFECT_COMPLETE` no-op handler，在 Duel buzz / answer / handoff / reveal 流程中驗證。
+3. 若沒有 regression，刪除 handler。
+4. 若仍有漏出的 `EFFECT_COMPLETE`，記錄 event source，修 `EffectManager`，不要只保留吞事件補丁。
+
+若驗證過程出現 regression，恢復 no-op handler，並依 `ARCHITECTURE_RULES.md` 的 Dynamic Pause 規則把繞過 blacklist 的 event source 記錄下來，再修 `EffectManager`；不要把驗證中的暫時移除直接合併成永久刪除。
 
 ### Phase 4：新增 dynamic score percentage UI
 
@@ -213,6 +227,7 @@
 1. dynamic 剛開始顯示約 100%
 2. dynamic 完成後顯示 `duelMinScore / duelBaseScore`
 3. 搶答後實際得分與顯示百分比可推導一致
+4. dynamic image 不得有 `transition: transform` 或 `transition: filter` 造成 rAF 數值延遲
 
 ### Phase 4b：Dynamic effect 擴充策略
 
@@ -560,6 +575,7 @@ CSS 負責：
 - blur 不影響非 dynamic 關卡
 - rotateZoom 不破壞 image layout
 - 搶答 pause 時畫面停在正確進度
+- dynamic image 沒有 transform/filter transition；runtime 每 frame 設值時不應被 CSS double-ease
 
 #### CSS Phase E：拆 CSS 檔
 
@@ -613,20 +629,32 @@ CSS 負責：
 
 建議時機：
 
-- quick hint / 教學關卡方向確定後
+- 教學跳結算 bug 與 quick hint stub 完成後
 - combo tier sound 前
+- dynamic variants 前
 - 新增更多音檔前
+
+理由：
+
+- combo tier sounds 不應先接在 `_beep()` 上再二次遷移。
+- BGM resume、AudioContext lifecycle、combo sound 都應共用同一個 audio path。
 
 ## 建議提交順序
 
-1. `docs(tutorial): define tutorial-level and quick-hint strategy`
+1. `docs(architecture): align rules with runtime API`
 2. `fix(tutorial): prevent in-game tutorial from settling`
 3. `feat(tutorial): replace in-game tutorial modal with quick hint`
-4. `feat(tutorial): add tutorial level flow`
-5. `feat(tutorial): add guided key-highlight steps`
-6. `fix(stats): count duel timeout and give-up as wrong attempts`
+4. `fix(stats): count duel timeout and give-up as wrong attempts`
+5. `refactor(time): thread action now through buzz flow`
+6. `chore(effects): verify dynamic pause completion handling`
 7. `feat(duel): show dynamic score percentage`
-8. `feat(dynamic): add blur and rotate zoom variants`
+8. `feat(audio): introduce audio manager`
 9. `feat(audio): add combo-tier sound hooks`
-10. `fix(ui): clean minor navigation and popup issues`
-11. `refactor(game-v2): extract modal/runtime helpers`
+10. `feat(dynamic): add blur and rotate zoom variants`
+11. `fix(ui): clean minor navigation and popup issues`
+12. `feat(tutorial): add tutorial level flow`
+13. `feat(tutorial): add guided key-highlight steps`
+14. `css: phase A add style sections`
+15. `css: phase B move low-risk inline styles`
+16. `css: phase C move display visibility rules to classes`
+17. `refactor(game-v2): extract modal/runtime/render helpers`
