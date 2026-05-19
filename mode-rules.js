@@ -13,7 +13,9 @@ const ModeRules = (function () {
     });
 
     const DYNAMIC_VARIANTS = Object.freeze({
-        ZOOM: 'zoom'
+        ZOOM: 'zoom',
+        BLUR: 'blur',
+        ROTATE_ZOOM: 'rotateZoom'
     });
 
     const RULES = Object.freeze({
@@ -69,6 +71,18 @@ const ModeRules = (function () {
             completeState: 'full-structure-visible',
             pauseOnBuzz: true,
             revealRequiresCompleteState: true
+        }),
+        blur: Object.freeze({
+            key: DYNAMIC_VARIANTS.BLUR,
+            completeState: 'full-structure-visible',
+            pauseOnBuzz: true,
+            revealRequiresCompleteState: true
+        }),
+        rotateZoom: Object.freeze({
+            key: DYNAMIC_VARIANTS.ROTATE_ZOOM,
+            completeState: 'full-structure-visible',
+            pauseOnBuzz: true,
+            revealRequiresCompleteState: true
         })
     });
 
@@ -77,7 +91,7 @@ const ModeRules = (function () {
     }
 
     function getDuelVariant(variant) {
-        return variant === DUEL_VARIANTS.DYNAMIC ? DYNAMIC_RULES.zoom : null;
+        return DYNAMIC_RULES[variant] || null;
     }
 
     function isPractice(mode) {
@@ -93,7 +107,7 @@ const ModeRules = (function () {
     }
 
     function isDynamicDuel(mode, variant) {
-        return isDuel(mode) && variant === DUEL_VARIANTS.DYNAMIC;
+        return isDuel(mode) && !!DYNAMIC_RULES[variant];
     }
 
     return {
@@ -317,7 +331,24 @@ const DynamicVariants = {
         initialScale: 5,    // 初始放大倍率（5x → 大概只能看到 1–2 個元素符號）
         finalScale: 1,      // 結束尺寸
     },
-    // effect2: { ... }  // 未來新增；不改 reducer，只在這裡加一筆
+    blur: {
+        completeState: 'fullStructureVisible',
+        pauseOnBuzz: true,
+        revealRequiresCompleteState: true,
+        durationMs: 8000,
+        initialBlurPx: 18,
+        finalBlurPx: 0,
+    },
+    rotateZoom: {
+        completeState: 'fullStructureVisible',
+        pauseOnBuzz: true,
+        revealRequiresCompleteState: true,
+        durationMs: 8000,
+        initialScale: 2.8,
+        finalScale: 1,
+        initialRotateDeg: -18,
+        finalRotateDeg: 0,
+    },
 };
 
 // Duel / Dynamic 數值（餵給上面 handler 的 dyn 參數）
@@ -331,7 +362,7 @@ const DuelDynamicRules = {
     duelTimingDecay:    10,    // 每播放 1 秒扣除的分數
     duelMinScore:       20,    // 答對最低得分（再晚搶也有這分）
     duelWrongPenalty:   50,    // 答錯扣分
-    dynamicDurationMs:  8000,  // 對應 DynamicVariants.zoom.durationMs
+    dynamicDurationMs:  8000,  // 對應 DynamicVariants.*.durationMs
     // 練習分數（連對等級對應 _comboLevel 的 3/5/7 門檻）
     practiceBaseScore:     10, // 連對 1–2 題
     practiceWrongPenalty:  10, // 答錯扣分（下限 0）

@@ -385,7 +385,7 @@
         _quickHintOpen = false;
         if (hint) { hint.classList.remove('visible', 'quick-hint'); hint.textContent = ''; }
         const img = document.getElementById('game-image');
-        if (img) img.classList.remove('dyn-zoom', 'dyn-playing', 'dyn-paused', 'dyn-completing', 'dyn-complete');
+        if (img) img.classList.remove('dyn-zoom', 'dyn-blur', 'dyn-rotate-zoom', 'dyn-playing', 'dyn-paused', 'dyn-completing', 'dyn-complete');
         const fb = document.getElementById('feedback-overlay');
         if (fb) { fb.classList.remove('show-correct', 'show-wrong'); fb.textContent = ''; }
         // Stop buzz countdown + clear handoff overlay
@@ -672,8 +672,10 @@
             }
             // Dynamic variant classes
             if (state.dynamic) {
+                imgEl.classList.remove('dyn-zoom', 'dyn-blur', 'dyn-rotate-zoom');
                 if (state.dynamic.variant === 'zoom') imgEl.classList.add('dyn-zoom');
-                else imgEl.classList.remove('dyn-zoom');
+                else if (state.dynamic.variant === 'blur') imgEl.classList.add('dyn-blur');
+                else if (state.dynamic.variant === 'rotateZoom') imgEl.classList.add('dyn-rotate-zoom');
                 imgEl.classList.toggle('dyn-playing', state.dynamic.phase === 'playing');
                 imgEl.classList.toggle('dyn-paused', state.dynamic.phase === 'paused');
                 imgEl.classList.toggle('dyn-completing', state.dynamic.phase === 'playingToComplete');
@@ -930,27 +932,47 @@
         }
     }
 
-    // Update inline transform on #game-image based on state.dynamic.elapsedMs.
+    // Update inline transform/filter on #game-image based on state.dynamic.elapsedMs.
     // Called from render() AND from onTick callbacks (so animation is smooth between dispatches).
     function _updateDynamicVisual() {
         const imgEl = document.getElementById('game-image');
         const pctEl = document.getElementById('dynamic-score-pct');
         if (!imgEl) return;
-        if (state && state.dynamic && state.dynamic.variant === 'zoom' && state.mode === 'duel') {
-            const v = (typeof DynamicVariants !== 'undefined' && DynamicVariants.zoom) || {};
+        if (state && state.dynamic && state.dynamic.variant && state.mode === 'duel') {
+            const variant = state.dynamic.variant;
+            const v = (typeof DynamicVariants !== 'undefined' && DynamicVariants[variant]) || {};
             const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
             const rules = getEffectiveRules(
                 (typeof DuelDynamicRules !== 'undefined') ? DuelDynamicRules : {},
                 settings
             );
             const dur = rules.dynamicDurationMs || v.durationMs || 8000;
-            const initialScale = v.initialScale || 5;
-            const finalScale = v.finalScale || 1;
             const t = state.dynamic.completeStateReached
                 ? 1
                 : Math.min(1, Math.max(0, (state.dynamic.elapsedMs || 0) / dur));
-            const scale = initialScale - (initialScale - finalScale) * t;
-            imgEl.style.transform = 'scale(' + scale + ')';
+            let transform = '';
+            let filter = '';
+            if (variant === 'zoom') {
+                const initialScale = v.initialScale || 5;
+                const finalScale = v.finalScale || 1;
+                const scale = initialScale - (initialScale - finalScale) * t;
+                transform = 'scale(' + scale + ')';
+            } else if (variant === 'blur') {
+                const initialBlur = typeof v.initialBlurPx === 'number' ? v.initialBlurPx : 18;
+                const finalBlur = typeof v.finalBlurPx === 'number' ? v.finalBlurPx : 0;
+                const blur = initialBlur - (initialBlur - finalBlur) * t;
+                filter = 'blur(' + blur.toFixed(2) + 'px)';
+            } else if (variant === 'rotateZoom') {
+                const initialScale = v.initialScale || 2.8;
+                const finalScale = v.finalScale || 1;
+                const initialRotate = typeof v.initialRotateDeg === 'number' ? v.initialRotateDeg : -18;
+                const finalRotate = typeof v.finalRotateDeg === 'number' ? v.finalRotateDeg : 0;
+                const scale = initialScale - (initialScale - finalScale) * t;
+                const rotate = initialRotate - (initialRotate - finalRotate) * t;
+                transform = 'scale(' + scale + ') rotate(' + rotate + 'deg)';
+            }
+            imgEl.style.transform = transform;
+            imgEl.style.filter = filter;
             if (pctEl) {
                 const base = Math.max(1, rules.duelBaseScore || 100);
                 const min = Math.max(0, rules.duelMinScore || 20);
@@ -963,6 +985,7 @@
             }
         } else {
             imgEl.style.transform = '';
+            imgEl.style.filter = '';
             if (pctEl) {
                 pctEl.textContent = '';
                 pctEl.removeAttribute('aria-label');
@@ -1954,6 +1977,16 @@
         beginMode(opts);
     }
 
+    function _dynamicVariantFor(opts) {
+        if (!opts || opts.mode !== 'duel') return null;
+        if (opts.dynamicVariant && typeof DynamicVariants !== 'undefined' && DynamicVariants[opts.dynamicVariant]) {
+            return opts.dynamicVariant;
+        }
+        if (opts.difficulty === 'advanced') return 'rotateZoom';
+        if (opts.difficulty === 'intermediate') return 'blur';
+        return 'zoom';
+    }
+
     function beginMode(opts) {
         // Tear down any prior AI
         if (aiController) { try { aiController.stop(); } catch (e) {} aiController = null; }
@@ -1991,7 +2024,7 @@
         }
         state.round.size = state.queue ? state.queue.length : 0;
 
-        state.dynamic.variant = (opts.mode === 'duel') ? 'zoom' : null;
+        state.dynamic.variant = _dynamicVariantFor(opts);
 
         if (opts.mode === 'duel' && opts.opponent && opts.opponent !== 'human') {
             const diffName = opts.opponent.replace('ai', '').toLowerCase(); // aiEasy → easy

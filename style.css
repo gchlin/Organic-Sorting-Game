@@ -2750,13 +2750,16 @@ body.v2-active .v2-root { display: block; }
     aspect-ratio: var(--game-image-ratio);
     object-fit: contain;
     transform-origin: center;
+    transition: none;
     background: #fff;
     border-radius: 2px;
 }
-/* Dynamic variant: zoom — JS sets inline transform via onTick(elapsedMs).
+/* Dynamic variants — JS sets inline transform/filter via onTick(elapsedMs).
    Static fallback only for no-JS state: */
 #game-image.dyn-zoom { transform: scale(5); }
-#game-image.dyn-complete { transform: scale(1); }
+#game-image.dyn-blur { filter: blur(18px); }
+#game-image.dyn-rotate-zoom { transform: scale(2.8) rotate(-18deg); }
+#game-image.dyn-complete { transform: scale(1); filter: none; }
 
 @media (orientation: landscape) {
     #screen-game.mode-duel.is-active {
