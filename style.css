@@ -2694,6 +2694,7 @@ body.v2-active .v2-root { display: block; }
     grid-area: image;
     align-self: start;
     justify-self: center;
+    position: relative;
     display: grid;
     place-items: center;
     width: min(760px, 100%, max(220px, calc(133.333dvh - 293px)));
@@ -2707,6 +2708,29 @@ body.v2-active .v2-root { display: block; }
         linear-gradient(180deg, rgba(245,239,222,.94), rgba(232,220,194,.96));
     box-shadow: 0 16px 36px rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.42);
     overflow: hidden;
+}
+.dynamic-score-pct {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: none;
+    min-width: 54px;
+    padding: 5px 8px;
+    border: 1px solid rgba(212, 175, 55, 0.72);
+    border-radius: 6px;
+    background: rgba(15, 12, 8, 0.78);
+    color: var(--hp-gold);
+    font-size: 0.86rem;
+    font-weight: 800;
+    line-height: 1;
+    text-align: center;
+    z-index: 5;
+}
+.dynamic-score-pct.visible { display: block; }
+.dynamic-score-pct.urgent {
+    border-color: var(--hp-red-bright);
+    color: #fff;
+    background: rgba(127, 9, 9, 0.84);
 }
 #game-image {
     display: block;

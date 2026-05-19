@@ -1038,10 +1038,16 @@
     // Called from render() AND from onTick callbacks (so animation is smooth between dispatches).
     function _updateDynamicVisual() {
         const imgEl = document.getElementById('game-image');
+        const pctEl = document.getElementById('dynamic-score-pct');
         if (!imgEl) return;
         if (state && state.dynamic && state.dynamic.variant === 'zoom' && state.mode === 'duel') {
             const v = (typeof DynamicVariants !== 'undefined' && DynamicVariants.zoom) || {};
-            const dur = v.durationMs || 8000;
+            const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
+            const rules = getEffectiveRules(
+                (typeof DuelDynamicRules !== 'undefined') ? DuelDynamicRules : {},
+                settings
+            );
+            const dur = rules.dynamicDurationMs || v.durationMs || 8000;
             const initialScale = v.initialScale || 5;
             const finalScale = v.finalScale || 1;
             const t = state.dynamic.completeStateReached
@@ -1049,8 +1055,23 @@
                 : Math.min(1, Math.max(0, (state.dynamic.elapsedMs || 0) / dur));
             const scale = initialScale - (initialScale - finalScale) * t;
             imgEl.style.transform = 'scale(' + scale + ')';
+            if (pctEl) {
+                const base = Math.max(1, rules.duelBaseScore || 100);
+                const min = Math.max(0, rules.duelMinScore || 20);
+                const potential = Math.round(Math.max(min, base * (1 - t)));
+                const pct = Math.round((potential / base) * 100);
+                pctEl.textContent = pct + '%';
+                pctEl.setAttribute('aria-label', '目前答對約可得 ' + potential + ' 分，' + pct + '%');
+                pctEl.classList.toggle('visible', true);
+                pctEl.classList.toggle('urgent', pct <= 30);
+            }
         } else {
             imgEl.style.transform = '';
+            if (pctEl) {
+                pctEl.textContent = '';
+                pctEl.removeAttribute('aria-label');
+                pctEl.classList.remove('visible', 'urgent');
+            }
         }
     }
 
