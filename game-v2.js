@@ -950,7 +950,7 @@
             const handoff = document.getElementById('handoff-overlay');
             if (handoff) {
                 if (state.buzz._isHandoff && elapsed < 1000) {
-                    handoff.textContent = '換 ' + (state.buzz.owner === 'p1' ? 'P1' : 'P2') + ' 答';
+                    handoff.textContent = '換 ' + (state.buzz.owner === 'p1' ? '左方' : '右方') + ' 答';
                     handoff.setAttribute('data-side', side);
                     handoff.style.opacity = String(Math.max(0, 1 - elapsed / 800));
                     handoff.classList.add('visible');
@@ -1070,7 +1070,7 @@
 
         if (state.mode === 'duel') {
             titleEl.textContent = state.result && state.result.winner
-                ? ((state.result.winner === 'p1' ? 'P1' : 'P2') + ' 勝利！')
+                ? ((state.result.winner === 'p1' ? '左方' : '右方') + ' 勝利！')
                 : '本局結算';
         } else {
             const cleared = (typeof Save !== 'undefined' && Save.isSubLevelCleared
@@ -1100,7 +1100,7 @@
             _appendStat(statsEl, '答錯', String(p1.wrongCount || 0));
         }
         if (state.mode === 'duel') {
-            _appendStat(statsEl, 'P2 答對', String(state.players.p2.correctCount || 0));
+            _appendStat(statsEl, '右方 答對', String(state.players.p2.correctCount || 0));
         }
         _appendStat(statsEl, '本輪正確率', acc !== null ? (Math.round(acc * 100) + '%') : '—');
         // Practice: show progress against the sub-level's full question set.
@@ -1611,13 +1611,13 @@
 
     // 快速鍵分組（顯示順序＝畫面順序；layout: 'grid2x2' 對應 2×2 選項版面）
     const _KEYBIND_GROUPS = [
-        { title: '左側 / P1 答題', layout: 'grid2x2', rows: [
+        { title: '左方 答題', layout: 'grid2x2', rows: [
             { id: 'optionLeft0', label: '左上' },
             { id: 'optionLeft1', label: '右上' },
             { id: 'optionLeft2', label: '左下' },
             { id: 'optionLeft3', label: '右下' }
         ]},
-        { title: '右側 / P2 答題（PvP）／練習替代輸入', layout: 'grid2x2', rows: [
+        { title: '右方 答題（PvP）／練習替代輸入', layout: 'grid2x2', rows: [
             { id: 'optionRight0', label: '左上' },
             { id: 'optionRight1', label: '右上' },
             { id: 'optionRight2', label: '左下' },
