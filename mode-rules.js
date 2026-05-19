@@ -181,7 +181,7 @@ const ModeRulesV2 = {
 
     'duel.buzzOpen.BUZZ': (s, a) => s.buzz.eligible.has(a.player)
         ? { nextPhase: 'buzzed',
-            stateDiff: { 'buzz.owner': a.player, 'buzz.timerStartedAt': Date.now(),
+            stateDiff: { 'buzz.owner': a.player, 'buzz.timerStartedAt': a.now || 0,
                          'buzz.elapsedAtBuzz': s.dynamic.elapsedMs || 0 },
             effects: [{ type: 'sound', name: 'buzz' },
                       { type: 'anim', name: 'pauseDynamic' },
@@ -286,7 +286,7 @@ const ModeRulesV2 = {
         // _isHandoff is read by render to show the "⚡ 輪到 P2" overlay briefly.
         return { nextPhase: 'buzzed',
                  stateDiff: { 'buzz.owner': other, 'buzz.eligible': new Set([other]),
-                              'buzz.timerStartedAt': Date.now(),
+                              'buzz.timerStartedAt': a.now || 0,
                               'buzz._isHandoff': true },
                  effects: [{ type: 'sound', name: 'buzz' },
                            { type: 'anim', name: 'lockoutLoser' },

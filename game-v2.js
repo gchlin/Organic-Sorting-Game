@@ -79,6 +79,9 @@
     let _lastAnswerPlayer = null;
 
     function dispatch(action) {
+        if (action && typeof action === 'object' && typeof action.now !== 'number') {
+            action.now = Date.now();
+        }
         _pendingDispatch.push(action);
         if (_dispatching) return;
         _dispatching = true;
