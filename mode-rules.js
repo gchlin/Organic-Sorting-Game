@@ -262,7 +262,7 @@ const ModeRulesV2 = {
             : { nextPhase: 'revealing', stateDiff: {},
                 effects: [{ type: 'anim', name: 'playDynamicToCompleteState' }] },
 
-    'duel.resolvingWrong.EFFECT_COMPLETE': (s, _, dyn) => {
+    'duel.resolvingWrong.EFFECT_COMPLETE': (s, a, dyn) => {
         const eliminated = s.question.eliminatedWrongKeys.size;
         const bothFailed = s.question.failedPlayersThisCycle.has('p1')
                         && s.question.failedPlayersThisCycle.has('p2');

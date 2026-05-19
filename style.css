@@ -2655,7 +2655,17 @@ body.v2-active .v2-root { display: block; }
 }
 .v2-hud .v2-back-btn-sm::before {
     margin: 0;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
     font-size: 18px;
+}
+.v2-back-btn[data-icon]::before,
+.v2-back-btn-sm[data-icon]::before,
+.v2-help-btn[data-icon]::before {
+    min-width: 1.15em;
+    min-height: 1.15em;
 }
 /* Practice mode hides p2 area */
 #screen-game.mode-practice .player-area[data-player="p2"] { display: none; }
@@ -2668,6 +2678,7 @@ body.v2-active .v2-root { display: block; }
 /* Viewport-fit game screen: HUD + image + options + buzz all fit without scroll.
    The molecule card keeps the same ratio as the generated SVG image. */
 #screen-game.is-active {
+    position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto auto auto minmax(0, 1fr);
@@ -3287,6 +3298,23 @@ body.input-locked .v2-buzz button { pointer-events: none; }
     display: none;
 }
 .v2-hint-bubble.visible { display: block; }
+#screen-game #game-hint-bubble.quick-hint.visible {
+    position: absolute;
+    top: clamp(72px, 12dvh, 120px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 40;
+    width: min(680px, calc(100% - 32px));
+    max-height: min(38dvh, 220px);
+    overflow: auto;
+    margin: 0;
+    background: rgba(22, 18, 12, 0.94);
+    border: 1px solid rgba(212, 175, 55, 0.82);
+    border-left: 4px solid var(--hp-gold);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.42);
+    color: var(--hp-parchment);
+    font-style: normal;
+}
 #screen-game.mode-duel #game-hint-bubble.quick-hint.visible {
     display: block !important;
 }

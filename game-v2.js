@@ -375,7 +375,7 @@
     function clearTransientUI() {
         // Per state→class table: clear all .eliminated/.wrong-chosen/.correct-reveal/.correct-chosen on options;
         // hide hint bubble; remove buzz-owner-* classes from #game-buzz; clear feedback overlay.
-        const opts = document.querySelectorAll('#game-options .option-btn');
+        const opts = document.querySelectorAll('#game-options .option-btn, #game-options-p2 .option-btn');
         for (let i = 0; i < opts.length; i++) {
             opts[i].classList.remove('eliminated', 'wrong-chosen', 'correct-reveal', 'correct-chosen');
         }
@@ -391,6 +391,30 @@
         // Stop buzz countdown + clear handoff overlay
         _stopBuzzedTickLoop();
         if (state && state.buzz) { state.buzz.timerStartedAt = 0; state.buzz._isHandoff = false; }
+    }
+
+    function resetRuntimeAfterLeavingGame() {
+        if (!state) return;
+        state.phase = 'idle';
+        state.globalInputLocked = false;
+        if (state.effects && state.effects.activeIds) state.effects.activeIds.clear();
+        if (state.buzz) {
+            state.buzz.owner = null;
+            state.buzz.eligible = new Set(['p1', 'p2']);
+            state.buzz.timerId = null;
+            state.buzz.timerStartedAt = 0;
+            state.buzz._isHandoff = false;
+        }
+        if (state.dynamic) {
+            state.dynamic.phase = 'inactive';
+            state.dynamic.elapsedMs = 0;
+            state.dynamic.completeStateReached = false;
+        }
+        if (state.question) {
+            state.question.lastChosenWrongKey = null;
+            if (state.question.eliminatedWrongKeys) state.question.eliminatedWrongKeys.clear();
+            if (state.question.failedPlayersThisCycle) state.question.failedPlayersThisCycle.clear();
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -1031,7 +1055,11 @@
         const handoff = document.getElementById('handoff-overlay');
         if (handoff) { handoff.classList.remove('visible'); handoff.removeAttribute('data-side'); handoff.style.opacity = '0'; handoff.textContent = ''; }
         const giveup = document.getElementById('btn-giveup');
-        if (giveup) giveup.classList.remove('visible');
+        if (giveup) {
+            if (document.activeElement === giveup) giveup.blur();
+            giveup.classList.remove('visible');
+            giveup.removeAttribute('data-side');
+        }
     }
 
     // Update inline transform on #game-image based on state.dynamic.elapsedMs.
@@ -2343,6 +2371,11 @@
                 case 'back-to-main':
                 case 'back-to-menu':
                     if (aiController) { try { aiController.stop(); } catch (err) {} aiController = null; }
+                    if (_currentScreen === 'game') {
+                        try { EffectManager.cancelAllEffects('leave-game'); } catch (err) {}
+                        clearTransientUI();
+                        resetRuntimeAfterLeavingGame();
+                    }
                     // Duel 子關選單現在直接回主選單。
                     if (_currentScreen === 'sub-menu' && _subMenuContext) {
                         if (_subMenuContext.kind === 'duelOpponentSetting') goToScreen('main-menu');
