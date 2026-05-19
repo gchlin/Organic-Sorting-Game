@@ -209,6 +209,20 @@
                 <label class="v2-setting-row"><input type="checkbox" id="settings-dev-log-actions"> console.log 每個 action</label>
                 <label class="v2-setting-row"><input type="checkbox" id="settings-dev-use-legacy-sounds"> 使用原本合成音效</label>
                 <details class="v2-setting-details">
+                    <summary class="v2-setting-summary">分數設定</summary>
+                    <p class="v2-setting-hint">練習模式</p>
+                    <label class="v2-setting-row">答對基礎分 <input type="number" id="settings-score-practice-base" min="1" value="10"></label>
+                    <label class="v2-setting-row">答錯扣分 <input type="number" id="settings-score-practice-wrong" min="0" value="10"></label>
+                    <label class="v2-setting-row">連對 3+ 分值 <input type="number" id="settings-score-practice-combo3" min="1" value="30"></label>
+                    <label class="v2-setting-row">連對 5+ 分值 <input type="number" id="settings-score-practice-combo5" min="1" value="40"></label>
+                    <label class="v2-setting-row">連對 7+ 分值 <input type="number" id="settings-score-practice-combo7" min="1" value="60"></label>
+                    <p class="v2-setting-hint">對決模式</p>
+                    <label class="v2-setting-row">搶答滿分 <input type="number" id="settings-score-duel-base" min="1" value="100"></label>
+                    <label class="v2-setting-row">答對最低分 <input type="number" id="settings-score-duel-min" min="0" value="20"></label>
+                    <label class="v2-setting-row">答錯扣分 <input type="number" id="settings-score-duel-wrong" min="0" value="50"></label>
+                    <label class="v2-setting-row">勝利門檻分數 <input type="number" id="settings-score-duel-target" min="1" value="300"></label>
+                </details>
+                <details class="v2-setting-details">
                     <summary class="v2-setting-summary">PvE AI 參數</summary>
                     <div class="v2-pveai-grid">
                         <div class="v2-pveai-header"></div>

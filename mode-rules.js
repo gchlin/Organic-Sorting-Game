@@ -128,24 +128,33 @@ const ModeRulesV2 = {
             stateDiff: { 'result.passed': true },
             effects: [{ type: 'render' }] },
 
-    'practice.canAnswer.SUBMIT_ANSWER': (s, a) =>
-        a.key === s.question.correctKey
-            ? { nextPhase: 'resolvingCorrect',
-                stateDiff: { 'players.p1.correctStreak': s.players.p1.correctStreak + 1,
+    'practice.canAnswer.SUBMIT_ANSWER': (s, a, dyn) => {
+        if (a.key === s.question.correctKey) {
+            const newStreak = s.players.p1.correctStreak + 1;
+            const pts = newStreak >= 7 ? (dyn.practiceCombo7Score || 60)
+                      : newStreak >= 5 ? (dyn.practiceCombo5Score || 40)
+                      : newStreak >= 3 ? (dyn.practiceCombo3Score || 30)
+                      : (dyn.practiceBaseScore || 10);
+            return { nextPhase: 'resolvingCorrect',
+                stateDiff: { 'players.p1.correctStreak': newStreak,
                              'players.p1.wrongStreak': 0,
                              'players.p1.correctCount': s.players.p1.correctCount + 1,
+                             'players.p1.score': s.players.p1.score + pts,
                              'round.score': s.round.score + 1 },
                 effects: [{ type: 'sound', name: 'correct' },
-                          { type: 'anim', name: 'correctHighlight', ms: 1000 }] }
-            : { nextPhase: 'resolvingWrong',
-                stateDiff: { 'players.p1.wrongStreak': s.players.p1.wrongStreak + 1,
-                             'players.p1.correctStreak': 0,
-                             'players.p1.wrongCount': (s.players.p1.wrongCount || 0) + 1,
-                             'question.lastChosenWrongKey': a.key,
-                             'question.lastResolveReason': 'wrong',
-                             'question.eliminatedWrongKeys': new Set([...s.question.eliminatedWrongKeys, a.key]) },
-                effects: [{ type: 'sound', name: 'wrong' },
-                          { type: 'anim', name: 'markChosen', ms: 800 }] },
+                          { type: 'anim', name: 'correctHighlight', ms: 1000 }] };
+        }
+        return { nextPhase: 'resolvingWrong',
+            stateDiff: { 'players.p1.wrongStreak': s.players.p1.wrongStreak + 1,
+                         'players.p1.correctStreak': 0,
+                         'players.p1.wrongCount': (s.players.p1.wrongCount || 0) + 1,
+                         'players.p1.score': Math.max(0, s.players.p1.score - (dyn.practiceWrongPenalty || 10)),
+                         'question.lastChosenWrongKey': a.key,
+                         'question.lastResolveReason': 'wrong',
+                         'question.eliminatedWrongKeys': new Set([...s.question.eliminatedWrongKeys, a.key]) },
+            effects: [{ type: 'sound', name: 'wrong' },
+                      { type: 'anim', name: 'markChosen', ms: 800 }] };
+    },
 
     'practice.resolvingCorrect.EFFECT_COMPLETE': (s) => ({
         nextPhase: 'cleanup',
@@ -172,9 +181,8 @@ const ModeRulesV2 = {
 
     'duel.buzzOpen.BUZZ': (s, a) => s.buzz.eligible.has(a.player)
         ? { nextPhase: 'buzzed',
-            // buzz.timerStartedAt lets the render layer compute the integer
-            // countdown shown to the player (7 → 1). Read-only for the reducer.
-            stateDiff: { 'buzz.owner': a.player, 'buzz.timerStartedAt': Date.now() },
+            stateDiff: { 'buzz.owner': a.player, 'buzz.timerStartedAt': Date.now(),
+                         'buzz.elapsedAtBuzz': s.dynamic.elapsedMs || 0 },
             effects: [{ type: 'sound', name: 'buzz' },
                       { type: 'anim', name: 'pauseDynamic' },
                       { type: 'render', target: 'showOptionsTo', player: a.player },
@@ -191,24 +199,34 @@ const ModeRulesV2 = {
     // ticking from buzzOpen.BUZZ) is killed before anything else. Then sound,
     // then a short anim — the anim's EFFECT_COMPLETE is what drives the next
     // phase transition (resolvingCorrect/Wrong → revealing / next-player).
-    'duel.buzzed.SUBMIT_ANSWER': (s, a) =>
-        a.key === s.question.correctKey
-            ? { nextPhase: 'resolvingCorrect',
+    'duel.buzzed.SUBMIT_ANSWER': (s, a, dyn) => {
+        if (a.key === s.question.correctKey) {
+            const elapsedSec = (s.buzz.elapsedAtBuzz || 0) / 1000;
+            const durSec = (dyn.dynamicDurationMs || 8000) / 1000;
+            const pts = Math.round(Math.max(
+                dyn.duelMinScore || 20,
+                (dyn.duelBaseScore || 100) * (1 - elapsedSec / durSec)
+            ));
+            return { nextPhase: 'resolvingCorrect',
                 stateDiff: { [`players.${a.player}.correctCount`]: s.players[a.player].correctCount + 1,
-                             [`players.${a.player}.correctStreak`]: s.players[a.player].correctStreak + 1 },
+                             [`players.${a.player}.correctStreak`]: s.players[a.player].correctStreak + 1,
+                             [`players.${a.player}.score`]: s.players[a.player].score + pts },
                 effects: [{ type: 'timer.clear' },
                           { type: 'sound', name: 'correct' },
-                          { type: 'anim', name: 'correctHighlight', ms: 800 }] }
-            : { nextPhase: 'resolvingWrong',
-                stateDiff: { 'question.eliminatedWrongKeys': new Set([...s.question.eliminatedWrongKeys, a.key]),
-                             'question.failedPlayersThisCycle': new Set([...s.question.failedPlayersThisCycle, a.player]),
-                             'question.lastChosenWrongKey': a.key,
-                             'question.lastResolveReason': 'wrong',
-                             [`players.${a.player}.wrongCount`]: (s.players[a.player].wrongCount || 0) + 1,
-                             [`players.${a.player}.correctStreak`]: 0 },
-                effects: [{ type: 'timer.clear' },
-                          { type: 'sound', name: 'wrong' },
-                          { type: 'anim', name: 'markChosen', ms: 800 }] },
+                          { type: 'anim', name: 'correctHighlight', ms: 800 }] };
+        }
+        return { nextPhase: 'resolvingWrong',
+            stateDiff: { 'question.eliminatedWrongKeys': new Set([...s.question.eliminatedWrongKeys, a.key]),
+                         'question.failedPlayersThisCycle': new Set([...s.question.failedPlayersThisCycle, a.player]),
+                         'question.lastChosenWrongKey': a.key,
+                         'question.lastResolveReason': 'wrong',
+                         [`players.${a.player}.wrongCount`]: (s.players[a.player].wrongCount || 0) + 1,
+                         [`players.${a.player}.correctStreak`]: 0,
+                         [`players.${a.player}.score`]: Math.max(0, s.players[a.player].score - (dyn.duelWrongPenalty || 50)) },
+            effects: [{ type: 'timer.clear' },
+                      { type: 'sound', name: 'wrong' },
+                      { type: 'anim', name: 'markChosen', ms: 800 }] };
+    },
 
     // Band-aid: Dynamic 的暫停實作偶爾還是會送出 EFFECT_COMPLETE（pause 後底層
     // setTimeout 漏網 / effectId blacklist 未生效）。在 buzzed 期間直接吸收掉，
@@ -239,7 +257,7 @@ const ModeRulesV2 = {
     // Duel 答對：先放完 Dynamic 到 completeState（讓沒搶到的對手也看到完整結構），
     // 再進 revealing 階段標出正解。winTarget 達到才直接進入結算（不再播完）。
     'duel.resolvingCorrect.EFFECT_COMPLETE': (s, _, dyn) =>
-        s.players[s.buzz.owner].correctCount >= dyn.winTarget
+        s.players[s.buzz.owner].score >= (dyn.scoreTarget || 300)
             ? { nextPhase: 'settling',
                 stateDiff: { 'result.winner': s.buzz.owner },
                 effects: [{ type: 'render' }] }
@@ -305,8 +323,24 @@ const DynamicVariants = {
 };
 
 // Duel / Dynamic 數值（餵給上面 handler 的 dyn 參數）
+// 所有分數設定均可由 save.js 的 settings.scoring 覆蓋（透過 getEffectiveRules）。
 const DuelDynamicRules = {
-    winTarget: 5,
+    // 勝利條件（分數制）
+    scoreTarget:        300,   // 先達到此分數者獲勝
+    winTarget:          5,     // 備用：答對題數（scoreTarget 未達前的 correctCount 檢查）
+    // 對決分數
+    duelBaseScore:      100,   // 最高分（動態剛開始即搶答）
+    duelTimingDecay:    10,    // 每播放 1 秒扣除的分數
+    duelMinScore:       20,    // 答對最低得分（再晚搶也有這分）
+    duelWrongPenalty:   50,    // 答錯扣分
+    dynamicDurationMs:  8000,  // 對應 DynamicVariants.zoom.durationMs
+    // 練習分數（連對等級對應 _comboLevel 的 3/5/7 門檻）
+    practiceBaseScore:     10, // 連對 1–2 題
+    practiceWrongPenalty:  10, // 答錯扣分（下限 0）
+    practiceCombo3Score:   30, // 連對 3–4
+    practiceCombo5Score:   40, // 連對 5–6
+    practiceCombo7Score:   60, // 連對 7+
+    // 其他
     answerOwnershipMs: 5000,
     revealThreshold: 3,
 };

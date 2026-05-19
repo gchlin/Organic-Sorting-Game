@@ -111,7 +111,20 @@ const Save = (function () {
             pveAI: defaultPveAI(),
             // 玩家自訂快速鍵；值是 KeyboardEvent.code。
             // 僅「答題選項」與「搶答」可改；其他系統鍵（Esc/M/T/C/W/R/N/S/G…）維持寫死。
-            keybindings: defaultKeybindings()
+            keybindings: defaultKeybindings(),
+            // 分數設定（所有數值皆可在開發者選項調整）
+            scoring: {
+                practiceBaseScore:    10,
+                practiceWrongPenalty: 10,
+                practiceCombo3Score:  30,
+                practiceCombo5Score:  40,
+                practiceCombo7Score:  60,
+                duelBaseScore:        100,
+                duelTimingDecay:      10,
+                duelMinScore:         20,
+                duelWrongPenalty:     50,
+                duelScoreTarget:      300
+            }
         };
     }
 
@@ -942,6 +955,8 @@ const Save = (function () {
                 data.settings.devQuickWin = Object.assign({}, data.settings.devQuickWin || {}, partial[key]);
             } else if (key === 'keybindings' && partial[key] && typeof partial[key] === 'object') {
                 data.settings.keybindings = Object.assign({}, data.settings.keybindings || defaultKeybindings(), partial[key]);
+            } else if (key === 'scoring' && partial[key] && typeof partial[key] === 'object') {
+                data.settings.scoring = Object.assign({}, data.settings.scoring || {}, partial[key]);
             } else if (key === 'pveAI' && partial[key] && typeof partial[key] === 'object') {
                 if (!data.settings.pveAI || typeof data.settings.pveAI !== 'object') {
                     data.settings.pveAI = defaultPveAI();

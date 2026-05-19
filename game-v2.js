@@ -34,10 +34,25 @@
     // -----------------------------------------------------------------------
     function getEffectiveRules(baseRules, settings) {
         const out = Object.assign({}, baseRules);
+        // Apply user-configured scoring overrides
+        if (settings && settings.scoring && typeof settings.scoring === 'object') {
+            const sc = settings.scoring;
+            if (sc.practiceBaseScore    != null) out.practiceBaseScore    = sc.practiceBaseScore;
+            if (sc.practiceWrongPenalty != null) out.practiceWrongPenalty = sc.practiceWrongPenalty;
+            if (sc.practiceCombo3Score  != null) out.practiceCombo3Score  = sc.practiceCombo3Score;
+            if (sc.practiceCombo5Score  != null) out.practiceCombo5Score  = sc.practiceCombo5Score;
+            if (sc.practiceCombo7Score  != null) out.practiceCombo7Score  = sc.practiceCombo7Score;
+            if (sc.duelBaseScore        != null) out.duelBaseScore        = sc.duelBaseScore;
+            if (sc.duelTimingDecay      != null) out.duelTimingDecay      = sc.duelTimingDecay;
+            if (sc.duelMinScore         != null) out.duelMinScore         = sc.duelMinScore;
+            if (sc.duelWrongPenalty     != null) out.duelWrongPenalty     = sc.duelWrongPenalty;
+            if (sc.duelScoreTarget      != null) out.scoreTarget          = sc.duelScoreTarget;
+        }
         if (settings && settings.devQuickWin && settings.devQuickWin.enabled) {
             const winAfter = Math.max(1, settings.devQuickWin.winAfter || 2);
             out.winTarget = winAfter;
             out.practiceClearAfterN = winAfter;
+            out.scoreTarget = winAfter * (out.duelBaseScore || 100); // scale for duel
         } else {
             out.practiceClearAfterN = null;
         }
@@ -581,10 +596,10 @@
             const scoreEl = area.querySelector('[data-field="score"]');
             const streakEl = area.querySelector('[data-field="streak"]');
             const comboEl = area.querySelector('[data-field="combo-level"]');
-            const score = player.correctCount || 0;
+            const score = player.score || 0;
             const target = state.mode === 'duel'
-                ? ((typeof DuelDynamicRules !== 'undefined' && DuelDynamicRules.winTarget) ? DuelDynamicRules.winTarget : 5)
-                : ((state.round && state.round.size) ? state.round.size : 10);
+                ? ((typeof DuelDynamicRules !== 'undefined' && DuelDynamicRules.scoreTarget) ? DuelDynamicRules.scoreTarget : 300)
+                : ((state.round && state.round.size) ? state.round.size * 10 : 100);
             const fill = target > 0 ? Math.max(0, Math.min(1, score / target)) : 0;
             if (scoreEl) scoreEl.textContent = String(score);
             area.style.setProperty('--score-fill', String(fill));
@@ -1095,12 +1110,15 @@
         const totalSubmissions = (p1.correctCount || 0) + (p1.wrongCount || 0);
         const acc = totalSubmissions > 0 ? (p1.correctCount / totalSubmissions) : null;
         statsEl.innerHTML = '';
+        _appendStat(statsEl, '得分', String(p1.score || 0));
         _appendStat(statsEl, '答對', String(p1.correctCount || 0));
         if ((p1.wrongCount || 0) > 0) {
             _appendStat(statsEl, '答錯', String(p1.wrongCount || 0));
         }
         if (state.mode === 'duel') {
-            _appendStat(statsEl, '右方 答對', String(state.players.p2.correctCount || 0));
+            const p2 = state.players.p2;
+            _appendStat(statsEl, '右方 得分', String(p2.score || 0));
+            _appendStat(statsEl, '右方 答對', String(p2.correctCount || 0));
         }
         _appendStat(statsEl, '本輪正確率', acc !== null ? (Math.round(acc * 100) + '%') : '—');
         // Practice: show progress against the sub-level's full question set.
@@ -1597,6 +1615,17 @@
         _setChecked('settings-dev-show-fps', settings.devShowFps);
         _setChecked('settings-dev-log-actions', settings.devLogActions);
         _setChecked('settings-dev-use-legacy-sounds', settings.devUseLegacySounds);
+        // Scoring settings
+        const sc = (settings && settings.scoring) ? settings.scoring : {};
+        _setValue('settings-score-practice-base',   sc.practiceBaseScore    ?? 10);
+        _setValue('settings-score-practice-wrong',  sc.practiceWrongPenalty ?? 10);
+        _setValue('settings-score-practice-combo3', sc.practiceCombo3Score  ?? 30);
+        _setValue('settings-score-practice-combo5', sc.practiceCombo5Score  ?? 40);
+        _setValue('settings-score-practice-combo7', sc.practiceCombo7Score  ?? 60);
+        _setValue('settings-score-duel-base',       sc.duelBaseScore        ?? 100);
+        _setValue('settings-score-duel-min',        sc.duelMinScore         ?? 20);
+        _setValue('settings-score-duel-wrong',      sc.duelWrongPenalty     ?? 50);
+        _setValue('settings-score-duel-target',     sc.duelScoreTarget      ?? 300);
         // PvE AI params
         var pveAI = (settings && settings.pveAI) ? settings.pveAI : {};
         ['easy', 'medium', 'hard'].forEach(function (diff) {
@@ -2462,6 +2491,27 @@
                 Save.writeSettings({ devUseLegacySounds: v });
             }],
         ];
+        // 分數設定（scoring sub-object）
+        const scoreMap = [
+            ['settings-score-practice-base',   'practiceBaseScore'],
+            ['settings-score-practice-wrong',  'practiceWrongPenalty'],
+            ['settings-score-practice-combo3', 'practiceCombo3Score'],
+            ['settings-score-practice-combo5', 'practiceCombo5Score'],
+            ['settings-score-practice-combo7', 'practiceCombo7Score'],
+            ['settings-score-duel-base',       'duelBaseScore'],
+            ['settings-score-duel-min',        'duelMinScore'],
+            ['settings-score-duel-wrong',      'duelWrongPenalty'],
+            ['settings-score-duel-target',     'duelScoreTarget'],
+        ];
+        for (const [id, field] of scoreMap) {
+            const el = document.getElementById(id);
+            if (!el) continue;
+            el.addEventListener('change', function () {
+                const v = Math.max(0, Number(el.value) || 0);
+                const patch = {}; patch[field] = v;
+                Save.writeSettings({ scoring: patch });
+            });
+        }
         for (let i = 0; i < map.length; i++) {
             const [id, kind, setter] = map[i];
             const el = document.getElementById(id);
