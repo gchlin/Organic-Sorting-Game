@@ -182,13 +182,11 @@
             state.queue = [];
         }
 
-        // Render after each action.
-        render();
-
-        // Settle-side bookkeeping (badges + persistence + result)
+        // Switch screen first if entering settling, then render once on the correct screen.
         if (beforePhase !== 'settling' && state.phase === 'settling') {
             _onEnterSettling();
         }
+        render();
     }
 
     function _setByPath(obj, path, value) {
