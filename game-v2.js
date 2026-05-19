@@ -96,7 +96,8 @@
 
         // Settings → effective rules (devQuickWin overlay applies to BOTH practice
         // clearAfterN and duel winTarget — see README §設定與開發者選項).
-        const dynRules = getEffectiveRules(DuelDynamicRules, settings);
+        const _baseDuelRules = (typeof DuelDynamicRules !== 'undefined') ? DuelDynamicRules : {};
+        const dynRules = getEffectiveRules(_baseDuelRules, settings);
 
         // Pre-action side effects: capture question identity BEFORE the reducer
         // mutates state.question (e.g. LOAD_NEXT_QUESTION rewrites it).
@@ -1961,6 +1962,8 @@
         if (aiController) { try { aiController.stop(); } catch (e) {} aiController = null; }
 
         _wrongChosenMap = {};
+        _prevCombo.p1 = '';
+        _prevCombo.p2 = '';
         state = GameState.createStateV2();
         state.mode = opts.mode;
         state.family = opts.family;
