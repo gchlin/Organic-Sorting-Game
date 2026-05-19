@@ -2522,6 +2522,7 @@ body.v2-active .v2-root { display: block; }
     margin-bottom: 0;
 }
 .player-area {
+    --score-fill: 0;
     display: grid;
     grid-template-columns: auto minmax(84px, 1fr) auto;
     gap: 6px;
@@ -2542,13 +2543,15 @@ body.v2-active .v2-root { display: block; }
     width: 100%;
     height: 10px;
     border-radius: 999px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        rgba(255, 255, 255, 0.35) 50%,
-        transparent 100%);
-    animation: hp-shimmer 3.5s linear infinite;
+    background: linear-gradient(to bottom,
+        var(--hp-glass-dark) 0%,
+        var(--hp-glass-mid) 50%,
+        var(--hp-glass-dark) 100%);
+    box-shadow:
+        inset 0 1px 3px rgba(0,0,0,.8),
+        inset 0 -1px 0 rgba(255,255,255,.08);
     pointer-events: none;
-    z-index: 1;
+    z-index: 0;
 }
 .player-area::after {
     content: "";
@@ -2560,6 +2563,7 @@ body.v2-active .v2-root { display: block; }
     min-width: 0;
     border-radius: 999px;
     background: linear-gradient(to bottom,
+        #fff5c0 0%,
         var(--hp-gold-light) 0%,
         var(--hp-gold) 50%,
         var(--hp-gold-deep) 100%);
@@ -2568,7 +2572,10 @@ body.v2-active .v2-root { display: block; }
         inset 0 -2px 4px rgba(0, 0, 0, 0.35),
         0 0 8px rgba(212, 175, 55, 0.45);
     overflow: hidden;
-    z-index: 0;
+    transform: scaleX(var(--score-fill));
+    transform-origin: left center;
+    transition: transform .28s ease;
+    z-index: 1;
 }
 .player-area .player-label {
     grid-column: 1;
@@ -2599,6 +2606,10 @@ body.v2-active .v2-root { display: block; }
     gap: 8px;
     min-width: 0;
     text-align: center;
+}
+.v2-duel-hud-title .v2-back-btn-sm {
+    align-self: center;
+    justify-self: center;
 }
 .v2-hud-title-text { min-width: 0; }
 .v2-duel-mode-label {
@@ -2768,6 +2779,7 @@ body.v2-active .v2-root { display: block; }
         grid-row: 1;
         border-radius: 999px;
         background: linear-gradient(to bottom,
+            #fff5c0 0%,
             var(--hp-gold-light) 0%,
             var(--hp-gold) 50%,
             var(--hp-gold-deep) 100%);
@@ -2775,6 +2787,8 @@ body.v2-active .v2-root { display: block; }
             inset 0 1px 2px rgba(255, 245, 200, 0.65),
             inset 0 -2px 4px rgba(0, 0, 0, 0.35),
             0 0 8px rgba(212, 175, 55, 0.45);
+        transform: scaleX(var(--score-fill));
+        transform-origin: left center;
     }
     #screen-game.mode-duel .player-area .player-label {
         grid-column: 1;

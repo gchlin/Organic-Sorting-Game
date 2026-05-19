@@ -582,7 +582,13 @@
             const scoreEl = area.querySelector('[data-field="score"]');
             const streakEl = area.querySelector('[data-field="streak"]');
             const comboEl = area.querySelector('[data-field="combo-level"]');
-            if (scoreEl) scoreEl.textContent = String(player.correctCount || 0);
+            const score = player.correctCount || 0;
+            const target = state.mode === 'duel'
+                ? ((typeof DuelDynamicRules !== 'undefined' && DuelDynamicRules.winTarget) ? DuelDynamicRules.winTarget : 5)
+                : ((state.round && state.round.size) ? state.round.size : 10);
+            const fill = target > 0 ? Math.max(0, Math.min(1, score / target)) : 0;
+            if (scoreEl) scoreEl.textContent = String(score);
+            area.style.setProperty('--score-fill', String(fill));
             if (streakEl) streakEl.textContent = (player.correctStreak > 0) ? ('連對 ' + player.correctStreak) : '';
             if (comboEl) comboEl.textContent = _comboLevel(player.correctStreak);
             area.classList.toggle('locked-area', !!player.isLocked);
@@ -837,11 +843,13 @@
             const handoff = document.getElementById('handoff-overlay');
             if (handoff) {
                 if (state.buzz._isHandoff && elapsed < 1000) {
-                    handoff.textContent = '⚡ 輪到 ' + (state.buzz.owner === 'p1' ? 'P1' : 'P2');
+                    handoff.textContent = '換 ' + (state.buzz.owner === 'p1' ? 'P1' : 'P2') + ' 答';
+                    handoff.setAttribute('data-side', side);
                     handoff.style.opacity = String(Math.max(0, 1 - elapsed / 800));
                     handoff.classList.add('visible');
                 } else {
                     handoff.classList.remove('visible');
+                    handoff.removeAttribute('data-side');
                     handoff.style.opacity = '0';
                     if (state.buzz._isHandoff) state.buzz._isHandoff = false;
                 }
@@ -854,7 +862,7 @@
         const cd = document.getElementById('buzz-countdown');
         if (cd) { cd.classList.remove('visible', 'urgent'); cd.textContent = ''; }
         const handoff = document.getElementById('handoff-overlay');
-        if (handoff) { handoff.classList.remove('visible'); handoff.style.opacity = '0'; handoff.textContent = ''; }
+        if (handoff) { handoff.classList.remove('visible'); handoff.removeAttribute('data-side'); handoff.style.opacity = '0'; handoff.textContent = ''; }
         const giveup = document.getElementById('btn-giveup');
         if (giveup) giveup.classList.remove('visible');
     }
