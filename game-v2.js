@@ -73,7 +73,7 @@
     let _tutorialState = null;  // { pages, idx, onDone, key }
     let _storyState = null;     // { lines, idx, playerName, onDone }
     let _quickHintOpen = false;
-    let _wrongChosenMap = {};   // { compoundKey: chosenWrongAnswerKey } — per round
+    let _wrongChosenMap = {};   // { compoundKey or compoundKey|questionIndex: chosenWrongAnswerKey } — per round
     let _codexTab = 'molecules'; // 'molecules' | 'levels' | 'badges' | 'story'
     let _wrongBookTab = 'category'; // 'category' | 'all' | 'box1' | 'box2' | 'box3' | 'mastered'
     let _lastAnswerPlayer = null;
@@ -161,10 +161,10 @@
                 }
             } else if (state.mode === 'practice' && !wasCorrect) {
                 state.wrongInRound.add(preCompoundKey);
-                // Track the first chosen wrong answer for this compound (for settle display)
-                if (!_wrongChosenMap[preCompoundKey]) {
-                    _wrongChosenMap[preCompoundKey] = action.key;
-                }
+                // Track the latest wrong pick for settle display, plus an indexed
+                // key so repeated compounds in a round do not collide for future UI.
+                _wrongChosenMap[preCompoundKey] = action.key;
+                _wrongChosenMap[preCompoundKey + '|' + (state.round && state.round.index || 0)] = action.key;
                 if (typeof Save !== 'undefined') {
                     if (Save.recordWrongV2) Save.recordWrongV2(state.family, state.difficulty, preCompoundKey);
                     // A wrong answer also demotes (back to box 1) if already tracked.
@@ -1035,7 +1035,8 @@
         // late removal doesn't clip the fade-out.
         setTimeout(function () {
             if (el && el.parentNode) el.parentNode.removeChild(el);
-            if (feedback) feedback.classList.remove('combo-suppressed');
+            const latestFeedback = document.getElementById('feedback-overlay');
+            if (latestFeedback) latestFeedback.classList.remove('combo-suppressed');
         }, 1600);
     }
     function _checkComboPopup() {
@@ -2283,10 +2284,6 @@
                         clearTransientUI();
                         resetRuntimeAfterLeavingGame();
                     }
-                    // Duel 子關選單現在直接回主選單。
-                    if (_currentScreen === 'sub-menu' && _subMenuContext) {
-                        if (_subMenuContext.kind === 'duelOpponentSetting') goToScreen('main-menu');
-                    }
                     goToScreen('main-menu');
                     break;
                 case 'continue-practice':
@@ -2360,7 +2357,11 @@
         // Story screen: click anywhere to advance
         const storyScreen = document.getElementById('screen-story');
         if (storyScreen) {
-            storyScreen.addEventListener('click', function () {
+            storyScreen.addEventListener('click', function (e) {
+                if (e.target && e.target.closest
+                    && e.target.closest('button, [data-action], a, input, select, textarea')) {
+                    return;
+                }
                 if (_currentScreen === 'story') _advanceStory();
             });
         }
@@ -2388,6 +2389,9 @@
                     text: '確定返回大廳？目前的對局會結束。',
                     onYes: function () {
                         if (aiController) { try { aiController.stop(); } catch (err) {} aiController = null; }
+                        try { EffectManager.cancelAllEffects('leave-game'); } catch (err) {}
+                        clearTransientUI();
+                        resetRuntimeAfterLeavingGame();
                         goToScreen('main-menu');
                     },
                     onNo: function () {}
@@ -2446,6 +2450,9 @@
         function onKey(ev) {
             ev.preventDefault();
             ev.stopPropagation();
+            if (['ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'MetaLeft', 'MetaRight'].indexOf(ev.code) !== -1) {
+                return;
+            }
             cleanup();
             if (ev.code === 'Escape') { renderSettingsScreen(); return; }
             // 找出衝突的 binding，若有 → 交換到舊鍵
