@@ -58,6 +58,35 @@ const QuestionEngine = (function () {
         return answer ? answer.content : '';
     }
 
+    function preferredByFamily(pool, familyScope, correctAKey) {
+        if (!familyScope || typeof Families === 'undefined' || !Families[familyScope]) return pool;
+        const fam = Families[familyScope];
+        const filter = fam.imageFilter;
+        if (filter && filter.type === 'byCategory') {
+            const cats = new Set(filter.categories);
+            return pool.filter(k => cats.has(AnswerBank[k].category));
+        }
+        if (filter && filter.type === 'byCompoundKeys') {
+            const keys = new Set(filter.keys);
+            return pool.filter(k => keys.has(k));
+        }
+        if (filter && filter.type === 'all') {
+            const correct = AnswerBank[correctAKey];
+            if (!correct || !correct.category) return pool;
+            const familyKeys = Object.keys(Families);
+            for (let i = 0; i < familyKeys.length; i++) {
+                const candidate = Families[familyKeys[i]];
+                const candidateFilter = candidate && candidate.imageFilter;
+                if (!candidateFilter || candidateFilter.type !== 'byCategory') continue;
+                if (candidateFilter.categories.indexOf(correct.category) === -1) continue;
+                const cats = new Set(candidateFilter.categories);
+                const inferred = pool.filter(k => cats.has(AnswerBank[k].category));
+                if (inferred.length) return inferred;
+            }
+        }
+        return pool;
+    }
+
     function getQuestionSet(familyKey, difficultyKey) {
         if (typeof Families === 'undefined' || typeof Difficulties === 'undefined' || typeof QuestionImages === 'undefined' || typeof AnswerBank === 'undefined') return [];
         const fam = Families[familyKey];
@@ -109,25 +138,29 @@ const QuestionEngine = (function () {
         return typeof limit === 'number' ? unique.slice(0, limit) : unique;
     }
 
-    function generateOptions({ correctAKey, answerType, familyScope, optionCount }) {
+    function generateOptions({ correctAKey, answerType, familyScope, optionCount, preferredDistractorCount }) {
         if (typeof AnswerBank === 'undefined') return [];
         const N = optionCount || 4;
         const pool = Object.keys(AnswerBank).filter(k => {
             const e = AnswerBank[k];
-            return e && e.type === answerType && k !== correctAKey;
+            if (!e || e.type !== answerType || k === correctAKey) return false;
+            if (answerType === 'categoryEn' && !/^CAT_EN_/.test(k)) return false;
+            if (answerType === 'categoryZh' && !/^CAT_ZH_/.test(k)) return false;
+            return true;
         });
-        let preferred = pool;
-        if (familyScope && typeof Families !== 'undefined' && Families[familyScope]) {
-            const fam = Families[familyScope];
-            if (fam.imageFilter && fam.imageFilter.type === 'byCategory') {
-                const cats = new Set(fam.imageFilter.categories);
-                preferred = pool.filter(k => cats.has(AnswerBank[k].category));
-            } else if (fam.imageFilter && fam.imageFilter.type === 'byCompoundKeys') {
-                const keys = new Set(fam.imageFilter.keys);
-                preferred = pool.filter(k => keys.has(k));
+        const preferred = preferredByFamily(pool, familyScope, correctAKey);
+        let distractors = shuffle(preferred);
+        if (typeof preferredDistractorCount === 'number') {
+            const preferredTarget = Math.max(0, Math.min(N - 1, preferredDistractorCount));
+            const preferredChosen = distractors.slice(0, preferredTarget);
+            const preferredSet = new Set(preferredChosen);
+            const outside = shuffle(pool.filter(k => !preferredSet.has(k) && preferred.indexOf(k) === -1));
+            distractors = preferredChosen.concat(outside);
+            if (distractors.length < N - 1) {
+                const fallbackPreferred = shuffle(preferred.filter(k => !preferredSet.has(k)));
+                distractors.push(...fallbackPreferred);
             }
         }
-        const distractors = shuffle(preferred);
         while (distractors.length < N - 1) {
             const extras = shuffle(pool.filter(k => !distractors.includes(k)));
             if (!extras.length) break;

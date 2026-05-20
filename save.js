@@ -95,8 +95,8 @@ const Save = (function () {
     function defaultSettings() {
         return {
             soundEnabled: true,     // 音效開關（玩家分頁 checkbox）
-            musicVolume: 0.60,
-            sfxVolume: 0.40,
+            musicVolume: 0.80,
+            sfxVolume: 0.30,
             devQuickWin: {
                 enabled: false,
                 winAfter: 2,

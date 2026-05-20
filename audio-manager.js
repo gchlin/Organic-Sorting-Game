@@ -41,11 +41,11 @@ const AudioManager = (function () {
     }
 
     function musicVolume() {
-        return clamp01(readSettings().musicVolume, 0.60);
+        return clamp01(readSettings().musicVolume, 0.80);
     }
 
     function sfxVolume() {
-        return clamp01(readSettings().sfxVolume, 0.40);
+        return clamp01(readSettings().sfxVolume, 0.30);
     }
 
     function preload() {

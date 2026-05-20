@@ -2932,6 +2932,7 @@ body.v2-active .v2-root { display: block; }
     #screen-game .v2-buzz button { padding: 8px; font-size: 0.9rem; }
 
     #screen-game.mode-duel.is-active {
+        --v2-action-button-width: clamp(104px, 19vw, 142px);
         grid-template-columns: clamp(104px, 19vw, 142px) minmax(188px, 1fr) clamp(104px, 19vw, 142px);
         grid-template-rows: auto minmax(0, 1fr) auto;
         grid-template-areas:
@@ -3113,6 +3114,13 @@ body.v2-active .v2-root { display: block; }
     align-self: start;
     align-content: start;
     animation: v2-options-fade-in 0.4s ease-out;
+}
+#screen-game {
+    --v2-action-button-width: clamp(118px, 21vw, 178px);
+}
+#screen-game.mode-duel .option-btn[data-option-key],
+#screen-game.mode-duel .v2-buzz button {
+    min-width: var(--v2-action-button-width);
 }
 @keyframes v2-options-fade-in {
     from { opacity: 0; transform: translateY(8px); }

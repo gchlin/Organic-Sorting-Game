@@ -1598,8 +1598,8 @@
         const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
         // Player tab
         _setChecked('settings-sound-enabled', settings.soundEnabled !== false); // default true
-        _setVolumeControl('settings-music-volume', 'settings-music-volume-label', settings.musicVolume, 0.60);
-        _setVolumeControl('settings-sfx-volume', 'settings-sfx-volume-label', settings.sfxVolume, 0.40);
+        _setVolumeControl('settings-music-volume', 'settings-music-volume-label', settings.musicVolume, 0.80);
+        _setVolumeControl('settings-sfx-volume', 'settings-sfx-volume-label', settings.sfxVolume, 0.30);
         _setChecked('settings-dev-quickwin-enabled', settings.devQuickWin && settings.devQuickWin.enabled);
         _setValue('settings-dev-quickwin-after', settings.devQuickWin && settings.devQuickWin.winAfter);
         _setChecked('settings-dev-quickwin-show-indicator', settings.devQuickWin && settings.devQuickWin.showIndicator);
@@ -2070,8 +2070,9 @@
         state.question.options = QuestionEngine.generateOptions({
             correctAKey: q.aKey,
             answerType: answerType,
-            familyScope: (state.difficulty === 'advanced') ? null : family,
-            optionCount: 4
+            familyScope: family,
+            optionCount: 4,
+            preferredDistractorCount: (state.difficulty === 'intermediate' || state.difficulty === 'advanced') ? 2 : null
         });
         state.question.eliminatedWrongKeys = new Set();
         state.question.lastChosenWrongKey = null;
@@ -2500,11 +2501,11 @@
             ['settings-music-volume', 'volume', function (v) {
                 Save.writeSettings({ musicVolume: v });
                 _syncMusicForScreen(_currentScreen);
-                _setVolumeControl('settings-music-volume', 'settings-music-volume-label', v, 0.60);
+                _setVolumeControl('settings-music-volume', 'settings-music-volume-label', v, 0.80);
             }],
             ['settings-sfx-volume', 'volume', function (v) {
                 Save.writeSettings({ sfxVolume: v });
-                _setVolumeControl('settings-sfx-volume', 'settings-sfx-volume-label', v, 0.40);
+                _setVolumeControl('settings-sfx-volume', 'settings-sfx-volume-label', v, 0.30);
             }],
             ['settings-dev-quickwin-enabled', 'checkbox', function (v) {
                 Save.writeSettings({ devQuickWin: { enabled: v } });
