@@ -227,12 +227,125 @@ const LevelTutorials = {
 
 };
 
+const TutorialModules = {
+  aromatic: {
+    title: "芳香烴教學關卡",
+    tag: "AR",
+    pages: [
+      {
+        expr: 'surprised',
+        img: _FG + "fg_11_aromatic.svg",
+        title: "六角形帶圈圈",
+        text: "看到六角形裡有圈圈，就是苯環。分子如果只有苯環或苯環加上碳氫尾巴，通常先判成芳香烴。"
+      },
+      {
+        expr: 'thinking',
+        img: _FG + "fg_13_phenol.svg",
+        title: "先別急著選酚",
+        text: "苯環只是背景。只有 –OH 直接接在苯環上才是酚；如果苯環旁邊掛的是醛、酸、醚、胺或鹵素，就要看那個官能基。"
+      },
+      {
+        expr: 'happy',
+        img: [_HL.aromatic + "11_aromatic_benzene.svg", _HL.aromatic + "11_aromatic_toluene.svg"],
+        title: "練習判斷順序",
+        text: "先找苯環，再找苯環外面有沒有更明顯的官能基。沒有其他官能基時，才把它放進芳香烴。"
+      }
+    ]
+  },
+  oxygen: {
+    title: "涵氧家族教學關卡",
+    tag: "O",
+    pages: [].concat(LevelTutorials.level2 || [], LevelTutorials.level3 || [], LevelTutorials.level4 || [])
+  },
+  nitrogenHalide: {
+    title: "含氮鹵化物教學關卡",
+    tag: "N/X",
+    pages: LevelTutorials.level5 || []
+  },
+  practiceControls: {
+    title: "練習模式操作教學關卡",
+    tag: "P",
+    pages: [
+      {
+        expr: 'neutral',
+        title: "先看圖，再選答案",
+        text: "練習模式沒有搶答。看清楚結構式上的官能基後，直接點選答案，或使用選項旁邊顯示的快捷鍵。"
+      },
+      {
+        expr: 'thinking',
+        title: "答錯不是結束",
+        text: "練習模式答錯會把錯誤選項劃掉，這題還可以繼續觀察。錯過的分子會進錯題本，之後可以集中訂正。"
+      },
+      {
+        expr: 'happy',
+        title: "正式關卡的提示",
+        text: "正式關卡中的教學按鈕只會顯示快速提示，不會中斷遊戲流程。完整教學從主選單的新手導覽進入。"
+      }
+    ]
+  },
+  duelControls: {
+    title: "對決模式操作教學關卡",
+    tag: "D",
+    pages: [
+      {
+        expr: 'neutral',
+        title: "先搶答，後作答",
+        text: "對決模式要先按搶答。誰先搶到，誰才會看到自己的答案按鈕並進入限時作答。"
+      },
+      {
+        expr: 'thinking',
+        title: "倒數會影響分數",
+        text: "越快答對分數越高；逾時、放棄或答錯都會扣分。搶答前先確定自己看到了關鍵官能基。"
+      },
+      {
+        expr: 'happy',
+        title: "鍵盤也能操作",
+        text: "搶答與答案選項都有快捷鍵，實際按鍵會顯示在畫面上。你可以到設定頁調整主要操作鍵。"
+      }
+    ]
+  },
+  wizardDuel: {
+    title: "巫師對決導覽關卡",
+    tag: "AI",
+    pages: [
+      {
+        expr: 'surprised',
+        title: "選擇你的對手",
+        text: "巫師對決可以雙人對戰，也可以挑戰 AI。設定中的對手模式會被記住，下次進入對決會沿用。"
+      },
+      {
+        expr: 'thinking',
+        title: "動態題圖規則",
+        text: "中高級對決可能會遇到模糊或旋轉縮放的題圖。搶答後題圖會快速揭示，讓作答階段能看清楚結構。"
+      },
+      {
+        expr: 'happy',
+        title: "勝利條件",
+        text: "對決目標是先達到勝利門檻分數。穩定辨識比亂搶更重要，因為錯誤、放棄和逾時都會讓分差拉開。"
+      }
+    ]
+  }
+};
+
+const LevelTutorialMap = {
+  'hydrocarbon-beginner': 'hydrocarbon-beginner',
+  'hydrocarbon-intermediate': 'hydrocarbon-intermediate',
+  'oxygen-beginner': 'oxygen-beginner',
+  'oxygen-intermediate': 'oxygen-intermediate',
+  'nitrogenHalide-beginner': 'nitrogenHalide-beginner',
+  'nitrogenHalide-intermediate': 'nitrogenHalide-intermediate',
+  'mixed-beginner': 'mixed-beginner',
+  'mixed-intermediate': 'mixed-intermediate',
+  'shell-intermediate': 'shell-intermediate',
+  'englishChallenge-advanced': 'englishChallenge-advanced'
+};
+
 // === Family-difficulty-keyed aliases (v2 migration) ===
 // Beginner and intermediate share the same slides initially; can fork later.
 LevelTutorials['hydrocarbon-beginner']        = LevelTutorials.level1 || [];
 LevelTutorials['hydrocarbon-intermediate']    = LevelTutorials.level1 || [];
-LevelTutorials['oxygen-beginner']             = LevelTutorials.level2 || LevelTutorials.level3 || LevelTutorials.level4 || [];
-LevelTutorials['oxygen-intermediate']         = LevelTutorials.level2 || LevelTutorials.level3 || LevelTutorials.level4 || [];
+LevelTutorials['oxygen-beginner']             = TutorialModules.oxygen.pages || [];
+LevelTutorials['oxygen-intermediate']         = TutorialModules.oxygen.pages || [];
 LevelTutorials['nitrogenHalide-beginner']     = LevelTutorials.level5 || [];
 LevelTutorials['nitrogenHalide-intermediate'] = LevelTutorials.level5 || [];
 LevelTutorials['mixed-beginner']              = LevelTutorials.level6 || [];

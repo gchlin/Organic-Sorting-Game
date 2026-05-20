@@ -500,6 +500,7 @@
     // Sub-menu kinds:
     //   'difficulty'           { difficulty }   → family list, click starts practice
     //   'duelFamily'           { difficulty }   → family list, click starts duel using saved mode
+    //   'tutorialModules'      {}               → tutorial module picker
     //   'duelOpponentSetting'  {}               → PvP / PvE 易/中/難 picker, saves to
     //                                             settings.duelOpponent. NOT in the start-game flow.
     function renderSubMenu() {
@@ -598,6 +599,21 @@
                         Save.writeSettings({ duelOpponent: op.key });
                     }
                     goToScreen('main-menu');
+                });
+                listEl.appendChild(btn);
+            }
+        } else if (_subMenuContext.kind === 'tutorialModules') {
+            titleEl.textContent = '新手導覽 — 選擇教學關卡';
+            const modules = (typeof TutorialModules !== 'undefined') ? TutorialModules : {};
+            const order = ['aromatic', 'oxygen', 'nitrogenHalide', 'practiceControls', 'duelControls', 'wizardDuel'];
+            for (let i = 0; i < order.length; i++) {
+                const key = order[i];
+                const mod = modules[key];
+                if (!mod || !Array.isArray(mod.pages) || !mod.pages.length) continue;
+                const btn = document.createElement('button');
+                setMenuButtonContent(btn, mod.tag || String(i + 1), mod.title || key);
+                btn.addEventListener('click', function () {
+                    _openTutorialPages(mod.pages, 'module:' + key, function () { goToScreen('sub-menu'); });
                 });
                 listEl.appendChild(btn);
             }
@@ -822,10 +838,23 @@
 
     function _tutorialPagesFor(family, difficulty) {
         if (!family || !difficulty || typeof LevelTutorials === 'undefined') return null;
-        const tut = LevelTutorials[family + '-' + difficulty];
+        const key = family + '-' + difficulty;
+        const mapped = (typeof LevelTutorialMap !== 'undefined' && LevelTutorialMap[key]) ? LevelTutorialMap[key] : key;
+        const tut = LevelTutorials[mapped];
         return (tut && Array.isArray(tut.pages)) ? tut.pages
              : (tut && Array.isArray(tut)) ? tut
              : null;
+    }
+    function _openTutorialPages(pages, key, onDone) {
+        if (!Array.isArray(pages) || !pages.length) return false;
+        _tutorialState = {
+            pages: pages,
+            idx: 0,
+            key: key || '',
+            onDone: typeof onDone === 'function' ? onDone : function () { render(); }
+        };
+        render();
+        return true;
     }
     function _quickHintText() {
         if (!state || !state.family || !state.difficulty) return '';
@@ -1973,9 +2002,7 @@
         // Tutorial gate
         const tutKey = opts.family + '-' + opts.difficulty;
         if (typeof Save !== 'undefined' && Save.isTutorialSeenV2 && !Save.isTutorialSeenV2(opts.family, opts.difficulty)) {
-            const tut = (typeof LevelTutorials !== 'undefined') ? LevelTutorials[tutKey] : null;
-            const pages = (tut && Array.isArray(tut.pages)) ? tut.pages
-                        : (tut && Array.isArray(tut)) ? tut : null;
+            const pages = _tutorialPagesFor(opts.family, opts.difficulty);
             if (pages && pages.length > 0) {
                 _tutorialState = {
                     pages: pages,
@@ -2272,18 +2299,8 @@
                     goToScreen('sub-menu');
                     break;
                 case 'enter-tutorial':
-                    // Open generic tutorial — first key in LevelTutorials if any
-                    if (typeof LevelTutorials !== 'undefined') {
-                        const k = Object.keys(LevelTutorials)[0];
-                        if (k) {
-                            const tut = LevelTutorials[k];
-                            const pages = Array.isArray(tut && tut.pages) ? tut.pages : (Array.isArray(tut) ? tut : null);
-                            if (pages) {
-                                _tutorialState = { pages: pages, idx: 0, key: k, onDone: function () { render(); } };
-                                render();
-                            }
-                        }
-                    }
+                    _subMenuContext = { kind: 'tutorialModules' };
+                    goToScreen('sub-menu');
                     break;
                 case 'enter-codex': goToScreen('codex'); break;
                 case 'enter-wrong-book': goToScreen('wrong-book'); break;
@@ -2323,9 +2340,7 @@
                             break;
                         }
                         const tutKey = state.family + '-' + state.difficulty;
-                        const tut = (typeof LevelTutorials !== 'undefined') ? LevelTutorials[tutKey] : null;
-                        const pages = (tut && Array.isArray(tut.pages)) ? tut.pages
-                                    : (tut && Array.isArray(tut)) ? tut : null;
+                        const pages = _tutorialPagesFor(state.family, state.difficulty);
                         if (pages && pages.length > 0) {
                             _tutorialState = {
                                 pages: pages, idx: 0, key: tutKey,
