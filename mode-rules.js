@@ -219,6 +219,11 @@ const ModeRulesV2 = {
         effects: [{ type: 'anim', name: 'freezeAtCompleteState' }],
     }),
 
+    // 無人搶答時 Dynamic 會自然播到底，EffectManager 對該 dynamic effect 送出一個
+    // EFFECT_COMPLETE。真正有意義的訊號是 DYNAMIC_COMPLETE（上面已處理）；這個
+    // EFFECT_COMPLETE 只是 effect 結束的回報，在 buzzOpen 不對應任何 phase 轉移。
+    'duel.buzzOpen.EFFECT_COMPLETE': (s) => ({ nextPhase: s.phase, stateDiff: {}, effects: [] }),
+
     // Effect order matters: timer.clear FIRST so the 5s answer-timer (still
     // ticking from buzzOpen.BUZZ) is killed before anything else. Then sound,
     // then a short anim — the anim's EFFECT_COMPLETE is what drives the next
@@ -251,6 +256,14 @@ const ModeRulesV2 = {
                       { type: 'sound', name: 'wrong' },
                       { type: 'anim', name: 'markChosen', ms: 800 }] };
     },
+
+    // buzzed 只由玩家輸入推進（SUBMIT_ANSWER / GIVE_UP / ANSWER_TIMEOUT）。但進入
+    // buzzed 的規則會附帶純視覺 anim —— 換人 handoff 的 `lockoutLoser` 走的是泛用
+    // anim 路徑，播完（預設 1000ms）會由 EffectManager 正常送出 EFFECT_COMPLETE。
+    // 它不是漏網的 ghost effect，而是合法但無 phase 意義的完成回報，故在 buzzed no-op。
+    // 註：前一版把這條誤標成「Dynamic pause band-aid」而在 d31b287 刪除，導致答錯
+    // handoff 後出現 `[reducer] no rule for duel.buzzed.EFFECT_COMPLETE`。
+    'duel.buzzed.EFFECT_COMPLETE': (s) => ({ nextPhase: s.phase, stateDiff: {}, effects: [] }),
 
     'duel.buzzed.ANSWER_TIMEOUT': (s, a) => ({
         nextPhase: 'resolvingWrong',
