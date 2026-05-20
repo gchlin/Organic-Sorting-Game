@@ -331,7 +331,11 @@
                 if (state.dynamic) state.dynamic.phase = 'playingToComplete';
                 const variant = state.dynamic.variant;
                 const variantDef = (typeof DynamicVariants !== 'undefined' && DynamicVariants[variant]) || null;
-                const durationMs = variantDef ? variantDef.durationMs : 8000;
+                let durationMs = variantDef ? variantDef.durationMs : 8000;
+                if (typeof effect.fastForwardMs === 'number' && state.dynamic) {
+                    const elapsed = state.dynamic.elapsedMs || 0;
+                    durationMs = Math.min(durationMs, elapsed + Math.max(0, effect.fastForwardMs));
+                }
                 EffectManager.runDynamicEffect(
                     { op: 'playToComplete', variant: variant, durationMs: durationMs,
                       startElapsedMs: state.dynamic.elapsedMs || 0,
@@ -1594,6 +1598,8 @@
         const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
         // Player tab
         _setChecked('settings-sound-enabled', settings.soundEnabled !== false); // default true
+        _setVolumeControl('settings-music-volume', 'settings-music-volume-label', settings.musicVolume, 0.60);
+        _setVolumeControl('settings-sfx-volume', 'settings-sfx-volume-label', settings.sfxVolume, 0.40);
         _setChecked('settings-dev-quickwin-enabled', settings.devQuickWin && settings.devQuickWin.enabled);
         _setValue('settings-dev-quickwin-after', settings.devQuickWin && settings.devQuickWin.winAfter);
         _setChecked('settings-dev-quickwin-show-indicator', settings.devQuickWin && settings.devQuickWin.showIndicator);
@@ -1739,6 +1745,14 @@
     function _setValue(id, v) {
         const el = document.getElementById(id);
         if (el && typeof v !== 'undefined' && v !== null) el.value = String(v);
+    }
+    function _setVolumeControl(inputId, labelId, value, fallback) {
+        const n = (typeof value === 'number') ? value : fallback;
+        const pct = Math.round(Math.max(0, Math.min(1, n)) * 100);
+        const input = document.getElementById(inputId);
+        const label = document.getElementById(labelId);
+        if (input) input.value = String(pct);
+        if (label) label.textContent = pct + '%';
     }
 
     function renderStoryScreen() {
@@ -2483,6 +2497,15 @@
                 Save.writeSettings({ soundEnabled: v });
                 _syncMusicForScreen(_currentScreen);
             }],
+            ['settings-music-volume', 'volume', function (v) {
+                Save.writeSettings({ musicVolume: v });
+                _syncMusicForScreen(_currentScreen);
+                _setVolumeControl('settings-music-volume', 'settings-music-volume-label', v, 0.60);
+            }],
+            ['settings-sfx-volume', 'volume', function (v) {
+                Save.writeSettings({ sfxVolume: v });
+                _setVolumeControl('settings-sfx-volume', 'settings-sfx-volume-label', v, 0.40);
+            }],
             ['settings-dev-quickwin-enabled', 'checkbox', function (v) {
                 Save.writeSettings({ devQuickWin: { enabled: v } });
             }],
@@ -2527,9 +2550,10 @@
             const [id, kind, setter] = map[i];
             const el = document.getElementById(id);
             if (!el) continue;
-            el.addEventListener('change', function () {
+            el.addEventListener(kind === 'volume' ? 'input' : 'change', function () {
                 const v = (kind === 'checkbox') ? !!el.checked
                         : (kind === 'number') ? Math.max(1, Number(el.value) || 1)
+                        : (kind === 'volume') ? Math.max(0, Math.min(1, (Number(el.value) || 0) / 100))
                         : el.value;
                 setter(v);
                 render();

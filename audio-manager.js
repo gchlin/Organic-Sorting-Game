@@ -34,6 +34,20 @@ const AudioManager = (function () {
         return readSettings().devUseLegacySounds === true;
     }
 
+    function clamp01(value, fallback) {
+        const n = Number(value);
+        if (isNaN(n)) return fallback;
+        return Math.max(0, Math.min(1, n));
+    }
+
+    function musicVolume() {
+        return clamp01(readSettings().musicVolume, 0.60);
+    }
+
+    function sfxVolume() {
+        return clamp01(readSettings().sfxVolume, 0.40);
+    }
+
     function preload() {
         if (typeof Audio === 'undefined') return;
         Object.keys(SOUND_FILES).forEach(function (name) {
@@ -62,7 +76,7 @@ const AudioManager = (function () {
             const audio = new Audio(src);
             audio.loop = true;
             audio.preload = 'auto';
-            audio.volume = 0.42;
+            audio.volume = musicVolume();
             musicCache[name] = audio;
         }
         return musicCache[name];
@@ -92,6 +106,7 @@ const AudioManager = (function () {
         try {
             audio.pause();
             audio.currentTime = 0;
+            audio.volume = sfxVolume();
             const played = audio.play();
             if (played && typeof played.catch === 'function') {
                 played.catch(function () { playSynthBeep(name); });
@@ -107,6 +122,8 @@ const AudioManager = (function () {
         if (!ctx) return;
         try {
             const t0 = ctx.currentTime;
+            const volume = sfxVolume();
+            if (volume <= 0) return;
             function note(freq, type, startMs, durMs, peakGain) {
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
@@ -115,7 +132,7 @@ const AudioManager = (function () {
                 const start = t0 + startMs / 1000;
                 const stop = start + durMs / 1000;
                 gain.gain.setValueAtTime(0.0001, start);
-                gain.gain.exponentialRampToValueAtTime(peakGain || 0.12, start + 0.01);
+                gain.gain.exponentialRampToValueAtTime((peakGain || 0.12) * volume, start + 0.01);
                 gain.gain.exponentialRampToValueAtTime(0.0001, stop);
                 osc.connect(gain);
                 gain.connect(ctx.destination);
@@ -178,6 +195,7 @@ const AudioManager = (function () {
             stopMusic();
             return;
         }
+        audio.volume = musicVolume();
         if (currentMusicName === name) return;
         stopMusic();
         currentMusicName = name;

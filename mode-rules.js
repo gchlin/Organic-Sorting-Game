@@ -185,13 +185,23 @@ const ModeRulesV2 = {
     'practice.cleanup.CLEANUP_DONE': (s) => ({ nextPhase: 'idle', stateDiff: {}, effects: [] }),
 
     // ===== Duel Dynamic =====
-    'duel.idle.LOAD_NEXT_QUESTION': (s) => ({
-        nextPhase: 'buzzOpen',
-        stateDiff: { 'question.current': s.queue[0], 'queue': s.queue.slice(1),
-                     'buzz.eligible': new Set(['p1', 'p2']) },
-        effects: [{ type: 'render' },
-                  { type: 'anim', name: 'startDynamic', variant: s.dynamic.variant }],
-    }),
+    'duel.idle.LOAD_NEXT_QUESTION': (s) => {
+        if (!s.queue.length) {
+            const p1Score = s.players.p1.score || 0;
+            const p2Score = s.players.p2.score || 0;
+            const winner = s.result.winner || (p1Score > p2Score ? 'p1' : p2Score > p1Score ? 'p2' : null);
+            return { nextPhase: 'settling',
+                stateDiff: { 'result.winner': winner },
+                effects: [{ type: 'render' }] };
+        }
+        return {
+            nextPhase: 'buzzOpen',
+            stateDiff: { 'question.current': s.queue[0], 'queue': s.queue.slice(1),
+                         'buzz.eligible': new Set(['p1', 'p2']) },
+            effects: [{ type: 'render' },
+                      { type: 'anim', name: 'startDynamic', variant: s.dynamic.variant }],
+        };
+    },
 
     'duel.buzzOpen.BUZZ': (s, a) => s.buzz.eligible.has(a.player)
         ? { nextPhase: 'buzzed',
@@ -266,15 +276,15 @@ const ModeRulesV2 = {
                   { type: 'anim', name: 'giveUp', ms: 300 }],
     }),
 
-    // Duel 答對：先放完 Dynamic 到 completeState（讓沒搶到的對手也看到完整結構），
-    // 再進 revealing 階段標出正解。winTarget 達到才直接進入結算（不再播完）。
-    'duel.resolvingCorrect.EFFECT_COMPLETE': (s, _, dyn) =>
-        s.players[s.buzz.owner].score >= (dyn.scoreTarget || 300)
-            ? { nextPhase: 'settling',
-                stateDiff: { 'result.winner': s.buzz.owner },
-                effects: [{ type: 'render' }] }
-            : { nextPhase: 'revealing', stateDiff: {},
-                effects: [{ type: 'anim', name: 'playDynamicToCompleteState' }] },
+    // Duel 答對：快速放完 Dynamic 到 completeState（讓沒搶到的對手也看到完整結構），
+    // 再進 revealing 階段標出正解。若已達勝利門檻，reveal 後才結算。
+    'duel.resolvingCorrect.EFFECT_COMPLETE': (s, _, dyn) => ({
+        nextPhase: 'revealing',
+        stateDiff: s.players[s.buzz.owner].score >= (dyn.scoreTarget || 300)
+            ? { 'result.winner': s.buzz.owner }
+            : {},
+        effects: [{ type: 'anim', name: 'playDynamicToCompleteState', fastForwardMs: 900 }],
+    }),
 
     'duel.resolvingWrong.EFFECT_COMPLETE': (s, a, dyn) => {
         const eliminated = s.question.eliminatedWrongKeys.size;
@@ -313,10 +323,10 @@ const ModeRulesV2 = {
     }),
 
     // Stage 2: reveal anim done → cleanup → next question.
-    'duel.revealed.EFFECT_COMPLETE': (s) => ({
-        nextPhase: 'cleanup', stateDiff: {},
-        effects: [{ type: 'cleanupAndDispatch', next: { type: 'LOAD_NEXT_QUESTION' } }],
-    }),
+    'duel.revealed.EFFECT_COMPLETE': (s) => s.result.winner
+        ? { nextPhase: 'settling', stateDiff: {}, effects: [{ type: 'render' }] }
+        : { nextPhase: 'cleanup', stateDiff: {},
+            effects: [{ type: 'cleanupAndDispatch', next: { type: 'LOAD_NEXT_QUESTION' } }] },
 
     'duel.cleanup.CLEANUP_DONE': (s) => ({ nextPhase: 'idle', stateDiff: {}, effects: [] }),
 };
