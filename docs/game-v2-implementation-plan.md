@@ -4,6 +4,42 @@
 
 ## 目前判斷
 
+## 實作狀態（2026-05-20）
+
+目前 **尚未完成 Game V2 全部規劃項目**。
+
+已完成並提交：
+
+- `docs(architecture): align rules with runtime API`
+- `fix(tutorial): prevent in-game tutorial from settling`
+- `feat(tutorial): replace in-game tutorial modal with quick hint`
+- `fix(stats): count duel timeout and give-up as wrong attempts`
+- `refactor(time): thread action now through buzz flow`
+- `chore(effects): verify dynamic pause completion handling`
+- `feat(duel): show dynamic score percentage`
+- `feat(audio): introduce audio manager`
+- `feat(audio): add combo-tier sound hooks`
+- `feat(dynamic): add blur and rotate zoom variants`
+- `fix(ui): clean minor navigation and popup issues`
+- 額外完成：Duel 最後一題 queue 空時正確結算。
+- 額外完成：答對後 dynamic effect 快速推進到完整顯示，再驗證答案。
+- 額外完成：玩家設定新增 BGM / SFX 音量，預設背景音樂 60%、效果音效 40%。
+
+尚未完成，仍保留為後續工作：
+
+- `feat(tutorial): add tutorial level flow`
+- `feat(tutorial): add guided key-highlight steps`
+- `css: phase A add style sections`
+- `css: phase B move low-risk inline styles`
+- `css: phase C move display visibility rules to classes`
+- `refactor(game-v2): extract modal/runtime/render helpers`
+
+判斷：
+
+- **核心 Duel / Dynamic / Audio / Quick hint 修補已完成。**
+- **完整教學關卡、導引按鍵亮起、CSS 分階段整理、`game-v2.js` 拆分尚未完成。**
+- 因此不能宣稱 Game V2 全部完成；只能宣稱「Phase 1-5 與 audio/dynamic 相關 gameplay bug 修補已完成」。
+
 ### 架構治理
 
 已新增 `docs/ARCHITECTURE_RULES.md` 作為後續所有人與 AI 修改前必讀的規則文件。
@@ -641,20 +677,24 @@ CSS 負責：
 
 ## 建議提交順序
 
-1. `docs(architecture): align rules with runtime API`
-2. `fix(tutorial): prevent in-game tutorial from settling`
-3. `feat(tutorial): replace in-game tutorial modal with quick hint`
-4. `fix(stats): count duel timeout and give-up as wrong attempts`
-5. `refactor(time): thread action now through buzz flow`
-6. `chore(effects): verify dynamic pause completion handling`
-7. `feat(duel): show dynamic score percentage`
-8. `feat(audio): introduce audio manager`
-9. `feat(audio): add combo-tier sound hooks`
-10. `feat(dynamic): add blur and rotate zoom variants`
-11. `fix(ui): clean minor navigation and popup issues`
-12. `feat(tutorial): add tutorial level flow`
-13. `feat(tutorial): add guided key-highlight steps`
-14. `css: phase A add style sections`
-15. `css: phase B move low-risk inline styles`
-16. `css: phase C move display visibility rules to classes`
-17. `refactor(game-v2): extract modal/runtime/render helpers`
+1. `[done] docs(architecture): align rules with runtime API`
+2. `[done] fix(tutorial): prevent in-game tutorial from settling`
+3. `[done] feat(tutorial): replace in-game tutorial modal with quick hint`
+4. `[done] fix(stats): count duel timeout and give-up as wrong attempts`
+5. `[done] refactor(time): thread action now through buzz flow`
+6. `[done] chore(effects): verify dynamic pause completion handling`
+7. `[done] feat(duel): show dynamic score percentage`
+8. `[done] feat(audio): introduce audio manager`
+9. `[done] feat(audio): add combo-tier sound hooks`
+10. `[done] feat(dynamic): add blur and rotate zoom variants`
+11. `[done] fix(ui): clean minor navigation and popup issues`
+12. `[todo] feat(tutorial): add tutorial level flow`
+13. `[todo] feat(tutorial): add guided key-highlight steps`
+14. `[todo] css: phase A add style sections`
+15. `[todo] css: phase B move low-risk inline styles`
+16. `[todo] css: phase C move display visibility rules to classes`
+17. `[todo] refactor(game-v2): extract modal/runtime/render helpers`
+
+後續新增完成：
+
+- `[done] fix(duel): settle final question and tune audio levels`
