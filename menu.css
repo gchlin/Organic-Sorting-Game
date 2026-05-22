@@ -203,19 +203,6 @@
     min-width: 0;
     font-weight: 700;
 }
-.v2-menu-btn .key-hint {
-    flex: 0 0 auto;
-    min-width: 30px;
-    text-align: center;
-    background: rgba(0,0,0,.36);
-    color: var(--hp-gold);
-    border: 1px solid rgba(212,175,55,.38);
-    border-radius: 6px;
-    padding: 2px 6px;
-    font-size: .78rem;
-    font-family: monospace;
-}
-
 /* --- Sub-menu --- */
 #screen-sub-menu.is-active {
     min-height: 100dvh;
