@@ -47,6 +47,7 @@
             if (sc.duelMinScore         != null) out.duelMinScore         = sc.duelMinScore;
             if (sc.duelWrongPenalty     != null) out.duelWrongPenalty     = sc.duelWrongPenalty;
             if (sc.duelScoreTarget      != null) out.scoreTarget          = sc.duelScoreTarget;
+            if (sc.dynamicFastForwardMs != null) out.dynamicFastForwardMs = sc.dynamicFastForwardMs;
         }
         if (settings && settings.devQuickWin && settings.devQuickWin.enabled) {
             const winAfter = Math.max(1, settings.devQuickWin.winAfter || 2);
@@ -590,7 +591,7 @@
             const familyKeys = Object.keys(Families).filter(k => Families[k].difficulties.indexOf(diff) !== -1);
             for (let i = 0; i < familyKeys.length; i++) {
                 const fk = familyKeys[i];
-                const btn = appendFamilyButton(fk, diff, 'L' + (i + 1), function () {
+                const btn = appendFamilyButton(fk, diff, '', function () {
                     startMode({ mode: 'practice', family: fk, difficulty: diff, opponent: 'human' });
                 });
                 listEl.appendChild(btn);
@@ -603,7 +604,7 @@
             const familyKeys = Object.keys(Families).filter(k => Families[k].difficulties.indexOf(diff) !== -1);
             for (let i = 0; i < familyKeys.length; i++) {
                 const fk = familyKeys[i];
-                const btn = appendFamilyButton(fk, diff, 'L' + (i + 1), function () {
+                const btn = appendFamilyButton(fk, diff, '', function () {
                     // 直接用 settings 裡存的對手模式開始對決
                     startMode({ mode: 'duel', family: fk, difficulty: diff, opponent: opponent });
                 });
@@ -635,13 +636,13 @@
         } else if (_subMenuContext.kind === 'tutorialModules') {
             titleEl.textContent = '新手導覽 — 選擇教學關卡';
             const modules = (typeof TutorialModules !== 'undefined') ? TutorialModules : {};
-            const order = ['aromatic', 'oxygen', 'nitrogenHalide', 'practiceControls', 'duelControls', 'wizardDuel'];
+            const order = ['hydrocarbon', 'oxygen', 'nitrogenHalide', 'aromatic', 'practiceControls', 'duelControls', 'wizardDuel'];
             for (let i = 0; i < order.length; i++) {
                 const key = order[i];
                 const mod = modules[key];
                 if (!mod || !Array.isArray(mod.pages) || !mod.pages.length) continue;
                 const btn = document.createElement('button');
-                setMenuButtonContent(btn, mod.tag || String(i + 1), mod.title || key);
+                setMenuButtonContent(btn, '', mod.title || key);
                 btn.addEventListener('click', function () {
                     _openTutorialPages(mod.pages, 'module:' + key, function () { goToScreen('sub-menu'); });
                 });
@@ -796,6 +797,12 @@
         const buzz = document.getElementById('game-buzz');
         if (buzz) {
             const isDuel = state.mode === 'duel';
+            const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
+            const keybindings = settings.keybindings || {};
+            const p1BuzzKey = _formatKeyCode(keybindings.buzzP1 || 'Space');
+            const p2BuzzKey = _formatKeyCode(keybindings.buzzP2 || 'Enter');
+            const p1BuzzBtn = document.getElementById('buzz-p1');
+            if (p1BuzzBtn) p1BuzzBtn.textContent = 'P1 搶答 [' + p1BuzzKey + ']';
             buzz.style.display = isDuel ? 'flex' : 'none';
             buzz.classList.toggle('buzz-open', state.phase === 'buzzOpen');
             buzz.classList.toggle('buzz-owner-p1', state.phase === 'buzzed' && state.buzz && state.buzz.owner === 'p1');
@@ -803,7 +810,10 @@
             // PvE: hide the P2 buzz button (AI owns p2; human shouldn't be able
             // to steal it via mouse click). PvP: show both.
             const p2Btn = document.getElementById('buzz-p2');
-            if (p2Btn) p2Btn.style.display = (isDuel && state.opponent === 'human') ? '' : 'none';
+            if (p2Btn) {
+                p2Btn.textContent = 'P2 搶答 [' + p2BuzzKey + ']';
+                p2Btn.style.display = (isDuel && state.opponent === 'human') ? '' : 'none';
+            }
         }
 
         // Spin up / tear down the buzzed-phase rAF loop based on current phase.
@@ -953,6 +963,12 @@
                 if (ownerIsAI) {
                     giveup.classList.remove('visible');
                 } else {
+                    const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
+                    const keybindings = settings.keybindings || {};
+                    const key = state.buzz.owner === 'p1'
+                        ? _formatKeyCode(keybindings.giveUpP1 || 'KeyV')
+                        : _formatKeyCode(keybindings.giveUpP2 || 'Backslash');
+                    giveup.textContent = '取消[' + key + ']';
                     giveup.classList.add('visible');
                     giveup.setAttribute('data-side', side);
                 }
@@ -1037,14 +1053,11 @@
             imgEl.style.transform = transform;
             imgEl.style.filter = filter;
             if (pctEl) {
-                const base = Math.max(1, rules.duelBaseScore || 100);
-                const min = Math.max(0, rules.duelMinScore || 20);
-                const potential = Math.round(Math.max(min, base * (1 - t)));
-                const pct = Math.round((potential / base) * 100);
+                const pct = Math.round(t * 100);
                 pctEl.textContent = pct + '%';
-                pctEl.setAttribute('aria-label', '目前答對約可得 ' + potential + ' 分，' + pct + '%');
+                pctEl.setAttribute('aria-label', 'Dynamic 效果進度 ' + pct + '%。越早搶答，答對分數越高；答錯扣分也越多。');
                 pctEl.classList.toggle('visible', true);
-                pctEl.classList.toggle('urgent', pct <= 30);
+                pctEl.classList.toggle('urgent', pct >= 70);
             }
         } else {
             imgEl.style.transform = '';
@@ -1676,6 +1689,7 @@
         _setValue('settings-score-duel-min',        sc.duelMinScore         ?? 20);
         _setValue('settings-score-duel-wrong',      sc.duelWrongPenalty     ?? 50);
         _setValue('settings-score-duel-target',     sc.duelScoreTarget      ?? 300);
+        _setValue('settings-dynamic-fast-forward',  sc.dynamicFastForwardMs ?? 900);
         // PvE AI params
         var pveAI = (settings && settings.pveAI) ? settings.pveAI : {};
         ['easy', 'medium', 'hard'].forEach(function (diff) {
@@ -1734,6 +1748,7 @@
         if (code.indexOf('Digit') === 0)  return code.slice(5);              // Digit4 → 4
         if (code.indexOf('Numpad') === 0) return 'Num ' + code.slice(6);     // Numpad4 → Num 4
         if (code.indexOf('Arrow') === 0)  return '↑↓←→ '.charAt(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(code)) || code;
+        if (code === 'Backslash')         return '\\';
         return code;                                                          // Space, Enter, Tab, …
     }
 
@@ -2582,6 +2597,7 @@
             ['settings-score-duel-min',        'duelMinScore'],
             ['settings-score-duel-wrong',      'duelWrongPenalty'],
             ['settings-score-duel-target',     'duelScoreTarget'],
+            ['settings-dynamic-fast-forward',  'dynamicFastForwardMs'],
         ];
         for (const [id, field] of scoreMap) {
             const el = document.getElementById(id);

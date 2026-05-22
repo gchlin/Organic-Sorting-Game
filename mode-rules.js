@@ -132,6 +132,14 @@ const ModeRules = (function () {
 
 // Flat composite-key reducer table. key = `${mode}.${phase}.${ACTION}`.
 // value = pure handler (state, action, dynRules) => { nextPhase, stateDiff, effects[] }.
+function timedDuelWrongPenalty(state, dyn) {
+    dyn = dyn || {};
+    const elapsedSec = state && state.buzz ? (state.buzz.elapsedAtBuzz || 0) / 1000 : 0;
+    const durSec = (dyn.dynamicDurationMs || 8000) / 1000;
+    const t = durSec > 0 ? Math.min(1, Math.max(0, elapsedSec / durSec)) : 1;
+    return Math.round((dyn.duelWrongPenalty || 50) * (1 - t));
+}
+
 const ModeRulesV2 = {
     // ===== Practice =====
     'practice.idle.LOAD_NEXT_QUESTION': (s) => s.queue.length
@@ -162,7 +170,7 @@ const ModeRulesV2 = {
             stateDiff: { 'players.p1.wrongStreak': s.players.p1.wrongStreak + 1,
                          'players.p1.correctStreak': 0,
                          'players.p1.wrongCount': (s.players.p1.wrongCount || 0) + 1,
-                         'players.p1.score': Math.max(0, s.players.p1.score - (dyn.practiceWrongPenalty || 10)),
+                         'players.p1.score': s.players.p1.score - (dyn.practiceWrongPenalty || 10),
                          'question.lastChosenWrongKey': a.key,
                          'question.lastResolveReason': 'wrong',
                          'question.eliminatedWrongKeys': new Set([...s.question.eliminatedWrongKeys, a.key]) },
@@ -251,7 +259,7 @@ const ModeRulesV2 = {
                          'question.lastResolveReason': 'wrong',
                          [`players.${a.player}.wrongCount`]: (s.players[a.player].wrongCount || 0) + 1,
                          [`players.${a.player}.correctStreak`]: 0,
-                         [`players.${a.player}.score`]: Math.max(0, s.players[a.player].score - (dyn.duelWrongPenalty || 50)) },
+                         [`players.${a.player}.score`]: s.players[a.player].score - timedDuelWrongPenalty(s, dyn) },
             effects: [{ type: 'timer.clear' },
                       { type: 'sound', name: 'wrong' },
                       { type: 'anim', name: 'markChosen', ms: 800 }] };
@@ -265,12 +273,13 @@ const ModeRulesV2 = {
     // handoff 後出現 `[reducer] no rule for duel.buzzed.EFFECT_COMPLETE`。
     'duel.buzzed.EFFECT_COMPLETE': (s) => ({ nextPhase: s.phase, stateDiff: {}, effects: [] }),
 
-    'duel.buzzed.ANSWER_TIMEOUT': (s, a) => ({
+    'duel.buzzed.ANSWER_TIMEOUT': (s, a, dyn) => ({
         nextPhase: 'resolvingWrong',
         stateDiff: { 'question.failedPlayersThisCycle': new Set([...s.question.failedPlayersThisCycle, a.player]),
                      'question.lastResolveReason': 'timeout',
                      [`players.${a.player}.wrongCount`]: (s.players[a.player].wrongCount || 0) + 1,
-                     [`players.${a.player}.correctStreak`]: 0 },
+                     [`players.${a.player}.correctStreak`]: 0,
+                     [`players.${a.player}.score`]: s.players[a.player].score - timedDuelWrongPenalty(s, dyn) },
         // 不加入 eliminatedWrongKeys、不設 lastChosenWrongKey —— 逾時 ≠ 選錯
         effects: [{ type: 'sound', name: 'wrong' }],
     }),
@@ -278,12 +287,13 @@ const ModeRulesV2 = {
     // 玩家主動放棄作答（按 G 或 ⊘ 按鈕）。語意同 ANSWER_TIMEOUT，但不浪費時間。
     // 不增加 eliminatedWrongKeys（沒選錯），只標記 failedPlayersThisCycle。
     // 需要明確的 anim 來驅動 EFFECT_COMPLETE（SUBMIT_ANSWER 一樣道理）。
-    'duel.buzzed.GIVE_UP': (s, a) => ({
+    'duel.buzzed.GIVE_UP': (s, a, dyn) => ({
         nextPhase: 'resolvingWrong',
         stateDiff: { 'question.failedPlayersThisCycle': new Set([...s.question.failedPlayersThisCycle, a.player]),
                      'question.lastResolveReason': 'giveup',
                      [`players.${a.player}.wrongCount`]: (s.players[a.player].wrongCount || 0) + 1,
-                     [`players.${a.player}.correctStreak`]: 0 },
+                     [`players.${a.player}.correctStreak`]: 0,
+                     [`players.${a.player}.score`]: s.players[a.player].score - timedDuelWrongPenalty(s, dyn) },
         effects: [{ type: 'timer.clear' },
                   { type: 'sound', name: 'timeout' },
                   { type: 'anim', name: 'giveUp', ms: 300 }],
@@ -296,7 +306,7 @@ const ModeRulesV2 = {
         stateDiff: s.players[s.buzz.owner].score >= (dyn.scoreTarget || 300)
             ? { 'result.winner': s.buzz.owner }
             : {},
-        effects: [{ type: 'anim', name: 'playDynamicToCompleteState', fastForwardMs: 900 }],
+        effects: [{ type: 'anim', name: 'playDynamicToCompleteState', fastForwardMs: dyn.dynamicFastForwardMs || 900 }],
     }),
 
     'duel.resolvingWrong.EFFECT_COMPLETE': (s, a, dyn) => {
@@ -305,7 +315,7 @@ const ModeRulesV2 = {
                         && s.question.failedPlayersThisCycle.has('p2');
         if (eliminated >= dyn.revealThreshold) {
             return { nextPhase: 'revealing', stateDiff: {},
-                     effects: [{ type: 'anim', name: 'playDynamicToCompleteState' }] };
+                     effects: [{ type: 'anim', name: 'playDynamicToCompleteState', fastForwardMs: dyn.dynamicFastForwardMs || 900 }] };
         }
         if (bothFailed) {
             return { nextPhase: 'buzzOpen',
@@ -386,9 +396,10 @@ const DuelDynamicRules = {
     duelMinScore:       20,    // 答對最低得分（再晚搶也有這分）
     duelWrongPenalty:   50,    // 答錯扣分
     dynamicDurationMs:  8000,  // 對應 DynamicVariants.*.durationMs
+    dynamicFastForwardMs: 900, // 答對 / 全部排除後快速補完 Dynamic 的時間
     // 練習分數（連對等級對應 _comboLevel 的 3/5/7 門檻）
     practiceBaseScore:     10, // 連對 1–2 題
-    practiceWrongPenalty:  10, // 答錯扣分（下限 0）
+    practiceWrongPenalty:  10, // 答錯扣分（可扣到負分）
     practiceCombo3Score:   30, // 連對 3–4
     practiceCombo5Score:   40, // 連對 5–6
     practiceCombo7Score:   60, // 連對 7+

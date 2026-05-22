@@ -228,6 +228,11 @@ const LevelTutorials = {
 };
 
 const TutorialModules = {
+  hydrocarbon: {
+    title: "碳氫骨架教學關卡",
+    tag: "HC",
+    pages: LevelTutorials.level1 || []
+  },
   aromatic: {
     title: "芳香烴教學關卡",
     tag: "AR",
@@ -253,7 +258,7 @@ const TutorialModules = {
     ]
   },
   oxygen: {
-    title: "涵氧家族教學關卡",
+    title: "含氧家族教學關卡",
     tag: "O",
     pages: [].concat(LevelTutorials.level2 || [], LevelTutorials.level3 || [], LevelTutorials.level4 || [])
   },

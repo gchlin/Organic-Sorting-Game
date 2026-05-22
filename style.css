@@ -3012,11 +3012,12 @@ body.v2-active .v2-root { display: block; }
     }
     body.phase-buzzed #screen-game.mode-duel #btn-giveup {
         position: fixed;
-        top: max(80px, calc(env(safe-area-inset-top) + 80px));
-        width: auto;
-        min-width: 58px;
-        padding: 6px 8px;
-        font-size: 0.64rem;
+        top: max(124px, calc(env(safe-area-inset-top) + 124px));
+        width: 52px;
+        min-width: 52px;
+        min-height: 32px;
+        padding: 4px 2px;
+        font-size: 0.56rem;
         line-height: 1.25;
         margin: 0;
         z-index: 9000;
@@ -3025,13 +3026,16 @@ body.v2-active .v2-root { display: block; }
         padding-top: 52px;
     }
     body.phase-buzzed #screen-game.mode-duel #buzz-countdown[data-side="left"] { left: 10px; right: auto; }
-    body.phase-buzzed #screen-game.mode-duel #btn-giveup[data-side="left"] { left: 60px; right: auto; }
+    body.phase-buzzed #screen-game.mode-duel #btn-giveup[data-side="left"] { left: 10px; right: auto; }
     body.phase-buzzed #screen-game.mode-duel #buzz-countdown[data-side="right"] { right: 10px; left: auto; }
-    body.phase-buzzed #screen-game.mode-duel #btn-giveup[data-side="right"] { right: 60px; left: auto; }
+    body.phase-buzzed #screen-game.mode-duel #btn-giveup[data-side="right"] { right: 10px; left: auto; }
 }
 
 #screen-game.mode-practice .v2-options-p2 {
     display: none;
+}
+#screen-game.mode-practice .option-btn {
+    font-size: var(--duel-option-font-size);
 }
 #screen-game.mode-duel .v2-options-p1 .option-btn,
 #screen-game.mode-duel .v2-options-p2 .option-btn {
@@ -3582,15 +3586,16 @@ body.input-locked .v2-buzz button { pointer-events: none; }
 /* 放棄作答按鈕：對齊倒數圓圈正下方，與倒數同側 */
 #btn-giveup {
     position: fixed;
-    top: calc(12vh + 76px);
-    width: 88px;
-    padding: 6px 8px;
+    top: calc(12vh + 72px);
+    width: 52px;
+    min-height: 32px;
+    padding: 4px 2px;
     background: rgba(60, 47, 42, 0.85);
     color: var(--hp-parchment);
     border: 2px solid var(--hp-red-bright);
     border-radius: 6px;
     font-family: inherit;
-    font-size: 0.85rem;
+    font-size: 0.58rem;
     font-weight: bold;
     cursor: pointer;
     z-index: 8000;
@@ -3602,8 +3607,8 @@ body.input-locked .v2-buzz button { pointer-events: none; }
 #btn-giveup.visible { display: block; }
 #btn-giveup:hover { background: var(--hp-red-bright); transform: scale(1.05); }
 #btn-giveup:active { transform: scale(0.96); }
-#btn-giveup[data-side="left"]  { left: 6px;  right: auto; }
-#btn-giveup[data-side="right"] { right: 6px; left:  auto; }
+#btn-giveup[data-side="left"]  { left: 18px;  right: auto; }
+#btn-giveup[data-side="right"] { right: 18px; left:  auto; }
 #buzz-countdown.urgent {
     color: #ff5a5a;
     border-color: #ff5a5a;

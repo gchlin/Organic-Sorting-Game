@@ -125,7 +125,8 @@ const Save = (function () {
                 duelTimingDecay:      10,
                 duelMinScore:         20,
                 duelWrongPenalty:     50,
-                duelScoreTarget:      300
+                duelScoreTarget:      300,
+                dynamicFastForwardMs: 900
             }
         };
     }
@@ -332,6 +333,11 @@ const Save = (function () {
                         out.settings.pveAI[diff] = Object.assign({}, defPve[diff], out.settings.pveAI[diff]);
                     }
                 }
+            }
+            if (!out.settings.scoring || typeof out.settings.scoring !== 'object') {
+                out.settings.scoring = defaultSettings().scoring;
+            } else {
+                out.settings.scoring = Object.assign({}, defaultSettings().scoring, out.settings.scoring);
             }
         }
         if (!out.familyProgress || typeof out.familyProgress !== 'object') out.familyProgress = {};
