@@ -6,10 +6,10 @@
     <title>Duel Layout Ratio Prototype</title>
     <style>
         :root {
-            --side-fr: 1fr;
-            --card-fr: 1fr;
-            --option-font: 18.4px;
-            --question-font: 16px;
+            --side-fr: 1.1fr;
+            --card-fr: 1.05fr;
+            --option-font: 20.6px;
+            --question-font: 17.3px;
             --bg: #f6efe2;
             --panel: #fff9ed;
             --ink: #241d16;
@@ -252,20 +252,20 @@
                 <p class="hint">只測左右選項與中間題目卡片的畫面比例，不影響正式版。左右選項欄鎖定一致。</p>
             </div>
             <label>
-                左右選項欄 <span id="side-value">1.00</span>
-                <input id="side-ratio" type="range" min="0.7" max="1.8" step="0.05" value="1">
+                左右選項欄 <span id="side-value">1.10</span>
+                <input id="side-ratio" type="range" min="0.7" max="1.8" step="0.05" value="1.1">
             </label>
             <label>
-                題目卡片 <span id="card-value">1.00</span>
-                <input id="card-ratio" type="range" min="0.7" max="1.8" step="0.05" value="1">
+                題目卡片 <span id="card-value">1.05</span>
+                <input id="card-ratio" type="range" min="0.7" max="1.8" step="0.05" value="1.05">
             </label>
             <label>
-                選項字級 <span id="option-font-value">18.4px</span>
-                <input id="option-font-size" type="range" min="14" max="42" step="0.1" value="18.4">
+                選項字級 <span id="option-font-value">20.6px</span>
+                <input id="option-font-size" type="range" min="14" max="42" step="0.1" value="20.6">
             </label>
             <label>
-                題目字級 <span id="question-font-value">16px</span>
-                <input id="question-font-size" type="range" min="13" max="30" step="0.1" value="16">
+                題目字級 <span id="question-font-value">17.3px</span>
+                <input id="question-font-size" type="range" min="13" max="30" step="0.1" value="17.3">
             </label>
         </section>
 
@@ -287,7 +287,7 @@
                 </div>
                 <div class="question-footer">
                     <span>Dynamic Zoom 完成狀態</span>
-                    <span class="ratio-readout" id="ratio-readout">1.00 : 1.00 : 1.00</span>
+                    <span class="ratio-readout" id="ratio-readout">1.10 : 1.05 : 1.10</span>
                 </div>
             </section>
 
@@ -334,6 +334,11 @@
             const card = getNumber('card-ratio');
             const optionFontPx = getNumber('option-font-size');
             const questionFontPx = getNumber('question-font-size');
+            const total = side + card + side;
+            const leftPct = total ? (side / total) * 100 : 0;
+            const cardPct = total ? (card / total) * 100 : 0;
+            const rightPct = leftPct;
+            const isEqualColumns = Math.abs(side - card) < 0.001;
             return {
                 reportType: 'duel-layout-ratio-prototype',
                 sourcePage: 'prototypes/duel-layout-ratio-prototype.html',
@@ -348,7 +353,17 @@
                         questionCardFr: card,
                         rightOptionsFr: side,
                         cssGridTemplateColumns: side.toFixed(2) + 'fr ' + card.toFixed(2) + 'fr ' + side.toFixed(2) + 'fr',
-                        ratioText: side.toFixed(2) + ' : ' + card.toFixed(2) + ' : ' + side.toFixed(2)
+                        ratioText: side.toFixed(2) + ' : ' + card.toFixed(2) + ' : ' + side.toFixed(2),
+                        normalizedRatioText: (side / side).toFixed(2) + ' : ' + (card / side).toFixed(2) + ' : ' + (side / side).toFixed(2),
+                        percent: {
+                            leftOptions: Number(leftPct.toFixed(2)),
+                            questionCard: Number(cardPct.toFixed(2)),
+                            rightOptions: Number(rightPct.toFixed(2))
+                        },
+                        isEqualColumns: isEqualColumns,
+                        layoutMeaning: isEqualColumns
+                            ? 'No column-ratio change versus 1:1:1; only typography or spacing changes are meaningful.'
+                            : 'Column ratio changes are meaningful and can be applied to the formal Duel grid.'
                     },
                     typography: {
                         optionFontPx: optionFontPx,
@@ -378,7 +393,10 @@
                 },
                 implementationHint: {
                     target: 'prototype-only unless user approves applying to game UI',
-                    likelyFilesIfApplied: ['style.css', 'index.html']
+                    likelyFilesIfApplied: ['style.css', 'index.html'],
+                    applyRule: isEqualColumns
+                        ? 'Do not replace formal grid columns with this ratio because equal fr values are equivalent to 1:1:1.'
+                        : 'Apply normalized ratio to the formal landscape Duel grid, HUD grid, and buzz grid together.'
                 }
             };
         }
@@ -391,7 +409,13 @@
                 label.textContent = value;
                 document.documentElement.style.setProperty('--' + key + '-fr', value + 'fr');
             });
-            readout.textContent = values.side + ' : ' + values.card + ' : ' + values.side;
+            const side = Number(values.side);
+            const card = Number(values.card);
+            const total = side + card + side;
+            const sidePct = total ? ((side / total) * 100).toFixed(1) : '0.0';
+            const cardPct = total ? ((card / total) * 100).toFixed(1) : '0.0';
+            readout.textContent = values.side + ' : ' + values.card + ' : ' + values.side
+                + ' = ' + sidePct + '% / ' + cardPct + '% / ' + sidePct + '%';
         }
 
         function syncFonts() {

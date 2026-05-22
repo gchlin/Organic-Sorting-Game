@@ -2763,18 +2763,24 @@ body.v2-active .v2-root { display: block; }
 
 @media (orientation: landscape) {
     #screen-game.mode-duel.is-active {
-        grid-template-columns: clamp(118px, 21vw, 178px) minmax(220px, 1fr) clamp(118px, 21vw, 178px);
+        grid-template-columns:
+            minmax(0, var(--duel-side-fr))
+            minmax(0, var(--duel-card-fr))
+            minmax(0, var(--duel-side-fr));
         grid-template-rows: auto minmax(0, 1fr) auto;
         grid-template-areas:
             "hud hud hud"
             "options image options-right"
             "buzz buzz buzz";
-        column-gap: 8px;
+        column-gap: 14px;
     }
     #screen-game.mode-duel .v2-hud {
         position: relative;
         display: grid;
-        grid-template-columns: clamp(118px, 21vw, 178px) minmax(220px, 1fr) clamp(118px, 21vw, 178px);
+        grid-template-columns:
+            minmax(0, var(--duel-side-fr))
+            minmax(0, var(--duel-card-fr))
+            minmax(0, var(--duel-side-fr));
         grid-template-areas:
             "p1 title p2"
             "p1 progress p2";
@@ -2851,18 +2857,22 @@ body.v2-active .v2-root { display: block; }
         display: grid;
         align-self: end;
     }
+    #screen-game.mode-duel .v2-duel-hud-title strong {
+        font-size: var(--duel-question-font-size);
+    }
     #screen-game.mode-duel .v2-question-progress {
         grid-area: progress;
         display: block;
         align-self: start;
-        justify-self: end;
-        padding-right: 4px;
+        justify-self: center;
+        padding-right: 0;
     }
     #screen-game.mode-duel .v2-image-frame {
         align-self: stretch;
         justify-self: stretch;
         width: 100%;
         max-width: 100%;
+        max-height: 100%;
         min-width: 0;
         padding: clamp(8px, 1.5vw, 14px);
     }
@@ -2870,22 +2880,28 @@ body.v2-active .v2-root { display: block; }
         align-self: stretch;
         width: 100%;
         grid-template-columns: 1fr;
-        align-content: center;
+        grid-template-rows: repeat(4, minmax(0, 1fr));
+        align-content: stretch;
         gap: 6px;
         max-width: none;
+        min-height: 0;
     }
     #screen-game.mode-duel .option-btn {
-        min-height: 40px;
+        min-height: 0;
         padding: 7px 8px;
         gap: 6px;
-        font-size: .95rem;
+        font-size: var(--duel-option-font-size);
         border-radius: 7px;
+        line-height: 1.16;
     }
     #screen-game.mode-duel .option-key-hint { font-size: .76rem; }
     #screen-game.mode-duel .v2-buzz {
         display: grid !important;
-        grid-template-columns: clamp(118px, 21vw, 178px) minmax(220px, 1fr) clamp(118px, 21vw, 178px);
-        gap: 8px;
+        grid-template-columns:
+            minmax(0, var(--duel-side-fr))
+            minmax(0, var(--duel-card-fr))
+            minmax(0, var(--duel-side-fr));
+        gap: 14px;
         width: 100%;
         margin: 0;
     }
@@ -2933,7 +2949,10 @@ body.v2-active .v2-root { display: block; }
 
     #screen-game.mode-duel.is-active {
         --v2-action-button-width: clamp(104px, 19vw, 142px);
-        grid-template-columns: clamp(104px, 19vw, 142px) minmax(188px, 1fr) clamp(104px, 19vw, 142px);
+        grid-template-columns:
+            minmax(0, var(--duel-side-fr))
+            minmax(0, var(--duel-card-fr))
+            minmax(0, var(--duel-side-fr));
         grid-template-rows: auto minmax(0, 1fr) auto;
         grid-template-areas:
             "hud hud hud"
@@ -2942,19 +2961,25 @@ body.v2-active .v2-root { display: block; }
     }
     #screen-game.mode-duel .v2-image-frame {
         width: 100%;
+        max-height: 100%;
         padding: 7px 10px;
     }
     #screen-game.mode-duel .v2-options {
         align-self: stretch;
         width: 100%;
         grid-template-columns: 1fr;
-        align-content: start;
+        grid-template-rows: repeat(4, minmax(0, 1fr));
+        align-content: stretch;
         gap: 6px;
         max-width: none;
+        min-height: 0;
     }
 
     body.phase-buzzed #screen-game.mode-duel.is-active {
-        grid-template-columns: clamp(104px, 19vw, 142px) minmax(188px, 1fr) clamp(104px, 19vw, 142px);
+        grid-template-columns:
+            minmax(0, var(--duel-side-fr))
+            minmax(0, var(--duel-card-fr))
+            minmax(0, var(--duel-side-fr));
         grid-template-rows: auto minmax(0, 1fr) auto;
         grid-template-areas:
             "hud hud hud"
@@ -3117,10 +3142,20 @@ body.v2-active .v2-root { display: block; }
 }
 #screen-game {
     --v2-action-button-width: clamp(118px, 21vw, 178px);
+    --duel-side-fr: 1.1fr;
+    --duel-card-fr: 1.05fr;
+    --duel-option-font-size: 20.6px;
+    --duel-question-font-size: 17.3px;
 }
 #screen-game.mode-duel .option-btn[data-option-key],
 #screen-game.mode-duel .v2-buzz button {
     min-width: var(--v2-action-button-width);
+}
+@media (orientation: landscape) {
+    #screen-game.mode-duel .option-btn[data-option-key],
+    #screen-game.mode-duel .v2-buzz button {
+        min-width: min(100%, var(--v2-action-button-width));
+    }
 }
 @keyframes v2-options-fade-in {
     from { opacity: 0; transform: translateY(8px); }
