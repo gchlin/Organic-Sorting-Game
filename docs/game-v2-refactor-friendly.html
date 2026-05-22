@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game V2 重構進度說明</title>
+    <style>
+        :root {
+            --bg: #f7f3ea;
+            --paper: #fffaf0;
+            --ink: #25211b;
+            --muted: #6f6658;
+            --line: #dfd2bf;
+            --green: #21785f;
+            --blue: #315f9e;
+            --amber: #a86c14;
+            --red: #a43d32;
+            --shadow: 0 18px 42px rgba(57, 42, 24, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background:
+                linear-gradient(135deg, rgba(49, 95, 158, 0.09), transparent 38%),
+                linear-gradient(315deg, rgba(33, 120, 95, 0.10), transparent 42%),
+                var(--bg);
+            color: var(--ink);
+            font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+            line-height: 1.7;
+        }
+
+        main {
+            width: min(1120px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 36px 0 56px;
+        }
+
+        .hero {
+            padding: 32px;
+            border: 1px solid var(--line);
+            background: rgba(255, 250, 240, 0.88);
+            box-shadow: var(--shadow);
+            border-radius: 8px;
+        }
+
+        .eyebrow {
+            margin: 0 0 8px;
+            color: var(--blue);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(30px, 5vw, 52px);
+            line-height: 1.12;
+            letter-spacing: 0;
+        }
+
+        .lead {
+            max-width: 780px;
+            margin: 18px 0 0;
+            color: var(--muted);
+            font-size: 18px;
+        }
+
+        .status-strip {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 24px;
+        }
+
+        .status-card {
+            min-height: 128px;
+            padding: 18px;
+            border: 1px solid var(--line);
+            background: #fffdf7;
+            border-radius: 8px;
+        }
+
+        .status-card strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 18px;
+        }
+
+        .status-card p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        section {
+            margin-top: 28px;
+            padding: 26px;
+            border: 1px solid var(--line);
+            background: rgba(255, 250, 240, 0.82);
+            border-radius: 8px;
+        }
+
+        h2 {
+            margin: 0 0 14px;
+            font-size: 26px;
+            line-height: 1.25;
+            letter-spacing: 0;
+        }
+
+        h3 {
+            margin: 22px 0 8px;
+            font-size: 19px;
+            letter-spacing: 0;
+        }
+
+        p {
+            margin: 0 0 12px;
+        }
+
+        ul {
+            margin: 0;
+            padding-left: 22px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        code {
+            padding: 2px 6px;
+            background: #f0e5d2;
+            border-radius: 4px;
+            color: #302516;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 0.94em;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .mini-card {
+            padding: 18px;
+            border: 1px solid var(--line);
+            background: #fffdf7;
+            border-radius: 8px;
+        }
+
+        .mini-card h3 {
+            margin-top: 0;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            margin: 4px 6px 4px 0;
+            padding: 3px 9px;
+            border: 1px solid var(--line);
+            background: #fffdf7;
+            border-radius: 999px;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .done {
+            color: var(--green);
+        }
+
+        .doing {
+            color: var(--amber);
+        }
+
+        .risk {
+            color: var(--red);
+        }
+
+        .timeline {
+            display: grid;
+            gap: 12px;
+        }
+
+        .step {
+            display: grid;
+            grid-template-columns: 112px 1fr;
+            gap: 16px;
+            padding: 16px;
+            border: 1px solid var(--line);
+            background: #fffdf7;
+            border-radius: 8px;
+        }
+
+        .step b {
+            color: var(--blue);
+        }
+
+        .plain-table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+        }
+
+        .plain-table th,
+        .plain-table td {
+            padding: 13px 14px;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .plain-table th {
+            background: #efe4d1;
+            color: #3b2e1f;
+        }
+
+        .plain-table tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .note {
+            padding: 16px;
+            border-left: 5px solid var(--amber);
+            background: #fff6df;
+            border-radius: 6px;
+            color: #4e3b20;
+        }
+
+        .footer {
+            color: var(--muted);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .decision-board {
+            display: grid;
+            gap: 14px;
+        }
+
+        .decision-item {
+            border: 1px solid var(--line);
+            background: #fffdf7;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .decision-item summary {
+            cursor: pointer;
+            padding: 16px 18px;
+            font-weight: 800;
+            color: #332719;
+        }
+
+        .decision-item div {
+            padding: 0 18px 18px;
+            color: var(--muted);
+        }
+
+        .choice-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .choice-row button {
+            min-height: 40px;
+            padding: 8px 12px;
+            border: 1px solid var(--line);
+            background: #fffaf0;
+            border-radius: 6px;
+            color: var(--ink);
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .choice-row button:hover,
+        .choice-row button.active {
+            border-color: var(--blue);
+            background: #eef4ff;
+            color: var(--blue);
+        }
+
+        .route-output {
+            min-height: 116px;
+            margin-top: 14px;
+            padding: 16px;
+            border: 1px solid var(--line);
+            background: #fffdf7;
+            border-radius: 8px;
+        }
+
+        .route-output strong {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--blue);
+        }
+
+        .route-output p {
+            margin-bottom: 8px;
+        }
+
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .field {
+            display: grid;
+            gap: 6px;
+        }
+
+        .field label,
+        .check-group legend {
+            font-weight: 800;
+            color: #332719;
+        }
+
+        .field input,
+        .field select,
+        .field textarea,
+        .json-output {
+            width: 100%;
+            border: 1px solid var(--line);
+            background: #fffdf7;
+            border-radius: 6px;
+            color: var(--ink);
+            font: inherit;
+        }
+
+        .field input,
+        .field select {
+            min-height: 42px;
+            padding: 8px 10px;
+        }
+
+        .field textarea,
+        .json-output {
+            min-height: 110px;
+            padding: 10px;
+            resize: vertical;
+        }
+
+        .check-group {
+            margin: 0;
+            padding: 16px;
+            border: 1px solid var(--line);
+            background: #fffdf7;
+            border-radius: 8px;
+        }
+
+        .check-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px 14px;
+            margin-top: 10px;
+        }
+
+        .check-list label {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .report-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .report-actions button {
+            min-height: 42px;
+            padding: 8px 13px;
+            border: 1px solid var(--line);
+            background: #fffaf0;
+            border-radius: 6px;
+            color: var(--ink);
+            font: inherit;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .report-actions button.primary {
+            border-color: var(--blue);
+            background: #eef4ff;
+            color: var(--blue);
+        }
+
+        @media (max-width: 760px) {
+            main {
+                width: min(100% - 20px, 1120px);
+                padding-top: 18px;
+            }
+
+            .hero,
+            section {
+                padding: 20px;
+            }
+
+            .status-strip,
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .step {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+
+            .report-grid,
+            .check-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <header class="hero">
+            <p class="eyebrow">給 vibe coder 的版本，不是工程規格書</p>
+            <h1>Game V2 重構：為什麼要做，現在做到哪裡？</h1>
+            <p class="lead">
+                簡單說：這次重構不是為了把遊戲變華麗，而是為了讓遊戲規則更穩、更好改、更不容易改一個地方壞三個地方。
+                目前 V2 已經接上主遊戲，接下來最重要的是測試、清理、修正細節。
+            </p>
+            <div class="status-strip">
+                <div class="status-card">
+                    <strong class="done">目前狀態：V2 已是主線</strong>
+                    <p><code>index.html</code> 現在載入 <code>game-v2.js</code>，舊版 <code>game.js</code> 已搬到 <code>legacy/</code>。</p>
+                </div>
+                <div class="status-card">
+                    <strong class="doing">接下來重點：驗證玩法</strong>
+                    <p>Practice、Duel、Dynamic、AI、存檔與輸入鎖都要用 checklist 一項項跑過。</p>
+                </div>
+                <div class="status-card">
+                    <strong class="risk">最大風險：文件比實作還亂</strong>
+                    <p>有些舊文件提到 Speed 或早期規則，現在要以 README 與實際遊戲行為交叉確認。</p>
+                </div>
+            </div>
+        </header>
+
+        <section>
+            <h2>一句話版</h2>
+            <p>
+                以前遊戲像「所有規則、畫面、計時器、按鍵都塞在同一鍋」。V2 是把它拆成比較清楚的區塊：
+                規則歸規則、狀態歸狀態、題目歸題目、動畫計時歸動畫計時。
+            </p>
+            <p>
+                這樣以後你想加新模式、調 AI、改 Duel 規則、修答題 bug，不會每次都像在拆炸彈。
+            </p>
+        </section>
+
+        <section>
+            <h2>為什麼需要重構？</h2>
+            <div class="grid">
+                <div class="mini-card">
+                    <h3>1. 遊戲規則需要穩</h3>
+                    <p>Practice、Duel、Dynamic、AI 都有不同節奏。如果規則散在很多函式裡，很容易出現「答錯、逾時、搶答」互相打架。</p>
+                </div>
+                <div class="mini-card">
+                    <h3>2. 避免 timer 決定遊戲</h3>
+                    <p>動畫和倒數應該只是效果。真正決定誰能答、何時換人、何時揭曉答案的，應該是遊戲狀態。</p>
+                </div>
+                <div class="mini-card">
+                    <h3>3. 讓 AI 和真人走同一條路</h3>
+                    <p>AI 不應該有秘密捷徑。它應該像玩家一樣送出「搶答」和「作答」動作，這樣比較公平，也比較好 debug。</p>
+                </div>
+                <div class="mini-card">
+                    <h3>4. 以後比較好加東西</h3>
+                    <p>如果新功能只要改規則表或某個小模組，就不需要一直碰巨大的主檔，心情會好很多。</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>現在已經做了什麼？</h2>
+            <table class="plain-table">
+                <thead>
+                    <tr>
+                        <th>項目</th>
+                        <th>目前看起來的進度</th>
+                        <th>白話意思</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>game-v2.js</code></td>
+                        <td><span class="done">已接上</span></td>
+                        <td>主遊戲現在跑 V2，不是舊版 <code>legacy/game.js</code>。</td>
+                    </tr>
+                    <tr>
+                        <td><code>mode-rules.js</code></td>
+                        <td><span class="done">已建立</span></td>
+                        <td>Practice、Speed、Duel 的規則數值被集中起來。不過 Speed 是否保留，仍要跟目前 README 規格對齊。</td>
+                    </tr>
+                    <tr>
+                        <td><code>game-state.js</code></td>
+                        <td><span class="done">已建立</span></td>
+                        <td>玩家分數、目前題目、搶答狀態、Dynamic 狀態、輸入鎖都開始集中管理。</td>
+                    </tr>
+                    <tr>
+                        <td><code>question-engine.js</code></td>
+                        <td><span class="done">已建立</span></td>
+                        <td>抽題、選項、答案檢查已拆出來，這是讓 Practice 和 Duel 共用題目邏輯的基礎。</td>
+                    </tr>
+                    <tr>
+                        <td><code>effect-manager.js</code></td>
+                        <td><span class="done">已建立</span></td>
+                        <td>timer、動畫殘留、暫態 class 清理集中處理，降低「上一題效果殘留到下一題」的機率。</td>
+                    </tr>
+                    <tr>
+                        <td><code>input-controller.js</code></td>
+                        <td><span class="done">已建立</span></td>
+                        <td>鍵盤、點擊、搶答會先變成 action，再交給遊戲處理。這讓輸入比較可控。</td>
+                    </tr>
+                    <tr>
+                        <td><code>ai-controller.js</code></td>
+                        <td><span class="done">已建立</span></td>
+                        <td>PvE AI 已有獨立控制器，目標是讓 AI 像真人一樣送出 action。</td>
+                    </tr>
+                    <tr>
+                        <td><code>docs/refactor-test-checklist.md</code></td>
+                        <td><span class="doing">待人工跑完</span></td>
+                        <td>這份是測試清單。它不是程式完成證明，而是用來確認 V2 真的穩。</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>所以它已經完成了嗎？</h2>
+            <p class="note">
+                比較準確的說法是：<strong>主要骨架已完成，而且 V2 已經接到遊戲入口；但還不能當作完全驗收完成。</strong>
+                因為重構最容易出問題的不是「檔案有沒有拆出來」，而是「所有玩法邊界情境是否都正常」。
+            </p>
+            <h3>我會把它分成三種狀態</h3>
+            <ul>
+                <li><span class="done">已完成：</span>V2 主檔接上、核心模組存在、舊版移到 <code>legacy/</code>。</li>
+                <li><span class="doing">需要驗證：</span>Practice 通關、Duel 搶答、Dynamic 暫停/恢復、AI 行為、存檔解鎖、輸入鎖。</li>
+                <li><span class="risk">需要整理：</span>README、舊 doc、實際程式之間有些規則可能不同步，尤其是 Speed 是否保留。</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>現在最重要的決策</h2>
+            <p>
+                你現在最需要決定的不是「要不要整理全部」，而是：
+                <strong>接下來 1 到 2 週，專案的主線到底是穩定遊戲，還是繼續改 UI？</strong>
+            </p>
+            <p>
+                我的建議是先選 <strong>穩定遊戲主線</strong>。原因很簡單：如果遊戲狀態會殘留，UI 再漂亮也會讓人覺得不穩。
+                但這不代表 UI 不重要，而是 UI 先進入「只修最痛點」模式。
+            </p>
+            <div class="grid">
+                <div class="mini-card">
+                    <h3 class="done">推薦主線：先穩定遊戲</h3>
+                    <p>先修 Duel 下一題殘留、輸入鎖、timer cleanup、答題流程。這些是玩家會立刻感覺到的 bug。</p>
+                </div>
+                <div class="mini-card">
+                    <h3 class="doing">UI 支線：只修阻礙體驗的地方</h3>
+                    <p>手機/桌機比例先不要大 redesign，只先處理文字爆版、圖片太大太小、按鈕難按。</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>目前最大的模糊點</h2>
+            <div class="decision-board">
+                <details class="decision-item" open>
+                    <summary>1. 哪一個 branch 才是「真主線」？</summary>
+                    <div>
+                        你現在 game logic branch 和 UI branch 交替做，最容易造成兩邊都各自前進，但最後很難合併。
+                        建議指定一條 <strong>integration branch</strong> 當真主線，其他 branch 都只做短任務。
+                    </div>
+                </details>
+                <details class="decision-item">
+                    <summary>2. README / docs / 程式碼誰說了算？</summary>
+                    <div>
+                        文件有歷史痕跡，程式碼也有過渡狀態。短期建議：以目前遊戲入口 <code>index.html</code> + 實際可玩行為為準，
+                        README 只當規格草稿，舊 docs 當歷史資料。
+                    </div>
+                </details>
+                <details class="decision-item">
+                    <summary>3. V2 到底算完成還是未完成？</summary>
+                    <div>
+                        架構接上了，但驗收未完成。也就是「已進入 V2 時代」，但還不是「V2 穩定版」。
+                    </div>
+                </details>
+                <details class="decision-item">
+                    <summary>4. CSS 要不要現在整個拆掉？</summary>
+                    <div>
+                        不建議一次全部拆。先建立新 CSS 分區，之後每修一個畫面，就把相關樣式搬到對應檔案。
+                        這樣風險小，也比較不會卡住。
+                    </div>
+                </details>
+                <details class="decision-item">
+                    <summary>5. 要不要同時修 logic 和 UI？</summary>
+                    <div>
+                        可以，但要分層：logic bug 優先進主線；UI 只修最影響遊玩的痛點。不要在同一個 commit 同時大改規則和大改 layout。
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <section>
+            <h2>互動路線選擇</h2>
+            <p>點一個你現在的狀態，下面會給你最適合的下一步。</p>
+            <div class="choice-row" aria-label="選擇目前狀態">
+                <button type="button" data-route="tired" class="active">我現在沒心力</button>
+                <button type="button" data-route="bug">我想先修 bug</button>
+                <button type="button" data-route="ui">我想先整理 UI</button>
+                <button type="button" data-route="branch">我 branches 很亂</button>
+            </div>
+            <div class="route-output" id="route-output">
+                <strong>建議：只做「確認主線 + 一個小修」</strong>
+                <p>今天不要讀完整專案。只確認目前主線是哪個 branch，然後挑一個明確 bug，例如 Duel 下一題殘留。</p>
+                <p>目標不是變乾淨，是先讓你重新有掌控感。</p>
+            </div>
+        </section>
+
+        <section>
+            <h2>檔案怎麼分工？</h2>
+            <div class="timeline">
+                <div class="step">
+                    <b>mode-rules</b>
+                    <div>放「規則數字」和「模式設定」。例如一局幾題、Duel 幾分贏、答題時間幾秒。</div>
+                </div>
+                <div class="step">
+                    <b>game-state</b>
+                    <div>放「現在遊戲到底在什麼狀態」。例如誰搶到、誰被鎖、目前題目是什麼。</div>
+                </div>
+                <div class="step">
+                    <b>question-engine</b>
+                    <div>處理題目和答案。它不管畫面漂亮不漂亮，只回答「這題是什麼、選項是什麼、選對了嗎」。</div>
+                </div>
+                <div class="step">
+                    <b>effect-manager</b>
+                    <div>管理倒數、動畫、清理殘留。它像舞台工作人員，確保上一幕收乾淨才進下一幕。</div>
+                </div>
+                <div class="step">
+                    <b>input-controller</b>
+                    <div>把鍵盤、滑鼠、觸控變成遊戲 action。先統一語言，遊戲邏輯才好處理。</div>
+                </div>
+                <div class="step">
+                    <b>ai-controller</b>
+                    <div>AI 專用。它不偷改遊戲，只模擬玩家送出搶答和作答。</div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>下一步最重要的 5 件事</h2>
+            <ul>
+                <li>打開遊戲，跑一輪 Practice：確認題目、答案、通關、解鎖、錯題都正常。</li>
+                <li>跑 Duel Standard：確認搶答、5 秒答題、答錯換人、先到 5 分。</li>
+                <li>跑 Duel Dynamic：確認搶答前動畫、搶答後暫停、答錯/逾時後恢復或換人。</li>
+                <li>測 PvE AI：確認 AI 不會卡住、不會在不能答題時偷答。</li>
+                <li>整理文件：把「已過期的 refactor 計畫」和「目前真實狀態」分清楚。</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>你的實際開發順序</h2>
+            <p>
+                這個順序比「先讀完整專案」健康很多。它先照顧你的工作感受，再處理規則正確性。
+            </p>
+            <div class="timeline">
+                <div class="step">
+                    <b>1. 顯示 UI 友善</b>
+                    <div>先讓畫面在手機和電腦都看得懂、按得到、文字不爆版。這一步不是追求完美設計，而是讓測試變得不痛苦。</div>
+                </div>
+                <div class="step">
+                    <b>2. 修明顯 bug</b>
+                    <div>修玩家一眼就會感覺怪的問題，例如 Duel 下一題瞬間殘留上一題、按鍵卡住、動畫沒清乾淨。</div>
+                </div>
+                <div class="step">
+                    <b>3. 符合教學需求</b>
+                    <div>確認題庫、選項池、誘答選項、答案說明真的能用在教學上，而不只是程式可以跑。</div>
+                </div>
+                <div class="step">
+                    <b>4. 修小 bug</b>
+                    <div>最後再處理比較細的邊角問題，例如特殊尺寸、重複點擊、少數題目資料怪怪的。</div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>目前該人工測試的清單</h2>
+            <p>
+                這份不是工程驗收表，而是「你可以照著玩一遍」的測試路線。先測最影響體驗的，再測規則細節。
+            </p>
+
+            <h3>第一輪：UI 友善度</h3>
+            <ul>
+                <li>手機直式：主選單、選關、遊戲畫面、設定視窗是否看得懂。</li>
+                <li>手機橫式：分子圖、題目文字、四個選項是否比例合理。</li>
+                <li>桌機：畫面是否太空、太擠，或重要資訊分散太遠。</li>
+                <li>選項按鈕：文字長一點時是否爆版，手指是否容易點。</li>
+                <li>分子圖片：是否太小看不清，或太大擠掉題目和選項。</li>
+                <li>Duel 畫面：兩位玩家的分數、狀態、搶答提示是否清楚。</li>
+                <li>Modal：教學、Codex、設定、確認視窗是否在手機上可讀可關。</li>
+            </ul>
+
+            <h3>第二輪：明顯 bug</h3>
+            <ul>
+                <li>Duel 下一題開始時，不應瞬間殘留上一題圖片、答案、高亮或動畫。</li>
+                <li>答題後 feedback 期間，連點或狂按鍵不應造成重複作答。</li>
+                <li>換題後，上一題的正確/錯誤 class 應該全部清掉。</li>
+                <li>Dynamic 暫停、恢復、揭曉答案後，不應留下多餘倒數或動畫元素。</li>
+                <li>離開遊戲再進入同模式，不應保留上一局分數、timer、buzz 狀態。</li>
+                <li>設定、返回、重新開始，不應讓遊戲卡在不能按的狀態。</li>
+            </ul>
+
+            <h3>第三輪：教學上真的能用</h3>
+            <ul>
+                <li>每一題的正確答案是否符合有機化學分類。</li>
+                <li>四個選項是否有合理誘答，而不是太簡單或太離題。</li>
+                <li>同一關的題目難度是否從基本到進階有教學節奏。</li>
+                <li>錯誤答案是否能幫學生理解差異，例如 alcohol / phenol / ether 不混亂。</li>
+                <li>題庫是否有足夠變化，不會一直抽到類似題。</li>
+                <li>Practice 通關條件是否符合你的教學目的，而不是只追求遊戲性。</li>
+                <li>Codex / 解鎖內容是否能支援複習，不只是收集品。</li>
+            </ul>
+
+            <h3>第四輪：小 bug 與整理</h3>
+            <ul>
+                <li>快速切換模式、返回主選單、重新開始，是否有殘留狀態。</li>
+                <li>不同瀏覽器或不同螢幕比例是否有文字重疊。</li>
+                <li>音效、動畫、震動感是否會過度干擾答題。</li>
+                <li>存檔匯入/匯出、重置進度是否還正常。</li>
+                <li>console 是否出現明顯錯誤。</li>
+            </ul>
+        </section>
+
+        <section id="interactive-report">
+            <h2>互動測試回報產生器</h2>
+            <p>
+                這裡是我們之後溝通用的表單。你不用寫很完整，只要選一選、填幾句，按「產生 JSON」，
+                再把輸出的內容貼給我，我就能快速理解問題。
+            </p>
+
+            <div class="report-grid">
+                <div class="field">
+                    <label for="report-stage">目前階段</label>
+                    <select id="report-stage">
+                        <option value="ui-friendly">1. 顯示 UI 友善</option>
+                        <option value="obvious-bug">2. 修明顯 bug</option>
+                        <option value="teaching-quality">3. 符合教學需求</option>
+                        <option value="small-bug">4. 修小 bug</option>
+                        <option value="unclear">我不確定是哪一類</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="report-area">問題區域</label>
+                    <select id="report-area">
+                        <option value="duel">Duel / 搶答</option>
+                        <option value="dynamic">Dynamic / 動態題</option>
+                        <option value="practice">Practice / 練習</option>
+                        <option value="mobile-ui">手機 UI</option>
+                        <option value="desktop-ui">桌機 UI</option>
+                        <option value="question-bank">題庫 / 選項池 / 誘答</option>
+                        <option value="codex-save">Codex / 存檔 / 解鎖</option>
+                        <option value="menu-modal">選單 / Modal / 設定</option>
+                        <option value="unknown">不確定</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="report-device">測試裝置或畫面</label>
+                    <select id="report-device">
+                        <option value="desktop">桌機 / 筆電</option>
+                        <option value="mobile-portrait">手機直式</option>
+                        <option value="mobile-landscape">手機橫式</option>
+                        <option value="tablet">平板</option>
+                        <option value="unknown">不確定</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="report-severity">嚴重程度</label>
+                    <select id="report-severity">
+                        <option value="blocker">卡住，不能繼續玩</option>
+                        <option value="major">明顯影響體驗</option>
+                        <option value="medium">有點怪，但可以玩</option>
+                        <option value="minor">小瑕疵</option>
+                        <option value="question">不是 bug，是想討論</option>
+                    </select>
+                </div>
+            </div>
+
+            <fieldset class="check-group">
+                <legend>常見問題，勾你看到的</legend>
+                <div class="check-list">
+                    <label><input type="checkbox" value="old-question-flash"> 下一題瞬間殘留上一題</label>
+                    <label><input type="checkbox" value="stuck-input"> 按鍵或點擊卡住</label>
+                    <label><input type="checkbox" value="double-answer"> 連點造成重複作答</label>
+                    <label><input type="checkbox" value="layout-overlap"> 文字或圖片重疊</label>
+                    <label><input type="checkbox" value="image-too-small"> 分子圖片太小</label>
+                    <label><input type="checkbox" value="image-too-large"> 分子圖片太大</label>
+                    <label><input type="checkbox" value="button-hard-to-tap"> 手機按鈕難按</label>
+                    <label><input type="checkbox" value="modal-hard-to-close"> Modal 難讀或難關</label>
+                    <label><input type="checkbox" value="wrong-options-weak"> 誘答選項不合理</label>
+                    <label><input type="checkbox" value="chemistry-doubt"> 化學答案可能有疑問</label>
+                    <label><input type="checkbox" value="save-unlock-doubt"> 存檔或解鎖怪怪的</label>
+                    <label><input type="checkbox" value="console-error"> console 有錯誤</label>
+                </div>
+            </fieldset>
+
+            <div class="report-grid">
+                <div class="field">
+                    <label for="report-steps">我怎麼觸發它</label>
+                    <textarea id="report-steps" placeholder="例：進入 Duel Dynamic，P1 搶答答錯，換下一題時上一題圖片閃一下。"></textarea>
+                </div>
+                <div class="field">
+                    <label for="report-expected">我原本期待</label>
+                    <textarea id="report-expected" placeholder="例：下一題開始前，上一題圖片、答案高亮、動畫都應該清乾淨。"></textarea>
+                </div>
+                <div class="field">
+                    <label for="report-actual">實際看到</label>
+                    <textarea id="report-actual" placeholder="例：新題出現前，上一題的答案或圖片會閃一下。"></textarea>
+                </div>
+                <div class="field">
+                    <label for="report-notes">補充或我的感覺</label>
+                    <textarea id="report-notes" placeholder="例：不確定是不是 render 太快，或 cleanup 沒有等完。"></textarea>
+                </div>
+            </div>
+
+            <div class="report-actions">
+                <button type="button" class="primary" id="generate-report">產生 JSON</button>
+                <button type="button" id="clear-report">清空表單</button>
+            </div>
+
+            <div class="field">
+                <label for="json-report">輸出給 Codex 的 JSON report</label>
+                <textarea class="json-output" id="json-report" readonly placeholder="按「產生 JSON」後會出現在這裡。"></textarea>
+            </div>
+        </section>
+
+        <section>
+            <h2>給 vibe coder 的判斷方式</h2>
+            <p>你不用先讀完所有工程文件。可以照這個順序看：</p>
+            <ul>
+                <li>想知道「現在遊戲用哪個版本」：看 <code>index.html</code> 最下面 script，現在是 <code>game-v2.js</code>。</li>
+                <li>想知道「規則在哪」：看 <code>mode-rules.js</code>。</li>
+                <li>想知道「按鍵或點擊怎麼進遊戲」：看 <code>input-controller.js</code>。</li>
+                <li>想知道「為什麼動畫或 timer 怪怪的」：先看 <code>effect-manager.js</code>。</li>
+                <li>想確認「真的穩不穩」：照 <code>docs/refactor-test-checklist.md</code> 玩一遍。</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>我建議怎麼處理舊文件</h2>
+            <p>
+                <code>docs/refactor-architecture.md</code> 比較像「當初要怎麼做」；
+                這份 HTML 則是「現在你要怎麼理解它」。
+            </p>
+            <p>
+                如果你之後要繼續開發，我建議把舊文件標成三類：
+            </p>
+            <span class="tag">目前規格</span>
+            <span class="tag">歷史計畫</span>
+            <span class="tag">測試清單</span>
+            <p>
+                這樣未來不會看到一份舊 plan 就以為還沒做，也不會看到檔案存在就以為已經完全驗收。
+            </p>
+        </section>
+
+        <p class="footer">
+            產生時間：2026-05-21。這份文件根據目前 repo 檔案狀態整理，重點是幫助理解，不取代實際測試。
+        </p>
+    </main>
+    <script>
+        function getValue(id) {
+            const el = document.getElementById(id);
+            return el ? el.value.trim() : '';
+        }
+
+        function setValue(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.value = value;
+        }
+
+        function getCheckedIssues() {
+            return Array.from(document.querySelectorAll('.check-list input[type="checkbox"]:checked'))
+                .map(input => input.value);
+        }
+
+        function getSelectLabel(id) {
+            const el = document.getElementById(id);
+            if (!el || !el.selectedOptions.length) return '';
+            return el.selectedOptions[0].textContent.trim();
+        }
+
+        function buildReport() {
+            return {
+                reportType: 'game-v2-human-test',
+                createdAt: new Date().toISOString(),
+                projectContext: {
+                    currentPriorityOrder: [
+                        'ui-friendly-display',
+                        'fix-obvious-bugs',
+                        'teaching-quality-question-bank-options-distractors',
+                        'fix-small-bugs'
+                    ],
+                    sourcePage: 'docs/game-v2-refactor-friendly.html'
+                },
+                selection: {
+                    stage: getValue('report-stage'),
+                    stageLabel: getSelectLabel('report-stage'),
+                    area: getValue('report-area'),
+                    areaLabel: getSelectLabel('report-area'),
+                    device: getValue('report-device'),
+                    deviceLabel: getSelectLabel('report-device'),
+                    severity: getValue('report-severity'),
+                    severityLabel: getSelectLabel('report-severity')
+                },
+                checkedIssues: getCheckedIssues(),
+                humanNotes: {
+                    stepsToReproduce: getValue('report-steps'),
+                    expected: getValue('report-expected'),
+                    actual: getValue('report-actual'),
+                    extraNotes: getValue('report-notes')
+                },
+                codexHint: 'Use this report to decide which files or UI states to inspect first. Do not assume the whole project has been reviewed.'
+            };
+        }
+
+        const generateReportButton = document.getElementById('generate-report');
+        const clearReportButton = document.getElementById('clear-report');
+
+        if (generateReportButton) {
+            generateReportButton.addEventListener('click', () => {
+                const report = buildReport();
+                setValue('json-report', JSON.stringify(report, null, 2));
+            });
+        }
+
+        if (clearReportButton) {
+            clearReportButton.addEventListener('click', () => {
+                [
+                    'report-steps',
+                    'report-expected',
+                    'report-actual',
+                    'report-notes',
+                    'json-report'
+                ].forEach(id => setValue(id, ''));
+                document.querySelectorAll('.check-list input[type="checkbox"]')
+                    .forEach(input => { input.checked = false; });
+            });
+        }
+
+        const routeText = {
+            tired: {
+                title: '建議：只做「確認主線 + 一個小修」',
+                body: [
+                    '今天不要讀完整專案。只確認目前主線是哪個 branch，然後挑一個明確 bug，例如 Duel 下一題殘留。',
+                    '目標不是變乾淨，是先讓你重新有掌控感。'
+                ]
+            },
+            bug: {
+                title: '建議：先修 Duel 下一題殘留',
+                body: [
+                    '這是清楚、可驗證、玩家會感覺到的問題。修它可以順便檢查 cleanup、timer、render transition。',
+                    '修完後再跑 Duel Standard / Dynamic 的短測試。'
+                ]
+            },
+            ui: {
+                title: '建議：只做 UI 痛點清單，不立刻重寫',
+                body: [
+                    '先列手機和桌機各 3 個最怪畫面，例如圖片比例、文字爆版、選項按鈕太擠。',
+                    '接著建立 layout 分區，不要一次重做整份 style.css。'
+                ]
+            },
+            branch: {
+                title: '建議：建立一條 integration branch',
+                body: [
+                    '把它當作唯一真主線。game logic 和 UI branch 都只做短任務，完成後合回 integration。',
+                    '每次合併只回答一件事：這次是修玩法，還是修畫面？不要混在一起。'
+                ]
+            }
+        };
+
+        const buttons = document.querySelectorAll('[data-route]');
+        const output = document.getElementById('route-output');
+
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                buttons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+
+                const route = routeText[button.dataset.route];
+                output.innerHTML = '<strong>' + route.title + '</strong>' +
+                    route.body.map(line => '<p>' + line + '</p>').join('');
+            });
+        });
+    </script>
+</body>
+</html>

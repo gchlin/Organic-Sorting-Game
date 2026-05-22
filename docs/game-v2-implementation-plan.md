@@ -40,6 +40,14 @@
 - **完整教學關卡、導引按鍵亮起、CSS 分階段整理、`game-v2.js` 拆分尚未完成。**
 - 因此不能宣稱 Game V2 全部完成；只能宣稱「Phase 1-5 與 audio/dynamic 相關 gameplay bug 修補已完成」。
 
+### 下一輪工作邊界更新（2026-05-20）
+
+不屬於原本 `game-v2.js` 核心 gameplay 收尾的需求，已移到新的計畫檔：
+
+- `docs/game-v2-next-implementation-plan.md`
+
+目前狀態：**wait review**。在 review 完成前，不建議把那些新增需求直接併回本計畫，也不要和 CSS Phase B/C 或 `game-v2.js` 拆分混在同一輪實作。
+
 ### 架構治理
 
 已新增 `docs/ARCHITECTURE_RULES.md` 作為後續所有人與 AI 修改前必讀的規則文件。
