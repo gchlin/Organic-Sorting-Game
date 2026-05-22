@@ -530,7 +530,7 @@
 
     // Sub-menu kinds:
     //   'difficulty'           { difficulty }   → family list, click starts practice
-    //   'duelFamily'           { difficulty }   → family list, click starts duel using saved mode
+    //   'duelFamily'           { difficulty }   → family list, with opponent picker, click starts duel
     //   'tutorialModules'      {}               → tutorial module picker
     //   'duelOpponentSetting'  {}               → PvP / PvE 易/中/難 picker, saves to
     //                                             settings.duelOpponent. NOT in the start-game flow.
@@ -599,13 +599,42 @@
         } else if (_subMenuContext.kind === 'duelFamily') {
             const diff = _subMenuContext.difficulty;
             const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
-            const opponent = settings.duelOpponent || 'aiMedium';
+            let opponent = settings.duelOpponent || 'aiMedium';
             titleEl.textContent = diffName(diff) + ' 巫師對決 — 選擇主題子關';
+
+            const opponents = [
+                { key: 'human', label: 'PvP' },
+                { key: 'aiEasy', label: 'PvE 易' },
+                { key: 'aiMedium', label: 'PvE 中' },
+                { key: 'aiHard', label: 'PvE 難' },
+            ];
+            const modeToggle = document.createElement('div');
+            modeToggle.className = 'v2-duel-mode-toggle';
+            modeToggle.setAttribute('role', 'group');
+            modeToggle.setAttribute('aria-label', '對決對手模式');
+            for (let i = 0; i < opponents.length; i++) {
+                const op = opponents[i];
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'v2-duel-mode-option';
+                btn.textContent = op.label;
+                btn.setAttribute('aria-pressed', op.key === opponent ? 'true' : 'false');
+                if (op.key === opponent) btn.classList.add('is-active');
+                btn.addEventListener('click', function () {
+                    opponent = op.key;
+                    if (typeof Save !== 'undefined' && Save.writeSettings) {
+                        Save.writeSettings({ duelOpponent: op.key });
+                    }
+                    renderSubMenu();
+                });
+                modeToggle.appendChild(btn);
+            }
+            listEl.appendChild(modeToggle);
+
             const familyKeys = Object.keys(Families).filter(k => Families[k].difficulties.indexOf(diff) !== -1);
             for (let i = 0; i < familyKeys.length; i++) {
                 const fk = familyKeys[i];
                 const btn = appendFamilyButton(fk, diff, '', function () {
-                    // 直接用 settings 裡存的對手模式開始對決
                     startMode({ mode: 'duel', family: fk, difficulty: diff, opponent: opponent });
                 });
                 listEl.appendChild(btn);
