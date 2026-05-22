@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duel Layout Ratio Prototype</title>
+    <style>
+        :root {
+            --side-fr: 1fr;
+            --card-fr: 1fr;
+            --option-font: 18.4px;
+            --question-font: 16px;
+            --bg: #f6efe2;
+            --panel: #fff9ed;
+            --ink: #241d16;
+            --muted: #716555;
+            --line: #dac9ad;
+            --gold: #b98a2d;
+            --blue: #315f9e;
+            --green: #24745f;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+        }
+
+        .page {
+            min-height: 100vh;
+            display: grid;
+            grid-template-rows: auto 1fr;
+        }
+
+        .toolbar {
+            display: grid;
+            grid-template-columns: minmax(220px, 1fr) repeat(4, minmax(150px, 210px));
+            gap: 14px;
+            align-items: end;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--line);
+            background: rgba(255, 249, 237, 0.92);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 18px;
+            line-height: 1.25;
+        }
+
+        .hint {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        label {
+            display: grid;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        input[type="range"] {
+            width: 100%;
+        }
+
+        button {
+            cursor: pointer;
+            font: inherit;
+        }
+
+        .export-button {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 20;
+            min-height: 42px;
+            padding: 0 18px;
+            border: 0;
+            border-radius: 8px;
+            background: var(--green);
+            color: #fff;
+            font-weight: 900;
+            box-shadow: 0 10px 24px rgba(36, 116, 95, 0.28);
+        }
+
+        .export-panel {
+            display: none;
+            position: fixed;
+            right: 18px;
+            bottom: 72px;
+            z-index: 21;
+            width: min(560px, calc(100vw - 36px));
+            padding: 12px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel);
+            box-shadow: 0 18px 42px rgba(67, 46, 18, 0.18);
+        }
+
+        .export-panel.visible {
+            display: grid;
+            gap: 6px;
+        }
+
+        .export-panel textarea {
+            width: 100%;
+            min-height: 150px;
+            resize: vertical;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px;
+            background: #fffdf8;
+            color: var(--ink);
+            font: 13px/1.5 Consolas, "Courier New", monospace;
+        }
+
+        .duel-stage {
+            min-height: 0;
+            display: grid;
+            grid-template-columns: var(--side-fr) var(--card-fr) var(--side-fr);
+            gap: 14px;
+            padding: 16px;
+        }
+
+        .options-panel,
+        .question-panel {
+            min-width: 0;
+            min-height: 0;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: var(--panel);
+            box-shadow: 0 12px 30px rgba(67, 46, 18, 0.10);
+        }
+
+        .options-panel {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            padding: 14px;
+        }
+
+        .player-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-weight: 800;
+        }
+
+        .score {
+            color: var(--blue);
+            font-size: 14px;
+        }
+
+        .options {
+            display: grid;
+            grid-template-rows: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .option {
+            display: grid;
+            place-items: center;
+            min-height: 0;
+            padding: 10px;
+            border: 2px solid #b9934a;
+            border-radius: 8px;
+            background: #fff3cf;
+            color: #332415;
+            font-size: var(--option-font);
+            font-weight: 900;
+            text-align: center;
+            line-height: 1.18;
+            overflow-wrap: anywhere;
+            word-break: normal;
+        }
+
+        .question-panel {
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            padding: 14px;
+            overflow: hidden;
+        }
+
+        .question-title {
+            margin: 0 0 10px;
+            color: var(--muted);
+            font-size: var(--question-font);
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .molecule-frame {
+            min-height: 0;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #ffffff;
+        }
+
+        .molecule {
+            width: min(78%, 360px);
+            max-height: 92%;
+            object-fit: contain;
+        }
+
+        .question-footer {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .ratio-readout {
+            color: var(--green);
+        }
+
+        @media (max-width: 820px) {
+            .toolbar {
+                grid-template-columns: 1fr;
+            }
+
+            .duel-stage {
+                grid-template-columns: 1fr;
+                grid-template-rows: minmax(180px, 0.8fr) minmax(240px, 1fr) minmax(180px, 0.8fr);
+            }
+
+            .option {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <section class="toolbar" aria-label="layout controls">
+            <div>
+                <h1>Duel 三欄比例 Prototype</h1>
+                <p class="hint">只測左右選項與中間題目卡片的畫面比例，不影響正式版。左右選項欄鎖定一致。</p>
+            </div>
+            <label>
+                左右選項欄 <span id="side-value">1.00</span>
+                <input id="side-ratio" type="range" min="0.7" max="1.8" step="0.05" value="1">
+            </label>
+            <label>
+                題目卡片 <span id="card-value">1.00</span>
+                <input id="card-ratio" type="range" min="0.7" max="1.8" step="0.05" value="1">
+            </label>
+            <label>
+                選項字級 <span id="option-font-value">18.4px</span>
+                <input id="option-font-size" type="range" min="14" max="42" step="0.1" value="18.4">
+            </label>
+            <label>
+                題目字級 <span id="question-font-value">16px</span>
+                <input id="question-font-size" type="range" min="13" max="30" step="0.1" value="16">
+            </label>
+        </section>
+
+        <section class="duel-stage">
+            <aside class="options-panel">
+                <div class="player-title"><span>P1</span><span class="score">120</span></div>
+                <div class="options">
+                    <button class="option">Phenol / Derivative</button>
+                    <button class="option">Carboxylic Acid</button>
+                    <button class="option">三氯甲烷（氯仿）</button>
+                    <button class="option">丙三醇（甘油）</button>
+                </div>
+            </aside>
+
+            <section class="question-panel">
+                <p class="question-title">這是甚麼類別的有機分子?</p>
+                <div class="molecule-frame">
+                    <img class="molecule" src="../assets/images/04_alcohol/04_alcohol_ethanol.svg" alt="乙醇結構式">
+                </div>
+                <div class="question-footer">
+                    <span>Dynamic Zoom 完成狀態</span>
+                    <span class="ratio-readout" id="ratio-readout">1.00 : 1.00 : 1.00</span>
+                </div>
+            </section>
+
+            <aside class="options-panel">
+                <div class="player-title"><span>P2</span><span class="score">80</span></div>
+                <div class="options">
+                    <button class="option">1,3-丁二烯</button>
+                    <button class="option">Aldehyde</button>
+                    <button class="option">Aromatic</button>
+                    <button class="option">鹵化物</button>
+                </div>
+            </aside>
+        </section>
+
+        <div class="export-ui">
+            <button type="button" class="export-button" id="export-json">輸出 JSON</button>
+            <div class="export-panel" id="export-panel">
+                <label for="export-output">給 Codex 的 layout JSON</label>
+                <textarea id="export-output" readonly></textarea>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const controls = [
+            ['side', document.getElementById('side-ratio'), document.getElementById('side-value')],
+            ['card', document.getElementById('card-ratio'), document.getElementById('card-value')]
+        ];
+        const fontControls = [
+            ['option-font', document.getElementById('option-font-size'), document.getElementById('option-font-value')],
+            ['question-font', document.getElementById('question-font-size'), document.getElementById('question-font-value')]
+        ];
+        const readout = document.getElementById('ratio-readout');
+        const exportButton = document.getElementById('export-json');
+        const exportPanel = document.getElementById('export-panel');
+        const exportOutput = document.getElementById('export-output');
+
+        function getNumber(id) {
+            return Number(document.getElementById(id).value);
+        }
+
+        function getLayoutReport() {
+            const side = getNumber('side-ratio');
+            const card = getNumber('card-ratio');
+            const optionFontPx = getNumber('option-font-size');
+            const questionFontPx = getNumber('question-font-size');
+            return {
+                reportType: 'duel-layout-ratio-prototype',
+                sourcePage: 'prototypes/duel-layout-ratio-prototype.html',
+                baseline: {
+                    source: 'current-desktop-duel-css',
+                    note: 'Current live Duel desktop CSS uses two equal flex player areas. This prototype maps that neutral baseline to a locked three-column 1:1:1 layout.'
+                },
+                layout: {
+                    lockedSideColumns: true,
+                    columns: {
+                        leftOptionsFr: side,
+                        questionCardFr: card,
+                        rightOptionsFr: side,
+                        cssGridTemplateColumns: side.toFixed(2) + 'fr ' + card.toFixed(2) + 'fr ' + side.toFixed(2) + 'fr',
+                        ratioText: side.toFixed(2) + ' : ' + card.toFixed(2) + ' : ' + side.toFixed(2)
+                    },
+                    typography: {
+                        optionFontPx: optionFontPx,
+                        questionFontPx: questionFontPx
+                    },
+                    moleculeImage: {
+                        src: '../assets/images/04_alcohol/04_alcohol_ethanol.svg',
+                        objectFit: 'contain'
+                    },
+                    optionTextStressCases: {
+                        source: 'data.js AnswerBank',
+                        longestOverall: { text: 'Phenol / Derivative', type: 'categoryEn', length: 19 },
+                        longestEnglish: { text: 'Phenol / Derivative', type: 'categoryEn', length: 19 },
+                        secondLongestEnglish: { text: 'Carboxylic Acid', type: 'categoryEn', length: 15 },
+                        longestChinese: { text: '三氯甲烷（氯仿）', type: 'compound', length: 8 },
+                        sampledOptionsInPrototype: [
+                            'Phenol / Derivative',
+                            'Carboxylic Acid',
+                            '三氯甲烷（氯仿）',
+                            '丙三醇（甘油）',
+                            '1,3-丁二烯',
+                            'Aldehyde',
+                            'Aromatic',
+                            '鹵化物'
+                        ]
+                    }
+                },
+                implementationHint: {
+                    target: 'prototype-only unless user approves applying to game UI',
+                    likelyFilesIfApplied: ['style.css', 'index.html']
+                }
+            };
+        }
+
+        function syncRatios() {
+            const values = {};
+            controls.forEach(([key, input, label]) => {
+                const value = Number(input.value).toFixed(2);
+                values[key] = value;
+                label.textContent = value;
+                document.documentElement.style.setProperty('--' + key + '-fr', value + 'fr');
+            });
+            readout.textContent = values.side + ' : ' + values.card + ' : ' + values.side;
+        }
+
+        function syncFonts() {
+            fontControls.forEach(([key, input, label]) => {
+                const value = Number(input.value);
+                label.textContent = value.toFixed(1).replace(/\.0$/, '') + 'px';
+                document.documentElement.style.setProperty('--' + key, value + 'px');
+            });
+        }
+
+        function exportJson() {
+            exportOutput.value = JSON.stringify(getLayoutReport(), null, 2);
+            exportPanel.classList.add('visible');
+        }
+
+        controls.forEach(([, input]) => input.addEventListener('input', syncRatios));
+        fontControls.forEach(([, input]) => input.addEventListener('input', syncFonts));
+        exportButton.addEventListener('click', exportJson);
+        syncRatios();
+        syncFonts();
+    </script>
+</body>
+</html>

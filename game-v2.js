@@ -331,17 +331,37 @@
                 if (state.dynamic) state.dynamic.phase = 'playingToComplete';
                 const variant = state.dynamic.variant;
                 const variantDef = (typeof DynamicVariants !== 'undefined' && DynamicVariants[variant]) || null;
-                let durationMs = variantDef ? variantDef.durationMs : 8000;
+                const fullDurationMs = variantDef ? variantDef.durationMs : 8000;
+                let durationMs = fullDurationMs;
+                let fastForwardFromMs = null;
+                let fastForwardWindowMs = null;
                 if (typeof effect.fastForwardMs === 'number' && state.dynamic) {
                     const elapsed = state.dynamic.elapsedMs || 0;
+                    fastForwardFromMs = elapsed;
+                    fastForwardWindowMs = Math.max(1, effect.fastForwardMs);
                     durationMs = Math.min(durationMs, elapsed + Math.max(0, effect.fastForwardMs));
                 }
                 EffectManager.runDynamicEffect(
                     { op: 'playToComplete', variant: variant, durationMs: durationMs,
                       startElapsedMs: state.dynamic.elapsedMs || 0,
-                      onTick: function (ms) { if (state && state.dynamic) { state.dynamic.elapsedMs = ms; _updateDynamicVisual(); } },
+                      onTick: function (ms) {
+                          if (state && state.dynamic) {
+                              if (fastForwardFromMs !== null && fastForwardWindowMs !== null) {
+                                  const p = Math.min(1, Math.max(0, (ms - fastForwardFromMs) / fastForwardWindowMs));
+                                  state.dynamic.elapsedMs = fastForwardFromMs + (fullDurationMs - fastForwardFromMs) * p;
+                              } else {
+                                  state.dynamic.elapsedMs = ms;
+                              }
+                              _updateDynamicVisual();
+                          }
+                      },
                       onCompleteStateReached: function () {
-                          if (state && state.dynamic) { state.dynamic.completeStateReached = true; state.dynamic.phase = 'completed'; }
+                          if (state && state.dynamic) {
+                              state.dynamic.elapsedMs = fullDurationMs;
+                              state.dynamic.completeStateReached = true;
+                              state.dynamic.phase = 'completed';
+                              _updateDynamicVisual();
+                          }
                       } },
                     function (completedId) { dispatch({ type: 'EFFECT_COMPLETE', effectId: completedId }); }
                 );
@@ -389,7 +409,17 @@
         _quickHintOpen = false;
         if (hint) { hint.classList.remove('visible', 'quick-hint'); hint.textContent = ''; }
         const img = document.getElementById('game-image');
-        if (img) img.classList.remove('dyn-zoom', 'dyn-blur', 'dyn-rotate-zoom', 'dyn-playing', 'dyn-paused', 'dyn-completing', 'dyn-complete');
+        if (img) {
+            img.classList.remove('dyn-zoom', 'dyn-blur', 'dyn-rotate-zoom', 'dyn-playing', 'dyn-paused', 'dyn-completing', 'dyn-complete');
+            img.style.transform = '';
+            img.style.filter = '';
+        }
+        const pct = document.getElementById('dynamic-score-pct');
+        if (pct) {
+            pct.textContent = '';
+            pct.removeAttribute('aria-label');
+            pct.classList.remove('visible', 'urgent');
+        }
         const fb = document.getElementById('feedback-overlay');
         if (fb) { fb.classList.remove('show-correct', 'show-wrong'); fb.textContent = ''; }
         // Stop buzz countdown + clear handoff overlay
