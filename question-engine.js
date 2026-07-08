@@ -10,54 +10,6 @@ const QuestionEngine = (function () {
         return arr;
     }
 
-    function getQuestions(levelKey) {
-        if (typeof QuestionSets === 'undefined') return [];
-        return Array.isArray(QuestionSets[levelKey]) ? QuestionSets[levelKey] : [];
-    }
-
-    function getAnswer(answerKey) {
-        if (typeof AnswerBank === 'undefined') return null;
-        return AnswerBank[answerKey] || null;
-    }
-
-    function buildRoundQueue(levelKey, options) {
-        const opts = options || {};
-        const all = getQuestions(levelKey);
-        if (!all.length) return [];
-
-        const wrongKeys = new Set(opts.wrongKeys || []);
-        const seenKeys = new Set(opts.seenKeys || []);
-        const wrongQuestions = all.filter(q => wrongKeys.has(q.aKey));
-        const unseenQuestions = all.filter(q => !seenKeys.has(q.aKey));
-        const fallback = all.filter(q => !wrongKeys.has(q.aKey));
-
-        const pool = [];
-        if (opts.includeUnseen) pool.push(...shuffle(unseenQuestions));
-        if (opts.includeWrong) pool.push(...shuffle(wrongQuestions));
-        pool.push(...shuffle(fallback));
-
-        const unique = [];
-        const used = new Set();
-        pool.forEach(q => {
-            const key = `${q.qContent}::${q.aKey}`;
-            if (!used.has(key)) {
-                used.add(key);
-                unique.push(q);
-            }
-        });
-
-        return typeof opts.limit === 'number' ? unique.slice(0, opts.limit) : unique;
-    }
-
-    function isCorrect(selectedKey, correctKey) {
-        return selectedKey === correctKey;
-    }
-
-    function answerText(answerKey) {
-        const answer = getAnswer(answerKey);
-        return answer ? answer.content : '';
-    }
-
     function preferredByFamily(pool, familyScope, correctAKey) {
         if (!familyScope || typeof Families === 'undefined' || !Families[familyScope]) return pool;
         const fam = Families[familyScope];
@@ -172,12 +124,6 @@ const QuestionEngine = (function () {
     }
 
     return {
-        shuffle,
-        getQuestions,
-        getAnswer,
-        buildRoundQueue,
-        isCorrect,
-        answerText,
         getQuestionSet,
         buildRoundQueueV2,
         generateOptions,
