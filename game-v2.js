@@ -853,7 +853,6 @@
         }
 
         _updateFeedbackOverlay();
-        _renderWhyHint();
         _checkComboPopup();
     }
 
@@ -926,60 +925,48 @@
         render();
         return true;
     }
+    // 提示泡泡內容（由「看教學」按鈕切換）。練習模式若本題答錯過，優先顯示該題
+    // 正解類別的「辨識重點＋常見陷阱＋官能基小圖」（教學時機）；否則顯示本關教學
+    // 第 1 頁的一般提示（不洩漏當題答案）。回傳 HTML 字串（動態文字均已跳脫）。
     function _quickHintText() {
-        if (!state || !state.family || !state.difficulty) return '';
-        const pages = _tutorialPagesFor(state.family, state.difficulty);
-        if (pages && pages.length > 0) {
-            const page = pages[0] || {};
-            const title = page.title ? String(page.title) : '';
-            const text = page.text ? String(page.text) : '';
-            return title && text ? (title + '：' + text) : (text || title);
+        const q = state && state.question ? state.question.current : null;
+        const triedWrong = state && state.question && state.question.eliminatedWrongKeys
+            && state.question.eliminatedWrongKeys.size > 0;
+        if (q && triedWrong && state.mode === 'practice'
+            && typeof AnswerBank !== 'undefined' && AnswerBank[q.compoundKey]
+            && typeof WhyHints !== 'undefined' && WhyHints[AnswerBank[q.compoundKey].category]) {
+            const wh = WhyHints[AnswerBank[q.compoundKey].category];
+            const img = wh.fg ? '<img class="why-hint-img" src="' + _escapeHtml(wh.fg) + '" alt="">' : '';
+            const trap = wh.trap ? '<span class="why-hint-trap">⚠ ' + _escapeHtml(wh.trap) + '</span>' : '';
+            return '<div class="why-hint-row">' + img +
+                '<div class="why-hint-text"><strong>「' + _escapeHtml(wh.zh) + '」怎麼認：</strong>' +
+                _escapeHtml(wh.key) + trap + '</div></div>';
         }
-        return state.mode === 'duel'
+        if (state && state.family && state.difficulty) {
+            const pages = _tutorialPagesFor(state.family, state.difficulty);
+            if (pages && pages.length > 0) {
+                const page = pages[0] || {};
+                const title = page.title ? _escapeHtml(String(page.title)) : '';
+                const text = page.text ? _escapeHtml(String(page.text)) : '';
+                return title && text ? ('<strong>' + title + '：</strong>' + text) : (text || title);
+            }
+        }
+        return _escapeHtml(state && state.mode === 'duel'
             ? '看清楚分子特徵後再搶答；搶答後只有目前搶答方可以作答。'
-            : '先找最明顯的官能基，再比對選項；答錯可以再觀察一次。';
+            : '先找最明顯的官能基，再比對選項；答錯可以再觀察一次。');
     }
     function _renderQuickHint() {
         const hint = document.getElementById('game-hint-bubble');
         if (!hint) return;
-        const text = _quickHintOpen ? _quickHintText() : '';
-        hint.classList.toggle('visible', !!text);
-        hint.classList.toggle('quick-hint', !!text);
+        const html = _quickHintOpen ? _quickHintText() : '';
+        hint.classList.toggle('visible', !!html);
+        hint.classList.toggle('quick-hint', !!html);
         hint.setAttribute('aria-live', 'polite');
-        hint.textContent = text;
+        if (html) hint.innerHTML = html; else hint.textContent = '';
     }
     function _toggleQuickHint() {
         _quickHintOpen = !_quickHintOpen;
         _renderQuickHint();
-    }
-
-    // Practice 答錯後，顯示「正解類別」的辨識重點＋常見陷阱＋官能基塗色圖。
-    // 只在練習模式、且本題答錯過（eliminatedWrongKeys 非空）時出現；
-    // 答對或換題會讓 eliminatedWrongKeys 歸零，面板自然消失。
-    function _renderWhyHint() {
-        const el = document.getElementById('why-hint-panel');
-        if (!el) return;
-        const q = state && state.question ? state.question.current : null;
-        const triedWrong = state && state.question && state.question.eliminatedWrongKeys
-            && state.question.eliminatedWrongKeys.size > 0;
-        const wh = (q && triedWrong && state.mode === 'practice'
-            && typeof AnswerBank !== 'undefined' && AnswerBank[q.compoundKey]
-            && typeof WhyHints !== 'undefined')
-            ? WhyHints[AnswerBank[q.compoundKey].category] : null;
-        if (!wh) {
-            el.classList.remove('visible');
-            el.innerHTML = '';
-            return;
-        }
-        const img = wh.fg ? '<img class="why-hint-img" src="' + _escapeHtml(wh.fg) + '" alt="">' : '';
-        const trap = wh.trap ? '<span class="why-hint-trap">⚠ ' + _escapeHtml(wh.trap) + '</span>' : '';
-        el.innerHTML = img +
-            '<div class="why-hint-text">' +
-                '<strong>「' + _escapeHtml(wh.zh) + '」怎麼認：</strong>' +
-                _escapeHtml(wh.key) + trap +
-            '</div>';
-        el.setAttribute('aria-live', 'polite');
-        el.classList.add('visible');
     }
 
     // ---- Buzz countdown + handoff overlay (rAF loop) --------------------
