@@ -90,36 +90,11 @@ const ModeRules = (function () {
         return RULES[mode] || null;
     }
 
-    function getDuelVariant(variant) {
-        return DYNAMIC_RULES[variant] || null;
-    }
-
-    function isPractice(mode) {
-        return mode === MODES.PRACTICE;
-    }
-
-    function isSpeed(mode) {
-        return mode === MODES.SPEED;
-    }
-
-    function isDuel(mode) {
-        return mode === MODES.DUEL;
-    }
-
-    function isDynamicDuel(mode, variant) {
-        return isDuel(mode) && !!DYNAMIC_RULES[variant];
-    }
-
     return {
         MODES,
         DUEL_VARIANTS,
         DYNAMIC_VARIANTS,
-        get,
-        getDuelVariant,
-        isPractice,
-        isSpeed,
-        isDuel,
-        isDynamicDuel
+        get
     };
 })();
 
