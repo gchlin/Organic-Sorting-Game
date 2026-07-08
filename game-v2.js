@@ -74,6 +74,10 @@
     let _tutorialState = null;  // { pages, idx, onDone, key }
     let _storyState = null;     // { lines, idx, playerName, onDone }
     let _quickHintOpen = false;
+    let _tutorialHintIconTimer = null;
+    let _tutorialHintIconKey = null;
+    let _tutorialHintIconIndex = 0;
+    let _activeWrongHintKey = '';
     let _wrongChosenMap = {};   // { compoundKey or compoundKey|questionIndex: chosenWrongAnswerKey } — per round
     let _codexTab = 'molecules'; // 'molecules' | 'levels' | 'badges' | 'story'
     let _wrongBookTab = 'category'; // 'category' | 'all' | 'box1' | 'box2' | 'box3' | 'mastered'
@@ -150,6 +154,14 @@
         if (action.type === 'SUBMIT_ANSWER' && preCompoundKey) {
             _lastAnswerPlayer = action.player || null;
             const wasCorrect = (action.key === preCorrectKey);
+            if (wasCorrect) {
+                _activeWrongHintKey = '';
+                _stopTutorialHintIcon();
+            } else {
+                _activeWrongHintKey = 'wrong:' + (action.key || preCompoundKey || Date.now());
+                const tutBtn = document.querySelector('[data-action="show-tutorial"]');
+                if (tutBtn) _startTutorialHintIcon(tutBtn, _activeWrongHintKey);
+            }
             if (state.mode === 'practice' && wasCorrect) {
                 if (typeof Save !== 'undefined') {
                     if (Save.recordMoleculeAnsweredV2) Save.recordMoleculeAnsweredV2(preCompoundKey, state.difficulty);
@@ -178,6 +190,8 @@
         }
         if (action.type === 'LOAD_NEXT_QUESTION' || action.type === 'BUZZ') {
             _lastAnswerPlayer = null;
+            _activeWrongHintKey = '';
+            _stopTutorialHintIcon();
         }
 
         // LOAD_NEXT_QUESTION side effects — enrich the freshly-loaded question.
@@ -408,6 +422,7 @@
         if (buzz) buzz.classList.remove('buzz-open', 'buzz-owner-p1', 'buzz-owner-p2');
         const hint = document.getElementById('game-hint-bubble');
         _quickHintOpen = false;
+        _stopTutorialHintIcon();
         if (hint) { hint.classList.remove('visible', 'quick-hint'); hint.textContent = ''; }
         const img = document.getElementById('game-image');
         if (img) {
@@ -446,6 +461,7 @@
             state.dynamic.completeStateReached = false;
         }
         if (state.question) {
+            _activeWrongHintKey = '';
             state.question.lastChosenWrongKey = null;
             if (state.question.eliminatedWrongKeys) state.question.eliminatedWrongKeys.clear();
             if (state.question.failedPlayersThisCycle) state.question.failedPlayersThisCycle.clear();
@@ -501,6 +517,7 @@
         renderTutorialModal();
         renderConfirmModal();
         renderDevBanner();
+        syncHatChars();  // 依皮膚設定同步所有 .hat-char（切換 hat/grimoire 後重繪）
     }
 
     function renderMainMenu() {
@@ -925,15 +942,12 @@
         render();
         return true;
     }
-    // 提示泡泡內容（由「看教學」按鈕切換）。練習模式若本題答錯過，優先顯示該題
-    // 正解類別的「辨識重點＋常見陷阱＋官能基小圖」（教學時機）；否則顯示本關教學
-    // 第 1 頁的一般提示（不洩漏當題答案）。回傳 HTML 字串（動態文字均已跳脫）。
+    // 提示泡泡內容（由「看教學」按鈕切換）。一律顯示當題正解類別的
+    // 「辨識重點＋常見陷阱＋官能基小圖」；查無對應提示才用通用提示。
+    // 回傳 HTML 字串（動態文字均已跳脫）。
     function _quickHintText() {
         const q = state && state.question ? state.question.current : null;
-        const triedWrong = state && state.question && state.question.eliminatedWrongKeys
-            && state.question.eliminatedWrongKeys.size > 0;
-        if (q && triedWrong && state.mode === 'practice'
-            && typeof AnswerBank !== 'undefined' && AnswerBank[q.compoundKey]
+        if (q && typeof AnswerBank !== 'undefined' && AnswerBank[q.compoundKey]
             && typeof WhyHints !== 'undefined' && WhyHints[AnswerBank[q.compoundKey].category]) {
             const wh = WhyHints[AnswerBank[q.compoundKey].category];
             const img = wh.fg ? '<img class="why-hint-img" src="' + _escapeHtml(wh.fg) + '" alt="">' : '';
@@ -941,15 +955,6 @@
             return '<div class="why-hint-row">' + img +
                 '<div class="why-hint-text"><strong>「' + _escapeHtml(wh.zh) + '」怎麼認：</strong>' +
                 _escapeHtml(wh.key) + trap + '</div></div>';
-        }
-        if (state && state.family && state.difficulty) {
-            const pages = _tutorialPagesFor(state.family, state.difficulty);
-            if (pages && pages.length > 0) {
-                const page = pages[0] || {};
-                const title = page.title ? _escapeHtml(String(page.title)) : '';
-                const text = page.text ? _escapeHtml(String(page.text)) : '';
-                return title && text ? ('<strong>' + title + '：</strong>' + text) : (text || title);
-            }
         }
         return _escapeHtml(state && state.mode === 'duel'
             ? '看清楚分子特徵後再搶答；搶答後只有目前搶答方可以作答。'
@@ -966,7 +971,64 @@
     }
     function _toggleQuickHint() {
         _quickHintOpen = !_quickHintOpen;
+        if (_quickHintOpen) {
+            _activeWrongHintKey = '';
+            _stopTutorialHintIcon();
+        }
         _renderQuickHint();
+    }
+
+    function _setTutorialHintIcon(btn) {
+        if (!btn) return;
+        btn.classList.add('hint-symbol');
+        btn.removeAttribute('data-icon');
+        btn.textContent = _tutorialHintIconIndex % 2 === 0 ? '✻' : '✿';
+    }
+    function _startTutorialHintIcon(btn, wrongKey) {
+        if (!btn || !wrongKey) return;
+        if (_tutorialHintIconKey !== wrongKey) {
+            _tutorialHintIconKey = wrongKey;
+            _tutorialHintIconIndex = 0;
+        }
+        _setTutorialHintIcon(btn);
+        if (_tutorialHintIconTimer !== null) return;
+        _tutorialHintIconTimer = setInterval(function () {
+            const latestBtn = document.querySelector('[data-action="show-tutorial"]');
+            if (!latestBtn) {
+                _stopTutorialHintIcon();
+                return;
+            }
+            _tutorialHintIconIndex++;
+            _setTutorialHintIcon(latestBtn);
+        }, 1000);
+    }
+    function _stopTutorialHintIcon() {
+        if (_tutorialHintIconTimer !== null) {
+            clearInterval(_tutorialHintIconTimer);
+            _tutorialHintIconTimer = null;
+        }
+        _tutorialHintIconKey = null;
+        _tutorialHintIconIndex = 0;
+        const tutBtn = document.querySelector('[data-action="show-tutorial"]');
+        if (tutBtn) {
+            tutBtn.classList.remove('hint-symbol');
+            tutBtn.setAttribute('data-icon', 'quill');
+            tutBtn.textContent = '看教學';
+        }
+    }
+    function _currentWrongHintKey() {
+        if (!state || !state.question) return '';
+        if (_activeWrongHintKey) return _activeWrongHintKey;
+        if (state.question.lastChosenWrongKey) return String(state.question.lastChosenWrongKey);
+        const q = state.question.current;
+        if (q && state.wrongInRound && state.wrongInRound.has && state.wrongInRound.has(q.compoundKey)) {
+            return 'compound:' + q.compoundKey;
+        }
+        const eliminated = state.question.eliminatedWrongKeys;
+        if (eliminated && eliminated.size > 0) {
+            return 'eliminated:' + Array.from(eliminated).join('|');
+        }
+        return '';
     }
 
     // ---- Buzz countdown + handoff overlay (rAF loop) --------------------
@@ -1248,6 +1310,12 @@
             const hasTut = tut && (Array.isArray(tut.pages) ? tut.pages.length > 0
                                  : Array.isArray(tut) ? tut.length > 0 : false);
             tutBtn.style.display = hasTut ? '' : 'none';
+
+            // 答錯後週期性切換提示按鈕 icon，提醒學生可以按提示看辨識重點。
+            const wrongKey = _currentWrongHintKey();
+            const shouldCycleHintIcon = hasTut && wrongKey && !_quickHintOpen;
+            if (shouldCycleHintIcon) _startTutorialHintIcon(tutBtn, wrongKey);
+            else _stopTutorialHintIcon();
         }
 
         // Wrong review (Practice only)
@@ -1721,6 +1789,7 @@
         _setChecked('settings-dev-quickwin-enabled', settings.devQuickWin && settings.devQuickWin.enabled);
         _setValue('settings-dev-quickwin-after', settings.devQuickWin && settings.devQuickWin.winAfter);
         _setChecked('settings-dev-quickwin-show-indicator', settings.devQuickWin && settings.devQuickWin.showIndicator);
+        _setChecked('settings-dev-character-hat', settings.characterSkin === 'hat');
         _setChecked('settings-dev-show-fps', settings.devShowFps);
         _setChecked('settings-dev-log-actions', settings.devLogActions);
         _setChecked('settings-dev-use-legacy-sounds', settings.devUseLegacySounds);
@@ -1881,7 +1950,8 @@
         if (!whoEl || !textEl || !_storyState) return;
         const line = _storyState.lines[_storyState.idx];
         if (!line) return;
-        const WHO_LABEL = { hat: '🎩 分類帽', wiz: '🧙 魔法師' };
+        const mentorLabel = _characterSkin() === 'grimoire' ? '📖 分類魔導書' : '🎩 分類帽';
+        const WHO_LABEL = { hat: mentorLabel, wiz: '🧙 魔法師' };
         whoEl.textContent = WHO_LABEL[line.who] || line.who;
         const raw = line.text || '';
         const name = _storyState.playerName || '';
@@ -1942,7 +2012,9 @@
     // Open story player. familyKey → looks up StoryScripts[familyKey].
     // onDone() is called after the last line (or if story is empty).
     function _openStory(familyKey, onDone) {
-        const scripts = (typeof StoryScripts !== 'undefined') ? StoryScripts : {};
+        const scripts = (_characterSkin() === 'grimoire' && typeof StoryScriptsGrimoire !== 'undefined')
+            ? StoryScriptsGrimoire
+            : (typeof StoryScripts !== 'undefined') ? StoryScripts : {};
         const lines = scripts[familyKey];
         if (!lines || lines.length === 0) {
             if (typeof onDone === 'function') onDone();
@@ -2622,6 +2694,9 @@
             ['settings-dev-quickwin-show-indicator', 'checkbox', function (v) {
                 Save.writeSettings({ devQuickWin: { showIndicator: v } });
             }],
+            ['settings-dev-character-hat', 'checkbox', function (v) {
+                Save.writeSettings({ characterSkin: v ? 'hat' : 'grimoire' });
+            }],
             ['settings-dev-show-fps', 'checkbox', function (v) {
                 Save.writeSettings({ devShowFps: v });
             }],
@@ -2782,8 +2857,23 @@
         '<div class="eye left"><div class="pupil"></div></div>' +
         '<div class="eye right"><div class="pupil"></div></div>' +
         '<div class="mouth"></div>';
+    // 'grimoire'（預設，靜態圖）或 'hat'（CSS 五官會做表情）。開發者選項可切換。
+    function _characterSkin() {
+        const s = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : null;
+        return (s && s.characterSkin === 'hat') ? 'hat' : 'grimoire';
+    }
     function ensureHatChar(el) {
-        if (el && !el.querySelector('.hat-img')) el.innerHTML = HAT_INNER;
+        if (!el) return;
+        if (_characterSkin() === 'grimoire') {
+            // 魔導書：靜態圖，忽略表情。切換自帽版時（無 .grimoire-img）重繪。
+            if (!el.querySelector('.grimoire-img')) {
+                el.classList.add('is-grimoire');
+                el.innerHTML = '<img class="grimoire-img" src="assets/images/character/magicbook.webp" alt="">';
+            }
+        } else if (!el.querySelector('.hat-img')) {
+            el.classList.remove('is-grimoire');
+            el.innerHTML = HAT_INNER;
+        }
     }
     function setHatExpression(el, expr) {
         if (!el) return;
@@ -2791,8 +2881,13 @@
         el.classList.add(expr && HAT_EXPRS.indexOf(expr) >= 0 ? expr : 'neutral');
     }
     let _hatMouseBound = false;
-    function initHatChars() {
+    // 依目前皮膚設定同步所有 .hat-char 的 DOM（切換 hat/grimoire 後也會正確重繪）。
+    // 只碰 DOM、不綁事件，可安全在每次 render() 結尾呼叫。
+    function syncHatChars() {
         document.querySelectorAll('.hat-char').forEach(ensureHatChar);
+    }
+    function initHatChars() {
+        syncHatChars();
         if (_hatMouseBound) return;
         _hatMouseBound = true;
         document.addEventListener('mousemove', (ev) => {

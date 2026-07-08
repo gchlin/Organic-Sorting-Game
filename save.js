@@ -106,6 +106,8 @@ const Save = (function () {
             devShowFps: false,
             devLogActions: false,
             devUseLegacySounds: false,
+            // 導師角色皮膚：'grimoire' = 分類魔導書（預設，版權安全）；'hat' = 分類帽
+            characterSkin: 'grimoire',
             // 對決對手模式，全域 sticky：玩家通常設定一次就不變。
             // 'human' = PvP；'aiEasy'/'aiMedium'/'aiHard' = PvE 各難度。
             duelOpponent: 'aiMedium',

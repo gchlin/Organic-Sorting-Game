@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap">
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=hint-symbol-no-before-image-200-20260708">
     <link rel="stylesheet" href="sorting-hat.css">
     <link rel="stylesheet" href="menu.css">
     <!-- Legacy layout.css / menu.css moved to legacy/ — v2 styles in style.css are self-contained. -->
@@ -208,6 +208,7 @@
                 <label class="v2-setting-row"><input type="checkbox" id="settings-dev-quickwin-enabled"> 啟用「答對 N 題即結算」</label>
                 <label class="v2-setting-row">N = <input type="number" id="settings-dev-quickwin-after" min="1" value="2"></label>
                 <label class="v2-setting-row"><input type="checkbox" id="settings-dev-quickwin-show-indicator"> 顯示螢幕底部紅色 banner</label>
+                <label class="v2-setting-row"><input type="checkbox" id="settings-dev-character-hat"> 導師用分類帽（預設分類魔導書）</label>
                 <label class="v2-setting-row"><input type="checkbox" id="settings-dev-show-fps"> 右上角顯示 FPS</label>
                 <label class="v2-setting-row"><input type="checkbox" id="settings-dev-log-actions"> console.log 每個 action</label>
                 <label class="v2-setting-row"><input type="checkbox" id="settings-dev-use-legacy-sounds"> 使用原本合成音效</label>
@@ -295,6 +296,7 @@
 
     <script src="data.js"></script>
     <script src="story.js"></script>
+    <script src="story-grimoire.js"></script>
     <script src="tutorial.js"></script>
     <script src="save.js"></script>
     <script src="mode-rules.js"></script>
@@ -305,6 +307,6 @@
     <script src="input-controller.js"></script>
     <script src="ai-controller.js"></script>
     <!-- Legacy game.js moved to legacy/ — game-v2.js is the live game loop. -->
-    <script src="game-v2.js"></script>
+    <script src="game-v2.js?v=hint-symbol-20260708"></script>
 </body>
 </html>

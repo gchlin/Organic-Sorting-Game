@@ -1534,17 +1534,30 @@ body.input-locked .v2-buzz button { pointer-events: none; }
 .why-hint-row { display: flex; gap: 12px; align-items: flex-start; }
 .why-hint-img {
     flex: 0 0 auto;
-    width: clamp(48px, 10vw, 72px);
-    height: clamp(48px, 10vw, 72px);
+    width: clamp(96px, 20vw, 144px);
+    height: clamp(96px, 20vw, 144px);
     object-fit: contain;
     background: #f7f1e1;
     border: 1px solid var(--hp-wood-dark);
     border-radius: 6px;
-    padding: 4px;
+    padding: 8px;
 }
 .why-hint-text { text-align: left; }
 .why-hint-text strong { color: var(--hp-gold); }
 .why-hint-trap { display: block; margin-top: 5px; color: #ffcf7a; font-size: .9em; }
+
+/* 答錯後提示按鈕改用週期性符號提醒，不使用閃爍動畫。 */
+.v2-game-tutorial-btn.hint-symbol {
+    color: var(--hp-gold);
+    font-family: "Cinzel", "Georgia", serif;
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1;
+}
+.v2-game-tutorial-btn.hint-symbol::before {
+    content: none !important;
+    display: none !important;
+}
 
 #screen-game #game-hint-bubble.quick-hint.visible {
     position: absolute;
