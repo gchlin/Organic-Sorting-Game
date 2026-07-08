@@ -18,106 +18,106 @@ const StoryScripts = {
 
   // Level 1：碳氫骨架（烷 / 烯 / 炔 / 芳香）
   level1: [
-    { who: "hat", expr: "neutral",   text: "…又來了一個。{name}，是嗎。坐好，我很忙。" },
-    { who: "wiz", text: "呃……分類帽前輩好。這些全是碳和氫，看起來都一樣……" },
-    { who: "hat", expr: "annoyed",   text: "都一樣？說這話的人通常一題也看不對。仔細看：全是 C–C 單鍵的叫『烷』；躲了一根 C=C 雙鍵的叫『烯』；更硬派、有 C≡C 參鍵的叫『炔』。" },
-    { who: "wiz", text: "那那個六角形圈圈？" },
-    { who: "hat", expr: "wink",      text: "哦，你總算注意到了。那是苯環——『芳香烴』的印記。先把它刻進腦子裡，之後到處都是它，你不認識它牠會認識你。" },
-    { who: "wiz", text: "所以先找：有沒有雙鍵、參鍵、苯環？" },
-    { who: "hat", expr: "wink",      text: "……還算孺子可教。碳氫骨架是地基，地基看清楚，後面加官能基才不會一腳踩空。" },
-    { who: "wiz", text: "我記住了。烷、烯、炔、芳香。" },
-    { who: "hat", expr: "annoyed",   text: "少廢話。去做題——帽子不是用來聊天的。" }
+    { who: "hat", expr: "annoyed",   text: "……又一個新面孔。{name}，對吧。本帽執業三百年，看過的學生比你吃過的米還多。坐下，別碰我的帽簷。" },
+    { who: "wiz", text: "分、分類帽前輩好！可是這些分子全是碳跟氫，長得……根本一模一樣吧？" },
+    { who: "hat", expr: "annoyed",   text: "『一模一樣』。每年說這四個字的人，成績單倒是很有辨識度——一樣的慘。睜大眼睛：全程 C–C 單鍵、乖得無聊的，叫『烷』。" },
+    { who: "wiz", text: "那……有雙鍵的呢？" },
+    { who: "hat", expr: "neutral",   text: "藏了一根 C=C 雙鍵的，叫『烯』。更狠、直接上 C≡C 參鍵的，叫『炔』。鍵越多脾氣越硬——這點跟我挺像。" },
+    { who: "wiz", text: "等等，那個六角形帶圈圈的是什麼？長得好像龜殼……" },
+    { who: "hat", expr: "wink",      text: "哦？眼睛總算派上用場了。那是苯環——『芳香烴』的家徽。現在就刻進腦子裡，之後它會陰魂不散地出現。" },
+    { who: "wiz", text: "所以口訣是：先找有沒有雙鍵、參鍵、苯環？" },
+    { who: "hat", expr: "neutral",   text: "……勉強算孺子可教。記住，碳氫骨架是地基；地基看歪，後面掛再多官能基都是危樓。滾去做題——本帽的時間比你的成績值錢。" }
   ],
 
   // Level 2：單鍵氧家族（醇 / 醚）
   level2: [
-    { who: "hat", expr: "neutral",   text: "骨架過關了。現在加一個氧進來——但氧很挑剔，接法不同、名字就不同。" },
-    { who: "wiz", text: "氧怎麼接？" },
-    { who: "hat", expr: "thinking",  text: "氧如果一手抓碳、一手抓氫，–O–H，那叫『醇』。乙醇，就是你們喝的那個。" },
-    { who: "wiz", text: "那如果兩手都抓碳呢？" },
-    { who: "hat", expr: "thinking",  text: "C–O–C，氧夾在兩個碳中間，那叫『醚』。看起來差一個 H，性質差了十萬八千里。" },
-    { who: "wiz", text: "所以關鍵就是那個 H 有沒有？" },
-    { who: "hat", expr: "surprised", text: "就那一個 H。{name}，你別看這題簡單，每年都有人把乙醇和乙醚看成同一家人。" },
-    { who: "wiz", text: "……我不會的。先找 –OH。" },
-    { who: "hat", expr: "wink",      text: "說得比唱得好聽。去證明吧。" }
+    { who: "hat", expr: "neutral",   text: "骨架，勉強放你過。現在放一個氧進場——先警告你，氧是出了名的難伺候：牽誰的手，連姓什麼都會變。" },
+    { who: "wiz", text: "氧……還能怎麼牽？" },
+    { who: "hat", expr: "neutral",   text: "一手抓碳、一手抓氫，–O–H，那叫『醇』。乙醇——就是大人喝了會開始講真話的那個酒精。" },
+    { who: "wiz", text: "那如果它兩手都抓著碳呢？" },
+    { who: "hat", expr: "thinking",  text: "C–O–C，氧被夾在兩個碳中間、一顆 H 都不掛，那叫『醚』。表面上只差一顆 H，性質差了十萬八千里——就像你跟學霸，表面上都是人。" },
+    { who: "wiz", text: "喂！……所以關鍵就是：氧身上到底有沒有掛 H？" },
+    { who: "hat", expr: "annoyed",   text: "就那一顆 H。{name}，別笑，每年都有人把乙醇跟乙醚認成雙胞胎，然後在考卷上手牽手一起陪葬。" },
+    { who: "wiz", text: "我才不會。看到氧，先找 –OH！" },
+    { who: "hat", expr: "wink",      text: "說得比唱得好聽。去，用分數證明你的歌喉。" }
   ],
 
   // Level 3：雙鍵氧家族（醛 / 酮）
   level3: [
-    { who: "hat", expr: "neutral",   text: "這一關，氧升級了——它跟碳之間是『雙鍵』，C=O，叫羰基。記住這個名字。" },
-    { who: "wiz", text: "羰基……醛跟酮有什麼差？" },
-    { who: "hat", expr: "thinking",  text: "差在位置。羰基如果長在碳鏈末端，旁邊還黏著一個 H，那是『醛』，–CHO。" },
-    { who: "wiz", text: "那酮？" },
-    { who: "hat", expr: "thinking",  text: "羰基被夾在兩個碳中間，沒有那個 H，那是『酮』。丙酮你應該聽過，去光指甲油用的。" },
-    { who: "wiz", text: "所以 C=O 在邊邊是醛、在中間是酮。" },
-    { who: "hat", expr: "surprised", text: "正確。雖然是從你嘴裡說出來的，讓我有點不習慣。" },
-    { who: "wiz", text: "……謝謝誇獎（吧？）" },
-    { who: "hat", expr: "wink",      text: "別誤會，我只是在核對事實。去做題，{name}。" }
+    { who: "hat", expr: "neutral",   text: "氧升級了。這次它跟碳來真的——雙鍵，C=O。這東西叫『羰基』，給我記牢；忘了它，等於忘了自己姓什麼。" },
+    { who: "wiz", text: "羰基……可是醛跟酮不是都有 C=O 嗎？到底差在哪？" },
+    { who: "hat", expr: "neutral",   text: "差在住址。羰基住在碳鏈的最末端、旁邊還黏著一顆 H——那是『醛』，寫作 –CHO。住邊間，附一個 H 室友。" },
+    { who: "wiz", text: "那酮呢？" },
+    { who: "hat", expr: "thinking",  text: "被兩個碳夾在正中間、沒有那顆 H 的，是『酮』。丙酮你肯定聞過——去光水，指甲油的天敵。" },
+    { who: "wiz", text: "懂了！C=O 在末端、帶 H 是醛；被夾在中間、沒 H 是酮！" },
+    { who: "hat", expr: "surprised", text: "……居然是對的。正確答案從你嘴裡說出來，我需要一點時間適應。" },
+    { who: "wiz", text: "這、這算是誇獎嗎？" },
+    { who: "hat", expr: "annoyed",   text: "想太多。我只是在核對事實——本帽從不誇人，只確認真相。去做題，{name}。" }
   ],
 
   // Level 4：雙氧複合（羧酸 / 酯）
   level4: [
-    { who: "hat", expr: "neutral",   text: "好，這關開始難了。同一個碳上，同時掛兩種氧。準備好了嗎？" },
-    { who: "wiz", text: "……說實話沒有。" },
-    { who: "hat", expr: "wink",      text: "誠實。算你一點。C=O 加 –OH 黏在同一個碳上，那叫『羧酸』，–COOH。乙酸，就是醋。" },
-    { who: "wiz", text: "那酯呢？看起來也有兩個氧。" },
-    { who: "hat", expr: "thinking",  text: "把羧酸的 –OH 裡那個 H 換成碳，就成了酯：C(=O)–O–C。水果香大多是酯，醋酸是羧酸——聞到不同，結構就差那個位置。" },
-    { who: "wiz", text: "差別只在尾巴是 –O–H 還是 –O–碳。" },
-    { who: "hat", expr: "wink",      text: "對。你這關如果還混淆，我建議你去聞一下醋，印象會比較深刻。" },
-    { who: "wiz", text: "……我會看清楚的。" },
-    { who: "hat", expr: "annoyed",   text: "最好是。酸與酯，出發。" }
+    { who: "hat", expr: "neutral",   text: "這關開始不客氣了。一個碳上，同時掛兩種氧。心臟準備好了嗎？" },
+    { who: "wiz", text: "……老實說，完全沒有。" },
+    { who: "hat", expr: "wink",      text: "誠實，難得的美德——可惜不加分。聽好：C=O 和 –OH 掛在同一個碳上，合體叫 –COOH，那是『羧酸』。乙酸，就是你吃水餃沾的醋。" },
+    { who: "wiz", text: "那酯呢？它看起來也有兩個氧啊……" },
+    { who: "hat", expr: "neutral",   text: "把羧酸 –OH 上那顆 H 摘掉、換成一截碳，就成了酯：C(=O)–O–C。水果的香味大多是酯的功勞，醋酸是羧酸——一個讓你流口水，一個讓你皺眉頭，差別就在那個位置。" },
+    { who: "wiz", text: "所以看尾巴：收在 –O–H 的是羧酸，接到 –O–碳 的是酯！" },
+    { who: "hat", expr: "annoyed",   text: "對。這關要是還搞混，我強烈建議你回家灌一口醋，用鼻子把這個知識點焊進記憶裡。" },
+    { who: "wiz", text: "……我用眼睛記就好，謝謝。" },
+    { who: "hat", expr: "neutral",   text: "最好是。酸與酯，出發——別讓我聞到失誤的酸味。" }
   ],
 
   // Level 5：雜原子與鹵素（胺 / 鹵化物）
   level5: [
-    { who: "hat", expr: "neutral",   text: "前面都是碳氫氧在玩。這一關，請兩個新角色上場：氮，還有鹵素。" },
-    { who: "wiz", text: "胺是 –NH₂ 那個嗎？" },
-    { who: "hat", expr: "thinking",  text: "對，氮接著碳還黏著氫，–NH₂，那是『胺』。小心——–NH₂ 跟 –OH 長得有那麼一點點像，別看錯。" },
-    { who: "wiz", text: "那鹵素呢？F、Cl、Br、I……" },
-    { who: "hat", expr: "neutral",   text: "碳上接了這四個其中一個，C–X，就是『鹵化物』。沒有特別難，就是認符號。" },
-    { who: "wiz", text: "看到 N 想胺、看到 X 想鹵化物。" },
-    { who: "hat", expr: "thinking",  text: "可以。雖然真正的分子常常一身好幾個官能基，到那時候你要學會看誰是主角。但那是以後的事。" },
-    { who: "wiz", text: "一步一步來。先把 N 跟 X 認熟。" },
-    { who: "hat", expr: "wink",      text: "難得你知道不要貪多。去吧，{name}。" }
+    { who: "hat", expr: "neutral",   text: "前面幾百年都是碳、氫、氧的獨角戲。今天請兩位新演員進場：氮，還有鹵素一家四口。" },
+    { who: "wiz", text: "胺！我知道，是 –NH₂ 那個對吧？" },
+    { who: "hat", expr: "surprised", text: "喲，居然預習了。氮牽著碳、身上還掛著氫——–NH₂ 這一掛的，只要旁邊沒有 C=O 來攪局，就是『胺』。醜話說在前頭：–NH₂ 跟 –OH 有三分神似，每年都有人臉盲，你別當其中之一。" },
+    { who: "wiz", text: "那鹵素呢？F、Cl、Br、I……聽起來像什麼四人天團。" },
+    { who: "hat", expr: "neutral",   text: "碳牽上這四個裡的任何一個，C–X，就叫『鹵化物』。不難，純粹認符號——連這個都錯的話，問題就不在化學了。" },
+    { who: "wiz", text: "看到 N 想胺、看到 X 想鹵化物！" },
+    { who: "hat", expr: "thinking",  text: "可以。不過先提醒你：真正的分子常常一身掛好幾個官能基，到時候你得學會分辨誰是主角。……那是以後的噩夢，今天先不嚇你。" },
+    { who: "wiz", text: "一步一步來。我先把 N 跟 X 認熟。" },
+    { who: "hat", expr: "wink",      text: "難得你懂得不貪多——這份自知之明，比你的正確率珍貴多了。去吧，{name}。" }
   ],
 
   // Level 6：終極分類帽（Level 1~5 綜合題）
   level6: [
-    { who: "hat", expr: "neutral",   text: "烷烯炔芳香、醇醚、醛酮、羧酸酯、胺鹵化物——都見過了。這關全混在一起。" },
-    { who: "wiz", text: "全混……而且你剛才提到苯酚是單獨一類？" },
-    { who: "hat", expr: "annoyed",   text: "–OH 直接接在苯環的碳上，那是『酚』，自成一類。別以為接了苯環的 –OH 還算醇，那是偷懶的想法。" },
-    { who: "wiz", text: "所以苯甲醇是醇，苯酚才是酚。" },
-    { who: "hat", expr: "happy",     text: "正確。苯甲醇的 –OH 是接在苯環外面的 –CH₂– 上；苯酚的 –OH 直接接在環上。差這一截，類別就不同。" },
+    { who: "hat", expr: "neutral",   text: "烷烯炔芳香、醇醚、醛酮、羧酸酯、胺鹵化物——全員到齊。這一關，我把它們全倒進同一鍋。" },
+    { who: "wiz", text: "全、全部混在一起？！等等，你之前好像說過……酚是自己一類？" },
+    { who: "hat", expr: "annoyed",   text: "記性不錯，難得。–OH 直接黏在苯環的碳上，那是『酚』，自立門戶。以為掛了苯環的 –OH 還能算醇？那是懶人的想法，而懶人在本帽這裡一律不及格。" },
+    { who: "wiz", text: "所以……苯甲醇是醇，苯酚才是酚？" },
+    { who: "hat", expr: "neutral",   text: "正確。苯甲醇的 –OH 接在苯環外面伸出的 –CH₂– 上，隔了一截；苯酚的 –OH 直接坐在環上。就差這一步的距離，戶口就不同本。" },
     { who: "wiz", text: "那苯甲醛、苯甲酸、苯胺呢？" },
-    { who: "hat", expr: "thinking",  text: "醛、羧酸、胺。苯環只是附件，主角還是官能基。{name}，冷靜看、一個一個找，不要被苯環嚇到。" },
-    { who: "wiz", text: "好。一個一個找，不要被外型騙了。" },
-    { who: "hat", expr: "wink",      text: "這才像話。終極分類——如果你在這關還搞錯，我會假裝不認識你。去吧。" }
+    { who: "hat", expr: "neutral",   text: "醛、羧酸、胺。苯環永遠只是背景板，主角是掛在它身上的官能基。{name}，深呼吸，一個一個找，別被那個六角形的氣勢唬住。" },
+    { who: "wiz", text: "好。一個一個找，不被外表騙。" },
+    { who: "hat", expr: "wink",      text: "這才像句人話。終極分類，開始——這關再錯，我就當我們素昧平生。" }
   ],
 
   // 「龜殼」與它的產地（苯環陷阱關）
   levelShell: [
-    { who: "hat", expr: "annoyed",   text: "{name}，這一關全是『龜殼』——那個畫成六角形帶圈圈的，叫苯環。新手看到龜殼就喊『酚』，每年都有人這樣丟分。" },
-    { who: "wiz", text: "不是嗎？我看它們都有苯環，有些還掛著 –OH……" },
-    { who: "hat", expr: "thinking",  text: "看清楚 –OH 的落腳點。直接黏在龜殼的碳上，那才叫『酚』；接在龜殼伸出來的尾巴上——比如苯甲醇的 –CH₂–OH——那只是個普通的『醇』。" },
-    { who: "wiz", text: "所以苯酚是酚、苯甲醇是醇。那苯甲醛、苯甲酸呢？" },
-    { who: "hat", expr: "thinking",  text: "醛、羧酸。苯環只是背景，主角永遠是它身上掛的官能基。苯甲醛末端一個 –CHO，苯甲酸一個 –COOH，差一個位置，類別就不同。" },
-    { who: "wiz", text: "苯乙酮、苯甲醚、氯苯、苯胺……也都是看官能基決定？" },
-    { who: "hat", expr: "neutral",   text: "酮、醚、鹵化物、胺。對。把龜殼遮起來，剩下那一小塊才是答案。" },
-    { who: "wiz", text: "懂了。先把苯環當背景，再看它身上掛了什麼。" },
-    { who: "hat", expr: "wink",      text: "難得開竅。去吧，{name}——別讓這些龜殼把你搞糊塗了。" }
+    { who: "hat", expr: "annoyed",   text: "{name}，警告：這關滿地都是『龜殼』——就是那個六角形帶圈圈的苯環。菜鳥一看到龜殼就尖叫『酚！』，然後分數跟著殼一起沉底。年年如此，風雨無阻。" },
+    { who: "wiz", text: "難道不是嗎？它們每一隻都揹著苯環，有些還掛著 –OH……" },
+    { who: "hat", expr: "neutral",   text: "重點是 –OH 落腳在哪。直接黏在龜殼的碳上，才配叫『酚』；要是接在殼上伸出來的尾巴上——像苯甲醇那截 –CH₂–OH——那就是個平平無奇的『醇』，別替它加戲。" },
+    { who: "wiz", text: "所以苯酚是酚、苯甲醇是醇……那苯甲醛跟苯甲酸呢？" },
+    { who: "hat", expr: "neutral",   text: "醛、羧酸。苯甲醛末端一個 –CHO，苯甲酸一個 –COOH。龜殼只是牠揹的房子，身分證看的是身上掛的官能基。" },
+    { who: "wiz", text: "那苯乙酮、苯甲醚、氯苯、苯胺……也全看官能基？什麼時候才輪到『芳香烴』？" },
+    { who: "hat", expr: "thinking",  text: "酮、醚、鹵化物、胺，一個都跑不掉。至於『芳香烴』——得整隻乾乾淨淨，只有龜殼加烷基尾巴，像甲苯、二甲苯那種，才輪得到它。教你一招本帽祖傳的：伸手把龜殼遮住，剩下那一小塊，就是答案。" },
+    { who: "wiz", text: "懂了！先把苯環當背景遮起來，再看它身上掛了什麼。" },
+    { who: "hat", expr: "wink",      text: "難得開竅。去吧，{name}——別讓一群烏龜爬到你前面。" }
   ],
 
   // Level 99：資優全英挑戰（選做；給挑戰玩家）
   level99: [
-    { who: "hat", expr: "surprised", text: "……你又來了。{name}，你知道這關選項全是英文嗎？" },
-    { who: "wiz", text: "知道。我準備好了。" },
-    { who: "hat", expr: "annoyed",   text: "嘴上說準備好，手不一定跟得上。Alkane、Alkene、Alkyne——光這三個就有人傻傻分不清楚。" },
-    { who: "wiz", text: "Alcohol、Ether、Aldehyde、Ketone……我背過了。" },
-    { who: "hat", expr: "thinking",  text: "『背過』跟『看到結構式就知道』是兩件事。Carboxylic Acid 和 Ester 差在哪？用英文回答我。" },
-    { who: "wiz", text: "……Carboxylic Acid 有 –COOH，Ester 有 –COO–C，差在那個 H 換成 carbon chain。" },
-    { who: "hat", expr: "thinking",  text: "……還行。Phenol 呢？" },
-    { who: "wiz", text: "–OH directly bonded to the aromatic ring carbon. Not –CH₂–OH，那是 benzyl alcohol，是 Alcohol。" },
-    { who: "hat", expr: "wink",      text: "好。你比我預期的強一點點——就一點點，別驕傲。Amine 跟 Halide 別看錯，Go on, {name}." }
+    { who: "hat", expr: "annoyed",   text: "……又是你。{name}，先確認一下：你知道這關的選項全是英文吧？現在退場還來得及，本帽不會笑你——好吧，會笑一下。" },
+    { who: "wiz", text: "知道。I'm ready。" },
+    { who: "hat", expr: "neutral",   text: "嘴巴 ready，手不一定。Alkane、Alkene、Alkyne——就差一個字母，每年都有人在這裡上演大型混淆現場。" },
+    { who: "wiz", text: "Alcohol、Ether、Aldehyde、Ketone……我全都背過了。" },
+    { who: "hat", expr: "annoyed",   text: "『背過』和『看到結構式一秒認出』是兩個世界。隨堂考：Carboxylic Acid 跟 Ester 差在哪？用英文，現在。" },
+    { who: "wiz", text: "呃……Carboxylic Acid 有 –COOH；Ester 是 –COO–C，那個 H 被換成了 carbon chain！" },
+    { who: "hat", expr: "thinking",  text: "……還行，沒讓我當場翻臉。Phenol 呢？" },
+    { who: "wiz", text: "–OH directly bonded to the aromatic ring carbon！如果是 –CH₂–OH，那是 benzyl alcohol，要選 Alcohol！" },
+    { who: "hat", expr: "wink",      text: "哼，比我預期的強一點——注意，是『一點』，別膨脹。最後叮嚀：Amine 跟 Halide 別眼花。Go on, {name}，讓我看看你的英文是不是也孺子可教。" }
   ]
 
 };
