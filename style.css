@@ -1530,15 +1530,15 @@ body.input-locked .v2-buzz button { pointer-events: none; }
 }
 .v2-hint-bubble.visible { display: block; }
 
-/* 練習答錯提示面板：官能基塗色圖 ＋ 辨識重點/常見陷阱。
-   底部置中浮層；若實測遮到選項，改 bottom/top 定位即可。 */
+/* 練習答錯提示面板：官能基小圖 ＋ 辨識重點/常見陷阱。
+   置於 HUD 下方（避開底部選項；桌面選項在下方會重疊，故靠上）。 */
 .v2-why-hint { display: none; }
 #screen-game .v2-why-hint.visible {
     position: absolute;
     left: 50%;
-    bottom: clamp(10px, 3dvh, 26px);
+    top: clamp(76px, 13dvh, 118px);
     transform: translateX(-50%);
-    z-index: 40;
+    z-index: 45;
     width: min(680px, calc(100% - 32px));
     display: flex;
     align-items: center;
