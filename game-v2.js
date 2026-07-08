@@ -853,6 +853,7 @@
         }
 
         _updateFeedbackOverlay();
+        _renderWhyHint();
         _checkComboPopup();
     }
 
@@ -950,6 +951,35 @@
     function _toggleQuickHint() {
         _quickHintOpen = !_quickHintOpen;
         _renderQuickHint();
+    }
+
+    // Practice 答錯後，顯示「正解類別」的辨識重點＋常見陷阱＋官能基塗色圖。
+    // 只在練習模式、且本題答錯過（eliminatedWrongKeys 非空）時出現；
+    // 答對或換題會讓 eliminatedWrongKeys 歸零，面板自然消失。
+    function _renderWhyHint() {
+        const el = document.getElementById('why-hint-panel');
+        if (!el) return;
+        const q = state && state.question ? state.question.current : null;
+        const triedWrong = state && state.question && state.question.eliminatedWrongKeys
+            && state.question.eliminatedWrongKeys.size > 0;
+        const wh = (q && triedWrong && state.mode === 'practice'
+            && typeof AnswerBank !== 'undefined' && AnswerBank[q.compoundKey]
+            && typeof WhyHints !== 'undefined')
+            ? WhyHints[AnswerBank[q.compoundKey].category] : null;
+        if (!wh) {
+            el.classList.remove('visible');
+            el.innerHTML = '';
+            return;
+        }
+        const img = wh.fg ? '<img class="why-hint-img" src="' + _escapeHtml(wh.fg) + '" alt="">' : '';
+        const trap = wh.trap ? '<span class="why-hint-trap">⚠ ' + _escapeHtml(wh.trap) + '</span>' : '';
+        el.innerHTML = img +
+            '<div class="why-hint-text">' +
+                '<strong>「' + _escapeHtml(wh.zh) + '」怎麼認：</strong>' +
+                _escapeHtml(wh.key) + trap +
+            '</div>';
+        el.setAttribute('aria-live', 'polite');
+        el.classList.add('visible');
     }
 
     // ---- Buzz countdown + handoff overlay (rAF loop) --------------------

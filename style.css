@@ -49,68 +49,6 @@ body, html {
     align-items: center;
 }
 
-/* 隱藏元素 */
-.hidden { display: none !important; }
-
-/* 預載入容器 */
-#preload-container {
-    position: absolute;
-    width: 0; height: 0;
-    overflow: hidden;
-    z-index: -1;
-}
-
-/* 通用按鈕樣式 (魔法石/木塊風格) */
-.btn {
-    font-family: var(--font-serif);
-    border: 2px solid var(--hp-wood-light);
-    background: linear-gradient(to bottom, var(--hp-wood-dark), #2a221f);
-    color: var(--hp-parchment);
-    padding: 12px 24px;
-    margin: 5px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1.1rem;
-    font-weight: bold;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1), 0 4px 6px rgba(0,0,0,0.4);
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-/* 按鈕 hover 發光效果 */
-.btn:hover, .btn:active {
-    background: linear-gradient(to bottom, var(--hp-wood-light), var(--hp-wood-dark));
-    border-color: var(--hp-gold);
-    color: var(--hp-gold);
-    box-shadow: 0 0 15px var(--hp-gold-glow), inset 0 1px 0 rgba(255,255,255,0.2);
-    transform: translateY(-1px);
-}
-
-/* 魔法文字效果 (標題用) */
-.magical-text {
-    color: var(--hp-gold);
-    text-shadow: 0 0 10px var(--hp-gold-glow), 2px 2px 4px rgba(0,0,0,0.8);
-    letter-spacing: 1px;
-}
-
-/* 魔法邊框 */
-.magic-border {
-    border: 3px solid var(--hp-wood-dark);
-    border-image: linear-gradient(to right, var(--hp-gold), var(--hp-wood-light), var(--hp-gold)) 1;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
-}
-
-/* 羊皮紙背景 (用於圖片和彈窗) */
-.parchment-bg {
-    background-color: var(--hp-parchment);
-    background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" result="noise"/><feDiffuseLighting in="noise" lighting-color="%23f0e6d2" surfaceScale="2"><feDistantLight azimuth="45" elevation="60"/></feDiffuseLighting></filter><rect width="100%" height="100%" filter="url(%23noise)"/></svg>'); /* 簡易的雜點紋理 */
-    color: #333; /* 在羊皮紙上的文字要深色 */
-    border-radius: 4px;
-    box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
-}
-
 .codex-tabs {
     display: flex;
     flex-wrap: wrap;
@@ -143,11 +81,6 @@ body, html {
     background: rgba(212,175,55,.06);
 }
 .codex-tabs .tab.active {
-    color: var(--hp-gold);
-    border-bottom-color: var(--hp-gold);
-    text-shadow: 0 0 6px rgba(212,175,55,.4);
-}
-.codex-tabs .tab.is-active {
     color: var(--hp-gold);
     border-bottom-color: var(--hp-gold);
     text-shadow: 0 0 6px rgba(212,175,55,.4);
@@ -555,15 +488,6 @@ body, html {
     border-color: var(--hp-gold);
     box-shadow: 0 0 12px rgba(212,175,55,0.35);
 }
-.tutorial-modal-content {
-    max-width: 560px;
-    width: 92vw;
-    max-height: calc(100dvh - 24px);
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr) auto;
-    text-align: center;
-    overflow: hidden;
-}
 .tutorial-slide {
     min-height: 0;
     overflow-y: auto;
@@ -589,16 +513,8 @@ body, html {
 }
 .tutorial-footer { display: flex; flex-direction: column; align-items: center; gap: 12px; flex-shrink: 0; }
 .tutorial-btn-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-.tutorial-btn-row .btn:disabled { opacity: 0.4; cursor: default; }
 
 @media (max-height: 620px) and (orientation: landscape) {
-    #tutorial-modal.modal,
-    .tutorial-modal-content,
-    .tutorial-modal-content .magical-text {
-        margin: 0 0 4px;
-        font-size: clamp(1.05rem, 4.6vh, 1.35rem);
-    }
-
     .tutorial-slide {
         justify-content: flex-start;
         gap: 6px;
@@ -1597,7 +1513,6 @@ body.v2-active .v2-root { display: block; }
 /* Phase-based body classes */
 body.phase-resolving-correct .option-btn:not(.wrong-chosen):not(.correct-reveal) { pointer-events: none; }
 body.phase-resolving-wrong .option-btn:not(.wrong-chosen):not(.correct-reveal) { pointer-events: none; }
-body.phase-revealing { /* JS marks correct-reveal class */ }
 body.phase-cleanup .option-btn { pointer-events: none; }
 body.input-locked { cursor: progress; }
 body.input-locked .option-btn,
@@ -1614,6 +1529,42 @@ body.input-locked .v2-buzz button { pointer-events: none; }
     display: none;
 }
 .v2-hint-bubble.visible { display: block; }
+
+/* 練習答錯提示面板：官能基塗色圖 ＋ 辨識重點/常見陷阱。
+   底部置中浮層；若實測遮到選項，改 bottom/top 定位即可。 */
+.v2-why-hint { display: none; }
+#screen-game .v2-why-hint.visible {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(10px, 3dvh, 26px);
+    transform: translateX(-50%);
+    z-index: 40;
+    width: min(680px, calc(100% - 32px));
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    background: rgba(22, 18, 12, 0.94);
+    border: 1px solid rgba(212, 175, 55, 0.7);
+    border-left: 4px solid var(--hp-gold);
+    border-radius: 8px;
+    color: var(--hp-parchment);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+.why-hint-img {
+    flex: 0 0 auto;
+    width: clamp(56px, 12vw, 84px);
+    height: clamp(56px, 12vw, 84px);
+    object-fit: contain;
+    background: #f7f1e1;
+    border: 1px solid var(--hp-wood-dark);
+    border-radius: 6px;
+    padding: 4px;
+}
+.why-hint-text { font-size: .95rem; line-height: 1.55; text-align: left; }
+.why-hint-text strong { color: var(--hp-gold); }
+.why-hint-trap { display: block; margin-top: 5px; color: #ffcf7a; font-size: .9em; }
+
 #screen-game #game-hint-bubble.quick-hint.visible {
     position: absolute;
     top: clamp(72px, 12dvh, 120px);

@@ -357,3 +357,54 @@ LevelTutorials['mixed-beginner']              = LevelTutorials.level6 || [];
 LevelTutorials['mixed-intermediate']          = LevelTutorials.level6 || [];
 LevelTutorials['shell-intermediate']          = LevelTutorials.levelShell || [];
 LevelTutorials['englishChallenge-advanced']   = LevelTutorials.level99 || [];
+
+// =====================================================================
+// WhyHints — 練習模式「答錯」時，分類帽點破的一句話（辨識重點＋常見陷阱）。
+//   key   = AnswerBank 的 category
+//   zh    = 類別短名（顯示用）
+//   fg    = 官能基示意圖（先用 00_functional_groups 的塗色純官能基圖；
+//           日後可換成「這一題那顆分子、把正解官能基塗色」的版本）
+//   key/trap 文字 = teaching_copy_draft.md v3（待化學老師審，審完就地改字即可）
+// ★ 怎麼改：只動引號 "" 裡的字，別破壞逗號/引號配對。★
+// =====================================================================
+const WhyHints = {
+  alkane:     { zh: "烷",       fg: _FG + "fg_01_alkane.svg",
+    key: "整個分子只有碳和氫，碳與碳之間全是單鍵（一條線），沒有多出來的官能基。",
+    trap: "碳碳之間出現兩條線是烯、三條線是炔；烷全是單鍵。" },
+  alkene:     { zh: "烯",       fg: _FG + "fg_02_alkene.svg",
+    key: "碳與碳之間有一條雙鍵（兩條平行線 C=C），這條 C=C 就是烯的記號。",
+    trap: "兩條線是烯、三條線是炔；六角形帶圈圈的苯環另屬芳香烴。" },
+  alkyne:     { zh: "炔",       fg: _FG + "fg_03_alkyne.svg",
+    key: "碳與碳之間有一條參鍵（三條線 C≡C），這條 C≡C 就是炔的記號。",
+    trap: "三條線是炔、兩條線是烯，別把線數看錯。" },
+  alcohol:    { zh: "醇",       fg: _FG + "fg_04_alcohol.svg",
+    key: "有一個羥基（O–H：氧一邊接碳、一邊接氫），而且長在一般的碳鏈上。",
+    trap: "和醛最容易混：醇的 H 在氧上（O–H）、氧碳單鍵；醛的 H 在碳上、碳氧是雙鍵 C=O。氧兩邊都接碳是醚；O–H 直接接苯環是酚。" },
+  ether:      { zh: "醚",       fg: _FG + "fg_09_ether.svg",
+    key: "氧的兩邊都接碳（C–O–C），這個「碳–氧–碳」就是醚。",
+    trap: "看氧上有沒有掛氫：有 O–H 是醇，被兩個碳夾住、沒有 H 是醚。" },
+  aldehyde:   { zh: "醛",       fg: _FG + "fg_05_aldehyde.svg",
+    key: "有一個羰基（C=O）長在碳鏈末端、羰基碳上還接著一個氫（合寫成 –CHO）。",
+    trap: "和醇別混：醛有碳氧雙鍵（C=O）、H 在碳上；醇沒有 C=O、H 在氧上（O–H）。和酮：醛的羰基在末端接 H、酮夾在中間。" },
+  ketone:     { zh: "酮",       fg: _FG + "fg_06_ketone.svg",
+    key: "有一個羰基（C=O）被兩個碳夾在中間（兩邊都接碳）。",
+    trap: "夾在中間是酮、在末端接 H 是醛。" },
+  carboxylic: { zh: "羧酸",     fg: _FG + "fg_07_carboxylic_acid.svg",
+    key: "同一個碳上同時有羰基（C=O）和羥基（O–H），合寫成 –COOH（羧基）。",
+    trap: "尾巴接氫（O–H）是羧酸；那個 H 換成碳（–O–碳）就是酯。" },
+  ester:      { zh: "酯",       fg: _FG + "fg_08_ester.svg",
+    key: "有一段 C(=O)–O–C（羰基碳先接一個氧、那個氧再接碳）。",
+    trap: "尾巴接碳是酯、接氫（O–H）是羧酸；酯有 C=O、醚沒有。" },
+  amine:      { zh: "胺",       fg: _FG + "fg_10_amine.svg",
+    key: "有一個氮（N）接在碳上，而且氮旁邊沒有羰基（C=O）。最常見是 –NH₂。",
+    trap: "–NH₂ 和 O–H 畫起來有點像，看清楚中間那個原子是 N 還是 O。" },
+  aromatic:   { zh: "芳香烴",   fg: _FG + "fg_11_aromatic.svg",
+    key: "有苯環（六角形帶圈圈），而且苯環上只接碳氫基、整顆乾乾淨淨（如苯、甲苯、二甲苯）。",
+    trap: "苯環上若掛了官能基就選那個官能基（–O–H→酚、–CHO→醛、–COOH→羧酸、–NH₂→胺、鹵素→鹵化物）；苯環常只是背景。" },
+  halide:     { zh: "鹵化物",   fg: _FG + "fg_12_halide.svg",
+    key: "有一個碳接著鹵素，例如 C–F、C–Cl、C–Br、C–I（統稱 C–X，X＝F、Cl、Br、I）。",
+    trap: "留意角落的鹵素符號別看漏。" },
+  phenol:     { zh: "酚",       fg: _FG + "fg_13_phenol.svg",
+    key: "有一個 O–H 直接接在苯環的碳上。",
+    trap: "O–H 直接接環是酚；接在環外伸出的碳（如苯甲醇 –CH₂–O–H）是醇。" }
+};
