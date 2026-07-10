@@ -134,7 +134,7 @@ async function captureAll(dir) {
     // --- 練習：教學 modal → 遊戲畫面 → 快速提示泡泡（種子固定 → 題目固定） ---
     await page.click('[data-action="enter-difficulty"][data-arg="beginner"]');
     await sleep(300);
-    await page.evaluate(() => { document.querySelector('#sub-menu-list button').click(); });
+    await page.evaluate(() => { document.querySelector('#sub-menu-list button:not(.v2-tutorial-entry)').click(); });
     await sleep(800);
     const hasTutorialModal = await page.evaluate(() =>
         !!document.querySelector('[data-action="tutorial-close"]'));
@@ -174,7 +174,7 @@ async function captureAll(dir) {
     await shot(page, dir, 'main-menu-360');
     await page.click('[data-action="enter-difficulty"][data-arg="beginner"]');
     await sleep(300);
-    await page.evaluate(() => { document.querySelector('#sub-menu-list button').click(); });
+    await page.evaluate(() => { document.querySelector('#sub-menu-list button:not(.v2-tutorial-entry)').click(); });
     await sleep(800);
     await closeOverlays(page);
     await sleep(400);

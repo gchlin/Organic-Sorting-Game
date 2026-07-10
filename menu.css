@@ -254,6 +254,35 @@
     transform: translateY(-1px);
     outline: none;
 }
+/* 教學入口＋關卡包成一格：.v2-sub-list 在桌機是三欄，平鋪會把兩者拆散。 */
+.v2-sub-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+/* 教學入口：插在每個子關按鈕前面。刻意做得比關卡按鈕矮、淡、字小，
+   一眼看得出是輔助入口而不是另一關。 */
+.v2-sub-list button.v2-tutorial-entry {
+    min-height: 0;
+    padding: 7px clamp(12px, 1.6vw, 18px);
+    background: none;
+    border: 1px dashed rgba(212, 175, 55, .3);
+    border-radius: 8px;
+    box-shadow: none;
+    color: rgba(237, 226, 200, .72);
+    font-size: clamp(.8rem, 1.6vh, .92rem);
+}
+.v2-sub-list button.v2-tutorial-entry:hover,
+.v2-sub-list button.v2-tutorial-entry:focus {
+    background: rgba(212, 175, 55, .08);
+    border-style: solid;
+    border-color: rgba(212, 175, 55, .6);
+    color: #fff6d2;
+    box-shadow: none;
+}
+.v2-tutorial-entry-icon { font-size: 1.05em; line-height: 1; }
+.v2-sub-list button.v2-tutorial-entry .level-name { font-weight: 400; }
+
 .v2-sub-list .sub-cleared {
     border-color: rgba(88,214,141,.65);
     box-shadow: inset 0 0 0 1px rgba(88,214,141,.12), 0 0 12px rgba(88,214,141,.12);

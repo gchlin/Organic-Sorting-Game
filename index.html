@@ -14,14 +14,14 @@
     <link rel="stylesheet" href="css/10-codex.css?v=css-split-1">
     <link rel="stylesheet" href="css/20-tutorial-icons.css?v=css-split-1">
     <link rel="stylesheet" href="css/30-screens-modals.css?v=css-split-1">
-    <link rel="stylesheet" href="css/40-game-screen.css?v=review-20260710">
+    <link rel="stylesheet" href="css/40-game-screen.css?v=controls-20260710">
     <link rel="stylesheet" href="css/50-responsive.css?v=css-split-1">
     <link rel="stylesheet" href="css/60-options-buzz.css?v=review-20260710">
     <link rel="stylesheet" href="css/70-hint-dev.css?v=css-split-1">
     <link rel="stylesheet" href="css/80-settle-wrongbook.css?v=css-split-1">
     <link rel="stylesheet" href="css/90-settings-misc.css?v=css-split-1">
     <link rel="stylesheet" href="sorting-hat.css?v=review-20260710">
-    <link rel="stylesheet" href="menu.css?v=hat-size-20260710">
+    <link rel="stylesheet" href="menu.css?v=tutorial-entry-20260710">
     <!-- Legacy layout.css / menu.css moved to legacy/ — v2 styles in style.css are self-contained. -->
 </head>
 <body>
@@ -113,13 +113,6 @@
             <div id="game-image-container" class="v2-image-frame">
                 <img id="game-image" src="" alt="" />
                 <div id="dynamic-score-pct" class="dynamic-score-pct" aria-live="polite"></div>
-                <!-- 練習回顧：翻看本輪已答對的題目（唯讀，不影響分數）。
-                     掛在分子卡右下角，HUD 是三欄格線，塞第四個子元素會多長一列。 -->
-                <div id="game-review-nav" class="v2-review-nav">
-                    <button type="button" data-action="review-prev" title="上一題 [←]" aria-label="上一題">◀</button>
-                    <button type="button" data-action="review-next" title="下一題 [→]" aria-label="下一題">▶</button>
-                    <button type="button" data-action="review-exit" class="v2-review-exit" title="回到最新題 [Esc]" aria-label="回到最新題">回到最新</button>
-                </div>
             </div>
 
             <div id="game-options" class="v2-options v2-options-p1">
@@ -152,14 +145,22 @@
             <div id="game-hint-bubble" class="v2-hint-bubble"></div>
 
             <!-- 練習模式導師：角落魔導書，隨作答換表情（答對開心／答錯不悅／思考）。
-                 用 <button> 而非 <div>：可點擊切換說明泡泡，Enter/Space 才會原生生效。 -->
+                 用 <button> 而非 <div>：點它會換表情，Enter/Space 才會原生生效。 -->
             <button type="button" id="game-mentor" class="hat-char game-mentor neutral"
-                    data-action="mentor-toggle" title="點魔導書問問題" aria-label="問魔導書"></button>
-            <!-- 導師說的話：未答對→官能基辨識重點；已答對→該分子的用途（CompoundFacts） -->
+                    data-action="mentor-poke" title="戳魔導書" aria-label="戳魔導書"></button>
+            <!-- 導師答對後講解該分子的用途（CompoundFacts） -->
             <div id="game-mentor-bubble" class="mentor-bubble" aria-live="polite"></div>
 
-            <!-- 練習答對後停在這裡，等學生讀完講解再按「繼續」換題 -->
-            <button type="button" id="game-continue" data-action="practice-continue">繼續 ▶ <small>[Space]</small></button>
+            <!-- 練習控制列：翻看已答對的題目（唯讀）＋ 答對後的「繼續」。
+                 借用 buzz 的格線列（練習模式那列本來就空著），不會蓋到分子圖。 -->
+            <div id="game-controls" class="v2-game-controls">
+                <div id="game-review-nav" class="v2-review-nav">
+                    <button type="button" data-action="review-prev" title="上一題 [←]" aria-label="上一題">◀</button>
+                    <button type="button" data-action="review-next" title="下一題 [→]" aria-label="下一題">▶</button>
+                    <button type="button" data-action="review-exit" class="v2-review-exit" title="回到最新題 [Esc]" aria-label="回到最新題">回到最新</button>
+                </div>
+                <button type="button" id="game-continue" data-action="practice-continue">繼續 <small>[Space]</small></button>
+            </div>
 
             <div id="dev-quickwin-banner" class="v2-dev-banner">🔧 測試模式：答對 N 題即結算</div>
             <div class="duel-orientation-lock" aria-hidden="true">
@@ -341,6 +342,6 @@
     <script src="ui-settle.js?v=codex-deeplink-20260710"></script>
     <script src="ui-story.js?v=ui-split-4"></script>
     <script src="ui-settings.js?v=ui-split-5"></script>
-    <script src="game-v2.js?v=review-20260710"></script>
+    <script src="game-v2.js?v=controls-20260710"></script>
 </body>
 </html>

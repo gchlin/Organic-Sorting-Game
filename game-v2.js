@@ -611,16 +611,36 @@
             listEl.appendChild(btn);
         }
 
+        // 每個子關前面插一顆教學入口，讓學生隨時能重看該關的教學
+        // （不只第一次進關才自動播一次）。沒有教學資料的關就不插。
+        // 教學＋關卡要包成一個 grid 格子：.v2-sub-list 在桌機是三欄，
+        // 直接平鋪會把教學和它的關卡拆到不同欄。
+        function makeTutorialEntry(fk, diff) {
+            if (!UIStory.pagesFor(fk, diff)) return null;
+            const btn = document.createElement('button');
+            btn.className = 'v2-tutorial-entry';
+            btn.innerHTML = '<span class="v2-tutorial-entry-icon" aria-hidden="true">📖</span>'
+                + '<span class="level-name">' + _escapeHtml(Families[fk].nameZh) + ' · 教學</span>';
+            btn.addEventListener('click', function () {
+                UIStory.openLevelTutorial(fk, diff, function () { goToScreen('sub-menu'); });
+            });
+            return btn;
+        }
+
         if (_subMenuContext.kind === 'difficulty') {
             const diff = _subMenuContext.difficulty;
             titleEl.textContent = diffName(diff) + ' 練習 — 選擇主題子關';
             const familyKeys = Object.keys(Families).filter(k => Families[k].difficulties.indexOf(diff) !== -1);
             for (let i = 0; i < familyKeys.length; i++) {
                 const fk = familyKeys[i];
-                const btn = appendFamilyButton(fk, diff, '', function () {
+                const cell = document.createElement('div');
+                cell.className = 'v2-sub-item';
+                const tut = makeTutorialEntry(fk, diff);
+                if (tut) cell.appendChild(tut);
+                cell.appendChild(appendFamilyButton(fk, diff, '', function () {
                     startMode({ mode: 'practice', family: fk, difficulty: diff, opponent: 'human' });
-                });
-                listEl.appendChild(btn);
+                }));
+                listEl.appendChild(cell);
             }
         } else if (_subMenuContext.kind === 'duelFamily') {
             const diff = _subMenuContext.difficulty;
@@ -1628,8 +1648,8 @@
                 case 'practice-continue':
                     dispatch({ type: 'CONTINUE' });
                     break;
-                case 'mentor-toggle':
-                    _mentorToggleBubble();
+                case 'mentor-poke':
+                    _mentorPoke();
                     break;
                 case 'review-prev':
                     _reviewStep(-1);
@@ -1879,9 +1899,7 @@
         }, 2800);
     }
 
-    // 練習模式：導師說的話。內容分兩種，取決於當題答案是否已經揭曉：
-    //   未答對 → 官能基辨識重點（WhyHints，跟「看教學」同源，不劇透分子）
-    //   已答對 → 該分子的用途（CompoundFacts）
+    // 練習模式：導師只在「答對後」開口，講該分子的用途（CompoundFacts）。
     // 用途說明常常直接點名類別（「最簡單的烷類」），作答前講等於送答案。
     // 泡泡不自動消失：答對後停在 awaitingContinue，學生按「繼續」才收（換題必收）。
     function _mentorShow(html) {
@@ -1902,24 +1920,15 @@
         _mentorShow('<strong>' + _escapeHtml(name) + '</strong>' + _escapeHtml(fact));
     }
 
-    // 答案已揭曉？（答對停等中，或正在回顧已答對的舊題）
-    function _answerRevealed() {
-        return _isReviewing() || (!!state && state.phase === 'awaitingContinue');
-    }
-
-    // 點魔導書：開著就收，收著就講。講什麼看答案揭曉了沒。
-    function _mentorToggleBubble() {
-        if (!state || state.mode !== 'practice') return;
-        const b = document.getElementById('game-mentor-bubble');
-        if (!b) return;
-        if (b.classList.contains('is-visible')) { _mentorHush(); return; }
-        if (_isReviewing()) {
-            _mentorSayFact(_reviewHistory[_reviewIdx].compoundKey);
-        } else if (state.phase === 'awaitingContinue' && state.question && state.question.current) {
-            _mentorSayFact(state.question.current.compoundKey);
-        } else {
-            _mentorShow(_quickHintText());
-        }
+    // 戳魔導書：只換表情，不說話。（提示留給「看教學」按鈕；泡泡再開一個會太擠。）
+    // 不呼叫 render()，表情就留到下一次 dispatch 由 _syncGameMentor 接手。
+    const _MENTOR_POKE_SEQ = ['surprised', 'wink', 'annoyed', 'sleepy', 'happy'];
+    let _mentorPokeIdx = -1;
+    function _mentorPoke() {
+        const el = document.getElementById('game-mentor');
+        if (!el) return;
+        _mentorPokeIdx = (_mentorPokeIdx + 1) % _MENTOR_POKE_SEQ.length;
+        setHatExpression(el, _MENTOR_POKE_SEQ[_mentorPokeIdx]);
     }
 
     // 練習模式導師表情：依當前 phase 反應。只在表情改變時才重設 class，

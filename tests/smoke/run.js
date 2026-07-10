@@ -56,7 +56,7 @@ async function closeOverlays(page) {
 async function enterPractice(page) {
     await page.click('[data-action="enter-difficulty"][data-arg="beginner"]');
     await page.waitForSelector('#screen-sub-menu.is-active');
-    await page.evaluate(() => { document.querySelector('#sub-menu-list button').click(); });
+    await page.evaluate(() => { document.querySelector('#sub-menu-list button:not(.v2-tutorial-entry)').click(); });
     await sleep(700);
     await closeOverlays(page);
     await sleep(400);
@@ -105,6 +105,16 @@ async function assertCorrectPause(page, failures) {
     if (!st.awaiting) { failures.push('practice: correct answer did not pause at awaitingContinue'); return; }
     if (!st.contShown) failures.push('practice: continue button hidden while awaiting continue');
     if (!st.bubbleText) failures.push('practice: mentor said nothing after a correct answer');
+
+    // 控制列不能蓋到分子圖
+    const clash = await page.evaluate(() => {
+        const c = document.getElementById('game-controls').getBoundingClientRect();
+        const i = document.getElementById('game-image-container').getBoundingClientRect();
+        const hit = !(c.right <= i.left || c.left >= i.right || c.bottom <= i.top || c.top >= i.bottom);
+        return { hit, inView: c.bottom <= innerHeight + 1 };
+    });
+    if (clash.hit) failures.push('practice: control row overlaps the molecule card');
+    if (!clash.inView) failures.push('practice: control row pushed below the viewport');
 
     // ← 進入唯讀回顧：看得到正解，但點選項不能改變 phase。
     await page.keyboard.press('ArrowLeft');
