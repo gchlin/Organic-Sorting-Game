@@ -20,3 +20,4 @@ docs/Review_game-v2_2
 
 # 煙霧測試依賴（tests/smoke/README：npm install 後執行 node run.js）
 tests/smoke/node_modules/
+tests/smoke/shots/
