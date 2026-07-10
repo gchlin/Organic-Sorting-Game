@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap">
 
-    <link rel="stylesheet" href="style.css?v=hint-symbol-no-before-image-200-20260708">
+    <link rel="stylesheet" href="style.css?v=quickhint-fixed-pos-20260710">
     <link rel="stylesheet" href="sorting-hat.css">
     <link rel="stylesheet" href="menu.css">
     <!-- Legacy layout.css / menu.css moved to legacy/ — v2 styles in style.css are self-contained. -->
@@ -92,7 +92,10 @@
                         <span id="game-mode-label" class="v2-duel-mode-label">雙人決鬥</span>
                         <strong id="game-question-label">這是甚麼類別的有機分子?</strong>
                     </div>
-                    <button class="v2-back-btn v2-back-btn-sm v2-game-tutorial-btn" data-action="show-tutorial" data-icon="quill" title="看教學" aria-label="看教學">看教學</button>
+                    <button class="v2-back-btn v2-game-tutorial-btn" data-action="show-tutorial" title="看教學" aria-label="看教學">
+                        <span class="v2-game-tutorial-icon" aria-hidden="true"></span>
+                        <span class="v2-game-tutorial-label">看教學</span>
+                    </button>
                 </div>
                 <div id="game-question-progress" class="v2-question-progress">1 / 10</div>
                 <div id="opponent-label" class="v2-opp-label"></div>
@@ -307,6 +310,6 @@
     <script src="input-controller.js"></script>
     <script src="ai-controller.js"></script>
     <!-- Legacy game.js moved to legacy/ — game-v2.js is the live game loop. -->
-    <script src="game-v2.js?v=hint-symbol-20260708"></script>
+    <script src="game-v2.js?v=quickhint-fixed-pos-20260710"></script>
 </body>
 </html>

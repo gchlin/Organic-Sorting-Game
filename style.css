@@ -783,7 +783,7 @@ body.v2-active .v2-root { display: block; }
 .player-area.locked-area { opacity: 0.35; pointer-events: none; }
 .v2-duel-hud-title {
     display: grid;
-    grid-template-columns: 36px minmax(0, 1fr) 36px;
+    grid-template-columns: minmax(86px, auto) minmax(0, 1fr) minmax(86px, auto);
     align-items: center;
     gap: 8px;
     min-width: 0;
@@ -848,6 +848,47 @@ body.v2-active .v2-root { display: block; }
 .v2-help-btn[data-icon]::before {
     min-width: 1.15em;
     min-height: 1.15em;
+}
+.v2-game-tutorial-btn {
+    justify-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: auto;
+    min-width: 86px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0 9px;
+    overflow: hidden;
+    color: var(--hp-parchment);
+    font-size: clamp(.72rem, 1.8vh, .86rem);
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    border-radius: 7px;
+    background: rgba(47, 36, 32, .9);
+}
+.v2-game-tutorial-btn:hover {
+    background: var(--hp-gold);
+    color: var(--hp-bg-dark);
+}
+.v2-game-tutorial-icon {
+    flex: 0 0 17px;
+    width: 17px;
+    height: 17px;
+    background-color: var(--hp-gold);
+    -webkit-mask: url('assets/images/icons/quill.svg') center / contain no-repeat;
+    mask: url('assets/images/icons/quill.svg') center / contain no-repeat;
+}
+.v2-game-tutorial-btn:hover .v2-game-tutorial-icon {
+    background-color: var(--hp-bg-dark);
+}
+.v2-game-tutorial-label {
+    display: inline-block;
+    min-width: 3em;
+    color: inherit;
+    text-align: left;
 }
 /* Practice mode hides p2 area */
 #screen-game.mode-practice .player-area[data-player="p2"] { display: none; }
@@ -1531,36 +1572,44 @@ body.input-locked .v2-buzz button { pointer-events: none; }
 .v2-hint-bubble.visible { display: block; }
 
 /* 答錯教學提示：顯示在「看教學」泡泡裡（官能基小圖 ＋ 辨識重點/常見陷阱）。 */
-.why-hint-row { display: flex; gap: 12px; align-items: flex-start; }
+.why-hint-row { display: flex; gap: 16px; align-items: center; }
 .why-hint-img {
     flex: 0 0 auto;
-    width: clamp(96px, 20vw, 144px);
-    height: clamp(96px, 20vw, 144px);
+    width: clamp(84px, 17vw, 116px);
+    height: clamp(84px, 17vw, 116px);
     object-fit: contain;
-    background: #f7f1e1;
-    border: 1px solid var(--hp-wood-dark);
-    border-radius: 6px;
-    padding: 8px;
+    background: #faf5e6;
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.38), inset 0 0 0 1px rgba(255, 255, 255, 0.45);
 }
-.why-hint-text { text-align: left; }
+.why-hint-text { text-align: left; line-height: 1.55; flex: 1 1 auto; min-width: 0; }
 .why-hint-text strong { color: var(--hp-gold); }
-.why-hint-trap { display: block; margin-top: 5px; color: #ffcf7a; font-size: .9em; }
-
-/* 答錯後提示按鈕改用週期性符號提醒，不使用閃爍動畫。 */
-.v2-game-tutorial-btn.hint-symbol {
-    color: var(--hp-gold);
-    font-family: "Cinzel", "Georgia", serif;
-    font-size: 24px;
-    font-weight: 900;
-    line-height: 1;
-}
-.v2-game-tutorial-btn.hint-symbol::before {
-    content: none !important;
-    display: none !important;
+.why-hint-trap {
+    display: block;
+    margin-top: 9px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(212, 175, 55, 0.42);
+    color: #ffcf7a;
+    font-size: .92em;
 }
 
+/* 答錯後只有「看教學」文字閃爍 4 次；按鈕本體和 quill icon 不參與動畫。 */
+.v2-game-tutorial-label.hint-flash-text { animation: hintTextFlash 0.5s ease-in-out 4; }
+@keyframes hintTextFlash {
+    0%, 100% { color: var(--hp-parchment); text-shadow: none; }
+    50% {
+        color: #ffe9a6;
+        text-shadow: 0 0 10px var(--hp-gold-glow), 0 0 4px var(--hp-gold-glow);
+    }
+}
+
+/* fixed（不用 absolute）：這個元素有 grid-area:hint，絕對定位的 grid 子元素
+   會以自己的 grid area 當定位基準；hint 列在高度不足時會被擠出畫面外，
+   造成泡泡「打開了卻看不到」。改用 fixed 直接對視窗定位。 */
 #screen-game #game-hint-bubble.quick-hint.visible {
-    position: absolute;
+    position: fixed;
     top: clamp(72px, 12dvh, 120px);
     left: 50%;
     transform: translateX(-50%);

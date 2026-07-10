@@ -74,10 +74,9 @@
     let _tutorialState = null;  // { pages, idx, onDone, key }
     let _storyState = null;     // { lines, idx, playerName, onDone }
     let _quickHintOpen = false;
-    let _tutorialHintIconTimer = null;
-    let _tutorialHintIconKey = null;
-    let _tutorialHintIconIndex = 0;
-    let _activeWrongHintKey = '';
+    let _wrongHintFlashSeq = 0;
+    let _activeWrongHintKey = '';       // 最近一次答錯的閃爍識別碼（''＝目前沒有答錯）
+    let _lastFlashedWrongKey = null;    // 已閃爍過的識別碼，避免 render 重複播放
     let _wrongChosenMap = {};   // { compoundKey or compoundKey|questionIndex: chosenWrongAnswerKey } — per round
     let _codexTab = 'molecules'; // 'molecules' | 'levels' | 'badges' | 'story'
     let _wrongBookTab = 'category'; // 'category' | 'all' | 'box1' | 'box2' | 'box3' | 'mastered'
@@ -154,14 +153,11 @@
         if (action.type === 'SUBMIT_ANSWER' && preCompoundKey) {
             _lastAnswerPlayer = action.player || null;
             const wasCorrect = (action.key === preCorrectKey);
-            if (wasCorrect) {
-                _activeWrongHintKey = '';
-                _stopTutorialHintIcon();
-            } else {
-                _activeWrongHintKey = 'wrong:' + (action.key || preCompoundKey || Date.now());
-                const tutBtn = document.querySelector('[data-action="show-tutorial"]');
-                if (tutBtn) _startTutorialHintIcon(tutBtn, _activeWrongHintKey);
-            }
+            // 每次答錯都產生新的識別碼；render() 會據此讓「看教學」文字閃爍 4 次。
+            _activeWrongHintKey = wasCorrect
+                ? ''
+                : 'wrong:' + (++_wrongHintFlashSeq);
+            if (wasCorrect) _clearHintFlash();
             if (state.mode === 'practice' && wasCorrect) {
                 if (typeof Save !== 'undefined') {
                     if (Save.recordMoleculeAnsweredV2) Save.recordMoleculeAnsweredV2(preCompoundKey, state.difficulty);
@@ -191,7 +187,7 @@
         if (action.type === 'LOAD_NEXT_QUESTION' || action.type === 'BUZZ') {
             _lastAnswerPlayer = null;
             _activeWrongHintKey = '';
-            _stopTutorialHintIcon();
+            _clearHintFlash();
         }
 
         // LOAD_NEXT_QUESTION side effects — enrich the freshly-loaded question.
@@ -422,7 +418,7 @@
         if (buzz) buzz.classList.remove('buzz-open', 'buzz-owner-p1', 'buzz-owner-p2');
         const hint = document.getElementById('game-hint-bubble');
         _quickHintOpen = false;
-        _stopTutorialHintIcon();
+        _clearHintFlash();
         if (hint) { hint.classList.remove('visible', 'quick-hint'); hint.textContent = ''; }
         const img = document.getElementById('game-image');
         if (img) {
@@ -869,6 +865,7 @@
             _stopBuzzedTickLoop();
         }
 
+        _syncTutorialBtn();
         _updateFeedbackOverlay();
         _checkComboPopup();
     }
@@ -972,63 +969,48 @@
     function _toggleQuickHint() {
         _quickHintOpen = !_quickHintOpen;
         if (_quickHintOpen) {
-            _activeWrongHintKey = '';
-            _stopTutorialHintIcon();
+            // 按開提示：立刻停止閃爍，並記住已看過這次答錯（關閉後不再重閃）。
+            _lastFlashedWrongKey = _activeWrongHintKey || null;
+            const btn = document.querySelector('[data-action="show-tutorial"]');
+            if (btn) {
+                const label = btn.querySelector('.v2-game-tutorial-label');
+                if (label) label.classList.remove('hint-flash-text');
+            }
         }
         _renderQuickHint();
     }
 
-    function _setTutorialHintIcon(btn) {
-        if (!btn) return;
-        btn.classList.add('hint-symbol');
-        btn.removeAttribute('data-icon');
-        btn.textContent = _tutorialHintIconIndex % 2 === 0 ? '✻' : '✿';
-    }
-    function _startTutorialHintIcon(btn, wrongKey) {
-        if (!btn || !wrongKey) return;
-        if (_tutorialHintIconKey !== wrongKey) {
-            _tutorialHintIconKey = wrongKey;
-            _tutorialHintIconIndex = 0;
+    // 移除「看教學」按鈕的閃爍狀態，並重置閃爍追蹤（下次答錯可重新閃）。
+    function _clearHintFlash() {
+        _lastFlashedWrongKey = null;
+        const btn = document.querySelector('[data-action="show-tutorial"]');
+        if (btn) {
+            const label = btn.querySelector('.v2-game-tutorial-label');
+            if (label) label.classList.remove('hint-flash-text');
         }
-        _setTutorialHintIcon(btn);
-        if (_tutorialHintIconTimer !== null) return;
-        _tutorialHintIconTimer = setInterval(function () {
-            const latestBtn = document.querySelector('[data-action="show-tutorial"]');
-            if (!latestBtn) {
-                _stopTutorialHintIcon();
-                return;
-            }
-            _tutorialHintIconIndex++;
-            _setTutorialHintIcon(latestBtn);
-        }, 1000);
     }
-    function _stopTutorialHintIcon() {
-        if (_tutorialHintIconTimer !== null) {
-            clearInterval(_tutorialHintIconTimer);
-            _tutorialHintIconTimer = null;
-        }
-        _tutorialHintIconKey = null;
-        _tutorialHintIconIndex = 0;
+
+    // 同步「看教學」按鈕：沒有教學就隱藏；答錯後讓文字閃爍 4 次，
+    // 提醒學生可以按提示看辨識重點。遊戲畫面與結算畫面共用。
+    function _syncTutorialBtn() {
         const tutBtn = document.querySelector('[data-action="show-tutorial"]');
-        if (tutBtn) {
-            tutBtn.classList.remove('hint-symbol');
-            tutBtn.setAttribute('data-icon', 'quill');
-            tutBtn.textContent = '看教學';
+        if (!tutBtn) return;
+        const pages = (state && state.family && state.difficulty)
+            ? _tutorialPagesFor(state.family, state.difficulty) : null;
+        const hasTut = !!(pages && pages.length > 0);
+        tutBtn.style.display = hasTut ? '' : 'none';
+
+        const wrongKey = _activeWrongHintKey || '';
+        const label = tutBtn.querySelector('.v2-game-tutorial-label');
+        if (!label) return;
+        if (_quickHintOpen || !hasTut || !wrongKey) {
+            label.classList.remove('hint-flash-text');
+        } else if (wrongKey !== _lastFlashedWrongKey) {
+            label.classList.remove('hint-flash-text');
+            void tutBtn.offsetWidth;  // 強制 reflow 以重播動畫
+            label.classList.add('hint-flash-text');
         }
-    }
-    function _currentWrongHintKey() {
-        if (!state || !state.question) return '';
-        if (_activeWrongHintKey) return _activeWrongHintKey;
-        if (state.question.lastChosenWrongKey) return String(state.question.lastChosenWrongKey);
-        const q = state.question.current;
-        if (q && state.wrongInRound && state.wrongInRound.has && state.wrongInRound.has(q.compoundKey)) {
-            return 'compound:' + q.compoundKey;
-        }
-        const eliminated = state.question.eliminatedWrongKeys;
-        if (eliminated && eliminated.size > 0) {
-            return 'eliminated:' + Array.from(eliminated).join('|');
-        }
-        return '';
+        _lastFlashedWrongKey = wrongKey || null;
     }
 
     // ---- Buzz countdown + handoff overlay (rAF loop) --------------------
@@ -1302,21 +1284,7 @@
         }
 
         // Tutorial button: hide/disable if no tutorial exists for current family-difficulty
-        const tutBtn = document.querySelector('[data-action="show-tutorial"]');
-        if (tutBtn) {
-            const tutKey = (state && state.family && state.difficulty)
-                ? state.family + '-' + state.difficulty : null;
-            const tut = tutKey && (typeof LevelTutorials !== 'undefined') ? LevelTutorials[tutKey] : null;
-            const hasTut = tut && (Array.isArray(tut.pages) ? tut.pages.length > 0
-                                 : Array.isArray(tut) ? tut.length > 0 : false);
-            tutBtn.style.display = hasTut ? '' : 'none';
-
-            // 答錯後週期性切換提示按鈕 icon，提醒學生可以按提示看辨識重點。
-            const wrongKey = _currentWrongHintKey();
-            const shouldCycleHintIcon = hasTut && wrongKey && !_quickHintOpen;
-            if (shouldCycleHintIcon) _startTutorialHintIcon(tutBtn, wrongKey);
-            else _stopTutorialHintIcon();
-        }
+        _syncTutorialBtn();
 
         // Wrong review (Practice only)
         if (wrongReview && wrongCards) {
