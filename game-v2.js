@@ -164,6 +164,8 @@
                     // re-answer toward its mastery streak (Leitner-spirit promote).
                     if (Save.promoteWrongV2) Save.promoteWrongV2(state.family, state.difficulty, preCompoundKey);
                 }
+                // 答對了，答案已揭曉 → 導師順便講這個分子能幹嘛。
+                _mentorSayFact(preCompoundKey);
             } else if (state.mode === 'practice' && !wasCorrect) {
                 state.wrongInRound.add(preCompoundKey);
                 // Track the latest wrong pick for settle display, plus an indexed
@@ -436,6 +438,7 @@
     }
 
     function resetRuntimeAfterLeavingGame() {
+        _mentorHush();
         if (!state) return;
         state.phase = 'idle';
         state.globalInputLocked = false;
@@ -1307,6 +1310,7 @@
         // Tear down any prior AI
         if (aiController) { try { aiController.stop(); } catch (e) {} aiController = null; }
         _teardownAudio();
+        _mentorHush();
 
         _wrongChosenMap = {};
         _prevCombo.p1 = '';
@@ -1725,13 +1729,25 @@
         const s = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : null;
         return (s && s.characterSkin === 'hat') ? 'hat' : 'grimoire';
     }
+    // 魔導書：底圖 + CSS 五官，包在 .grimoire-body 裡（動作動畫套在 body 上，
+    // 臉才會跟著書一起動）。表情由 .hat-char 上的 class 驅動，見 sorting-hat.css。
+    const GRIMOIRE_INNER =
+        '<div class="grimoire-body">' +
+            '<img class="grimoire-img" src="assets/images/character/magicbook.webp" alt="">' +
+            '<div class="grimoire-face">' +
+                '<div class="g-brow left"></div><div class="g-brow right"></div>' +
+                '<div class="g-eye left"><div class="g-pupil"></div></div>' +
+                '<div class="g-eye right"><div class="g-pupil"></div></div>' +
+                '<div class="g-mouth"></div>' +
+            '</div>' +
+        '</div>';
     function ensureHatChar(el) {
         if (!el) return;
         if (_characterSkin() === 'grimoire') {
-            // 魔導書：靜態圖，忽略表情。切換自帽版時（無 .grimoire-img）重繪。
-            if (!el.querySelector('.grimoire-img')) {
+            // 切換自帽版時（或舊版無 .grimoire-body 的 DOM）重繪。
+            if (!el.querySelector('.grimoire-body')) {
                 el.classList.add('is-grimoire');
-                el.innerHTML = '<img class="grimoire-img" src="assets/images/character/magicbook.webp" alt="">';
+                el.innerHTML = GRIMOIRE_INNER;
             }
         } else if (!el.querySelector('.hat-img')) {
             el.classList.remove('is-grimoire');
@@ -1784,6 +1800,32 @@
             _homeIdleIdx = (_homeIdleIdx + 1) % _HOME_IDLE_SEQ.length;
             setHatExpression(el, _HOME_IDLE_SEQ[_homeIdleIdx]);
         }, 2800);
+    }
+
+    // 練習模式：答對後由導師講解該分子的用途（沿用圖鑑的 CompoundFacts）。
+    // 只在答對後才說，因為說明常常直接點名類別（「最簡單的烷類」），
+    // 在作答前顯示等於送答案。7 秒後自動收起。
+    let _mentorSayTimer = null;
+    function _mentorHush() {
+        if (_mentorSayTimer !== null) { clearTimeout(_mentorSayTimer); _mentorSayTimer = null; }
+        const b = document.getElementById('game-mentor-bubble');
+        if (b) { b.classList.remove('is-visible'); b.textContent = ''; }
+    }
+    function _mentorSayFact(compoundKey) {
+        const b = document.getElementById('game-mentor-bubble');
+        if (!b) return;
+        const fact = (typeof CompoundFacts !== 'undefined') ? CompoundFacts[compoundKey] : null;
+        if (!fact) { _mentorHush(); return; }
+        const entry = (typeof AnswerBank !== 'undefined') ? AnswerBank[compoundKey] : null;
+        const name = entry ? entry.content : compoundKey;
+        b.innerHTML = '<strong>' + _escapeHtml(name) + '</strong>' + _escapeHtml(fact);
+        b.classList.add('is-visible');
+        if (_mentorSayTimer !== null) clearTimeout(_mentorSayTimer);
+        _mentorSayTimer = setTimeout(function () {
+            _mentorSayTimer = null;
+            const el = document.getElementById('game-mentor-bubble');
+            if (el) el.classList.remove('is-visible');
+        }, 7000);
     }
 
     // 練習模式導師表情：依當前 phase 反應。只在表情改變時才重設 class，

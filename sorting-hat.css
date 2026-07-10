@@ -24,13 +24,128 @@
     position: absolute; inset: 0;
     background: url('assets/images/character/Sorting_Hat.webp') no-repeat center / contain;
 }
-/* 分類魔導書皮膚：靜態圖，取代 CSS 五官 */
+/* 分類魔導書皮膚：底圖 + CSS 五官。
+   .grimoire-body 是動作動畫的載體，讓臉跟著書一起彈跳/搖擺，不會脫框。 */
+.hat-char.is-grimoire { container-type: size; --g-line: 2px; }
+@supports (width: 1cqw) {
+    /* 線條粗細隨角色尺寸縮放：100px 的首頁書與 340px 的放大檢視都好看 */
+    .hat-char.is-grimoire { --g-line: max(1px, 1.6cqw); }
+}
+.hat-char.is-grimoire .grimoire-body {
+    position: absolute; inset: 0;
+    transform-origin: 50% 88%;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,.5));
+}
 .hat-char.is-grimoire .grimoire-img {
     position: absolute; inset: 0;
     width: 100%; height: 100%;
     object-fit: contain;
-    filter: drop-shadow(0 3px 6px rgba(0,0,0,.5));
 }
+
+/* ---- 魔導書的臉（方案 A：封面墨線五官）----
+   五官畫在「面向觀眾的右封面」上。座標以圖片在方框內的實際矩形為基準：
+   magicbook.webp 是 1408x768（比例 1.8333），方框 object-fit:contain
+   → 圖片上緣 22.73%、高 54.55%。圓角一律用百分比：絕對 px 圓角在 100px
+   的實際尺寸下會把嘴巴和眼睛渲染成方框。 */
+/* 比例是照「首頁實際 100px」調的，不是照放大檢視——五官必須夠大才讀得出表情。
+   兩眼＋間距要塞進封面的 50%~77% 區間。 */
+.hat-char.is-grimoire {
+    --g-eye-cx: 63.5%; --g-eye-y: 26%; --g-eye-gap: 7%;
+    --g-eye-w: 9%; --g-eye-h: 22%;
+    --g-brow-lift: 11%; --g-brow-h: 5%;
+    --g-mouth-y: 62%; --g-mouth-w: 17%; --g-mouth-h: 13%;
+}
+.grimoire-face {
+    position: absolute; left: 0; width: 100%;
+    top: 22.73%; height: 54.55%;
+    pointer-events: none;
+}
+.g-eye, .g-brow, .g-mouth, .g-pupil { position: absolute; }
+.g-eye {
+    top: var(--g-eye-y);
+    width: var(--g-eye-w); height: var(--g-eye-h);
+    background: #f7f2e4;
+    border: var(--g-line) solid #6b5535;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: inset 0 -2px 3px rgba(0,0,0,.15), 0 1px 3px rgba(0,0,0,.5);
+    transition: height .15s ease, transform .2s ease, border-radius .2s ease;
+}
+.g-eye.left  { left: calc(var(--g-eye-cx) - var(--g-eye-gap) / 2 - var(--g-eye-w)); }
+.g-eye.right { left: calc(var(--g-eye-cx) + var(--g-eye-gap) / 2); }
+.g-pupil {
+    left: 50%; top: 52%;
+    width: 38%; aspect-ratio: 1/1;
+    background: radial-gradient(circle at 35% 30%, #555, #000 60%);
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+}
+.g-brow {
+    top: calc(var(--g-eye-y) - var(--g-brow-lift));
+    width: calc(var(--g-eye-w) + 2%); height: var(--g-brow-h);
+    background: var(--ink);
+    border-radius: 4px;
+    box-shadow: var(--ink-shadow);
+    transition: transform .2s ease, top .2s ease;
+}
+.g-brow.left  { left: calc(var(--g-eye-cx) - var(--g-eye-gap) / 2 - var(--g-eye-w) - 1%); transform-origin: right center; transform: rotate(-4deg); }
+.g-brow.right { left: calc(var(--g-eye-cx) + var(--g-eye-gap) / 2 - 1%);                  transform-origin: left center;  transform: rotate(4deg); }
+.g-mouth {
+    left: calc(var(--g-eye-cx) - var(--g-mouth-w) / 2);
+    top: var(--g-mouth-y);
+    width: var(--g-mouth-w); height: var(--g-mouth-h);
+    border: var(--g-line) solid var(--ink);
+    border-top-color: transparent;
+    border-radius: 0 0 50% 50% / 0 0 100% 100%;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.7));
+    transition: all .2s ease;
+}
+@keyframes gBlink { 0%,92%,100% { transform: scaleY(1); } 96% { transform: scaleY(.08); } }
+.hat-char.is-grimoire:not(.surprised):not(.sleepy):not(.sleep) .g-eye { animation: gBlink 4.2s infinite; }
+.hat-char.is-grimoire:not(.surprised):not(.sleepy):not(.sleep) .g-eye.right { animation-delay: .05s; }
+
+/* 表情：眼/眉/嘴的形變。純靜態幾何，reduce 模式下照樣讀得出來。 */
+.is-grimoire.happy .g-eye { height: calc(var(--g-eye-h) * .55); border-radius: 0 0 50% 50% / 0 0 100% 100%; border-top-color: transparent; }
+.is-grimoire.happy .g-pupil { display: none; }
+.is-grimoire.happy .g-brow { top: calc(var(--g-eye-y) - var(--g-brow-lift) - 3%); }
+.is-grimoire.happy .g-brow.left  { transform: rotate(-10deg); }
+.is-grimoire.happy .g-brow.right { transform: rotate(10deg); }
+.is-grimoire.happy .g-mouth { width: calc(var(--g-mouth-w) * 1.25); height: calc(var(--g-mouth-h) * 1.5); left: calc(var(--g-eye-cx) - var(--g-mouth-w) * .625); }
+
+.is-grimoire.sad .g-pupil { transform: translate(-50%, 18%); }
+.is-grimoire.sad .g-brow.left  { transform: rotate(20deg)  translateY(12%); }
+.is-grimoire.sad .g-brow.right { transform: rotate(-20deg) translateY(12%); }
+.is-grimoire.sad .g-mouth { border-top-color: var(--ink); border-bottom-color: transparent; border-radius: 50% 50% 0 0 / 100% 100% 0 0; top: calc(var(--g-mouth-y) + 4%); }
+
+.is-grimoire.surprised .g-eye { height: calc(var(--g-eye-h) * 1.3); transform: translateY(-4%); }
+.is-grimoire.surprised .g-pupil { width: 24%; }
+.is-grimoire.surprised .g-brow { top: calc(var(--g-eye-y) - var(--g-brow-lift) - 5%); }
+.is-grimoire.surprised .g-mouth { width: calc(var(--g-mouth-w) * .55); height: calc(var(--g-mouth-h) * 1.7); left: calc(var(--g-eye-cx) - var(--g-mouth-w) * .275); border: var(--g-line) solid var(--ink); border-radius: 50%; background: rgba(0,0,0,.35); }
+
+.is-grimoire.thinking .g-pupil { transform: translate(-25%, -85%); }
+.is-grimoire.thinking .g-brow.right { top: calc(var(--g-eye-y) - var(--g-brow-lift) - 4%); transform: rotate(-14deg); }
+.is-grimoire.thinking .g-mouth { width: calc(var(--g-mouth-w) * .55); height: 0; border: none; border-bottom: var(--g-line) solid var(--ink); border-radius: 0; transform: rotate(-8deg); }
+
+.is-grimoire.wink .g-eye.right { height: calc(var(--g-eye-h) * .18); border-radius: 0 0 50% 50% / 0 0 100% 100%; border-top-color: transparent; animation: none; }
+.is-grimoire.wink .g-eye.right .g-pupil { display: none; }
+.is-grimoire.wink .g-eye.left { height: calc(var(--g-eye-h) * .62); border-radius: 0 0 50% 50% / 0 0 100% 100%; border-top-color: transparent; }
+.is-grimoire.wink .g-eye.left .g-pupil { display: none; }
+.is-grimoire.wink .g-brow.right { transform: rotate(8deg) translateY(6%); }
+.is-grimoire.wink .g-mouth { width: calc(var(--g-mouth-w) * 1.15); transform: rotate(-5deg); }
+
+.is-grimoire.annoyed .g-eye { height: calc(var(--g-eye-h) * .7); }
+.is-grimoire.annoyed .g-brow.left  { transform: rotate(14deg)  translateY(10%); }
+.is-grimoire.annoyed .g-brow.right { transform: rotate(-14deg) translateY(10%); }
+.is-grimoire.annoyed .g-mouth { width: calc(var(--g-mouth-w) * .8); height: 0; border: none; border-bottom: var(--g-line) solid var(--ink); border-radius: 0; }
+
+.is-grimoire.sleepy .g-eye { height: calc(var(--g-eye-h) * .35); border-radius: 0 0 50% 50% / 0 0 100% 100%; border-top-color: transparent; animation: none; }
+.is-grimoire.sleepy .g-pupil { display: none; }
+.is-grimoire.sleepy .g-brow { top: calc(var(--g-eye-y) - var(--g-brow-lift) + 2%); }
+.is-grimoire.sleepy .g-mouth { width: calc(var(--g-mouth-w) * .5); height: calc(var(--g-mouth-h) * .8); }
+
+.is-grimoire.sleep .g-eye { height: calc(var(--g-eye-h) * .16); border-radius: 0 0 50% 50% / 0 0 100% 100%; border-top-color: transparent; animation: none; }
+.is-grimoire.sleep .g-pupil { display: none; }
+.is-grimoire.sleep .g-mouth { width: calc(var(--g-mouth-w) * .45); height: calc(var(--g-mouth-h) * 1.2); border-radius: 50%; }
 .hat-char .eye {
     position: absolute;
     top: var(--eye-y);
@@ -118,9 +233,9 @@
    魔導書不畫臉，用動作與光影表達情緒；每個 filter 都要帶著基礎 drop-shadow。
    happy/surprised/wink/annoyed 是一次性動作（表情切換時播一次），
    thinking/sleepy 是持續的緩慢循環，sad/sleep 是靜態姿勢。 */
-.hat-char.is-grimoire .grimoire-img { transform-origin: 50% 88%; }
+.hat-char.is-grimoire .grimoire-body { transform-origin: 50% 88%; }
 
-.hat-char.is-grimoire.happy .grimoire-img {
+.hat-char.is-grimoire.happy .grimoire-body {
     animation: grimoireBounce .55s ease-out;
     filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) brightness(1.08)
             drop-shadow(0 0 14px rgba(212,175,55,.7));
@@ -132,12 +247,12 @@
     100% { transform: translateY(0) scale(1); }
 }
 
-.hat-char.is-grimoire.sad .grimoire-img {
+.hat-char.is-grimoire.sad .grimoire-body {
     transform: rotate(-6deg) translateY(4%);
     filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) saturate(.6) brightness(.85);
 }
 
-.hat-char.is-grimoire.surprised .grimoire-img {
+.hat-char.is-grimoire.surprised .grimoire-body {
     animation: grimoireJolt .45s cubic-bezier(.2, 1.6, .4, 1);
     filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) brightness(1.12);
 }
@@ -147,7 +262,7 @@
     100% { transform: scale(1); }
 }
 
-.hat-char.is-grimoire.thinking .grimoire-img {
+.hat-char.is-grimoire.thinking .grimoire-body {
     animation: grimoireSway 2.6s ease-in-out infinite;
 }
 @keyframes grimoireSway {
@@ -155,7 +270,7 @@
     50%      { transform: rotate(4deg); }
 }
 
-.hat-char.is-grimoire.wink .grimoire-img {
+.hat-char.is-grimoire.wink .grimoire-body {
     animation: grimoireTip .6s ease-out;
     filter: drop-shadow(0 3px 6px rgba(0,0,0,.5))
             drop-shadow(0 0 10px rgba(212,175,55,.55));
@@ -166,7 +281,7 @@
     100% { transform: rotate(0); }
 }
 
-.hat-char.is-grimoire.annoyed .grimoire-img {
+.hat-char.is-grimoire.annoyed .grimoire-body {
     animation: grimoireShake .4s ease-in-out;
     filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) saturate(1.15) contrast(1.05);
 }
@@ -178,7 +293,7 @@
     80% { transform: translateX(2%); }
 }
 
-.hat-char.is-grimoire.sleepy .grimoire-img {
+.hat-char.is-grimoire.sleepy .grimoire-body {
     animation: grimoireBreathe 3.2s ease-in-out infinite;
     filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) brightness(.8) saturate(.75);
 }
@@ -187,7 +302,7 @@
     50%      { transform: translateY(2.5%) rotate(-2deg); }
 }
 
-.hat-char.is-grimoire.sleep .grimoire-img {
+.hat-char.is-grimoire.sleep .grimoire-body {
     transform: rotate(-8deg) translateY(5%);
     filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) brightness(.6) saturate(.55);
 }
@@ -195,13 +310,14 @@
 /* 使用者偏好減少動態：關掉循環與彈跳，但換成靜態姿勢，表情仍讀得出來。
    （注意：本專案使用者的 Windows 即為 reduce 模式——combo 動畫 bug 同源） */
 @media (prefers-reduced-motion: reduce) {
-    .hat-char.is-grimoire .grimoire-img { animation: none !important; }
-    .hat-char.is-grimoire.happy .grimoire-img     { transform: translateY(-4%) scale(1.03); }
-    .hat-char.is-grimoire.surprised .grimoire-img { transform: scale(1.08) rotate(2deg); }
-    .hat-char.is-grimoire.thinking .grimoire-img  { transform: rotate(4deg); }
-    .hat-char.is-grimoire.wink .grimoire-img      { transform: rotate(5deg) translateY(-2%); }
-    .hat-char.is-grimoire.annoyed .grimoire-img   { transform: rotate(-7deg) translateY(2%); }
-    .hat-char.is-grimoire.sleepy .grimoire-img    { transform: translateY(2.5%) rotate(-2deg); }
+    .hat-char.is-grimoire .grimoire-body,
+    .hat-char.is-grimoire .g-eye { animation: none !important; }
+    .hat-char.is-grimoire.happy .grimoire-body     { transform: translateY(-4%) scale(1.03); }
+    .hat-char.is-grimoire.surprised .grimoire-body { transform: scale(1.08) rotate(2deg); }
+    .hat-char.is-grimoire.thinking .grimoire-body  { transform: rotate(4deg); }
+    .hat-char.is-grimoire.wink .grimoire-body      { transform: rotate(5deg) translateY(-2%); }
+    .hat-char.is-grimoire.annoyed .grimoire-body   { transform: rotate(-7deg) translateY(2%); }
+    .hat-char.is-grimoire.sleepy .grimoire-body    { transform: translateY(2.5%) rotate(-2deg); }
 }
 
 .tutorial-slide-media {
@@ -308,20 +424,48 @@
    #screen-game 是 position:relative + overflow:hidden，導師用 absolute
    釘在左下角空白處，只在練習模式顯示；對決模式版面滿、直式空間窄→隱藏。
    ============================================================ */
+#screen-game { --mentor-size: clamp(84px, 10vw, 140px); }
 #game-mentor {
     display: none;
     position: absolute;
     left: clamp(6px, 1.5vw, 24px);
     top: 46%;
     transform: translateY(-50%);
-    width: clamp(84px, 10vw, 140px);
-    height: clamp(84px, 10vw, 140px);
+    width: var(--mentor-size);
+    height: var(--mentor-size);
     z-index: 30;
     pointer-events: none;
-    filter: drop-shadow(0 4px 10px rgba(0,0,0,.5));
+}
+
+/* 答對後的講解泡泡：接在導師正下方，寬度受左側邊欄限制。 */
+.mentor-bubble {
+    display: none;
+    position: absolute;
+    left: clamp(6px, 1.5vw, 24px);
+    top: calc(46% + var(--mentor-size) / 2 + 10px);
+    z-index: 30;
+    width: clamp(150px, 17vw, 240px);
+    padding: 9px 11px;
+    background: rgba(22, 18, 12, 0.94);
+    border: 1px solid rgba(212, 175, 55, 0.72);
+    border-left: 3px solid var(--hp-gold);
+    border-radius: 8px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+    color: var(--hp-parchment);
+    font-size: clamp(.68rem, 1.5vh, .8rem);
+    line-height: 1.5;
+    text-align: left;
+    pointer-events: none;
+}
+.mentor-bubble strong {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--hp-gold);
+    font-size: 1.05em;
 }
 /* 練習橫向：選項置底滿寬、分子卡置中，左側邊欄留白 → 導師擺左側垂直置中。
    直式與窄橫向空間不夠會壓到內容，收起不顯示。 */
 @media (orientation: landscape) and (min-width: 900px) and (min-height: 600px) {
     #screen-game.mode-practice #game-mentor { display: block; }
+    #screen-game.mode-practice .mentor-bubble.is-visible { display: block; }
 }

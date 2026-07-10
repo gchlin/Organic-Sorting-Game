@@ -308,7 +308,8 @@ const EXPR_ZH = { neutral:'平常', happy:'開心', sad:'難過', surprised:'驚
 // 五官座標（% 以「圖片實際矩形」為基準，不是方框）
 const VAR_DEFAULTS = {
     // 右封面（面向觀眾）大約落在 x 50%~77%、y 17%~83%；藍寶石中心約 (62.5%, 46%)
-    'v-cover':  { '--eye-cx':'64%', '--eye-y':'33%', '--eye-gap':'10%', '--eye-w':'6.5%', '--eye-h':'13%', '--brow-lift':'7%', '--brow-h':'3.5%', '--mouth-y':'64%', '--mouth-w':'12%', '--mouth-h':'8%', '--solo-y':'38%', '--solo-w':'11%', '--solo-h':'20%' },
+    // A 是遊戲實際採用的方案；比例是照 100px 實際尺寸調的（見 sorting-hat.css）
+    'v-cover':  { '--eye-cx':'63.5%', '--eye-y':'26%', '--eye-gap':'7%', '--eye-w':'9%', '--eye-h':'22%', '--brow-lift':'11%', '--brow-h':'5%', '--mouth-y':'62%', '--mouth-w':'17%', '--mouth-h':'13%', '--solo-y':'38%', '--solo-w':'11%', '--solo-h':'20%' },
     'v-rune':   { '--eye-cx':'64%', '--eye-y':'33%', '--eye-gap':'10%', '--eye-w':'6.5%', '--eye-h':'13%', '--brow-lift':'7%', '--brow-h':'3.5%', '--mouth-y':'64%', '--mouth-w':'12%', '--mouth-h':'8%', '--solo-y':'38%', '--solo-w':'11%', '--solo-h':'20%' },
     'v-spirit': { '--eye-cx':'63%', '--eye-y':'32%', '--eye-gap':'11%', '--eye-w':'7.5%', '--eye-h':'15%', '--brow-lift':'8%', '--brow-h':'3.5%', '--mouth-y':'63%', '--mouth-w':'14%', '--mouth-h':'9%', '--solo-y':'38%', '--solo-w':'11%', '--solo-h':'20%' },
     // D：寶石本身當獨眼 → 眉毛拉高到寶石上方，嘴放在 ELARA 上方

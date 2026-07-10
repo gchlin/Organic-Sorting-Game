@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="css/70-hint-dev.css?v=css-split-1">
     <link rel="stylesheet" href="css/80-settle-wrongbook.css?v=css-split-1">
     <link rel="stylesheet" href="css/90-settings-misc.css?v=css-split-1">
-    <link rel="stylesheet" href="sorting-hat.css?v=grimoire-mentor-20260710">
+    <link rel="stylesheet" href="sorting-hat.css?v=grimoire-face-20260710">
     <link rel="stylesheet" href="menu.css?v=hat-size-20260710">
     <!-- Legacy layout.css / menu.css moved to legacy/ — v2 styles in style.css are self-contained. -->
 </head>
@@ -146,6 +146,8 @@
 
             <!-- 練習模式導師：角落魔導書，隨作答換表情（答對開心／答錯不悅／思考） -->
             <div id="game-mentor" class="hat-char game-mentor neutral" aria-hidden="true"></div>
+            <!-- 答對後由魔導書講解該分子的用途（圖鑑的 CompoundFacts） -->
+            <div id="game-mentor-bubble" class="mentor-bubble" aria-live="polite"></div>
 
             <div id="dev-quickwin-banner" class="v2-dev-banner">🔧 測試模式：答對 N 題即結算</div>
             <div class="duel-orientation-lock" aria-hidden="true">
@@ -327,6 +329,6 @@
     <script src="ui-settle.js?v=codex-deeplink-20260710"></script>
     <script src="ui-story.js?v=ui-split-4"></script>
     <script src="ui-settings.js?v=ui-split-5"></script>
-    <script src="game-v2.js?v=grimoire-mentor-20260710"></script>
+    <script src="game-v2.js?v=grimoire-face-20260710"></script>
 </body>
 </html>
