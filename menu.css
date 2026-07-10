@@ -22,9 +22,11 @@
     border-bottom: 2px solid rgba(212,175,55,.34);
     box-shadow: 0 10px 26px rgba(0,0,0,.35);
 }
+/* 注意：這條比 sorting-hat.css 的 .title-hat 特異度高、又晚載入，
+   首頁魔導書的實際尺寸由這裡決定（改 sorting-hat.css 不會生效）。 */
 .v2-menu-header .title-hat {
-    width: clamp(54px, 8vh, 78px);
-    height: clamp(54px, 8vh, 78px);
+    width: clamp(76px, 13vh, 124px);
+    height: clamp(76px, 13vh, 124px);
 }
 .v2-title {
     font-family: "Cinzel", "Georgia", serif;

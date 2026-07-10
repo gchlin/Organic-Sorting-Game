@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>魔導書的臉 — 五官方案比較 Demo</title>
+<style>
+:root {
+    --gold: #d4af37;
+    --parchment: #ede2c8;
+    --bg: #16121a;
+    --panel: #221b26;
+    --cyan: #6fd8ff;
+}
+* { box-sizing: border-box; }
+body {
+    margin: 0; padding: 24px;
+    background: radial-gradient(ellipse at 50% 0%, #241d2b 0%, var(--bg) 70%);
+    color: var(--parchment);
+    font-family: "Segoe UI", "Microsoft JhengHei", system-ui, sans-serif;
+    line-height: 1.6;
+}
+h1 { color: var(--gold); font-size: 1.5rem; margin: 0 0 4px; }
+h2 { color: var(--gold); font-size: 1.05rem; margin: 28px 0 10px; border-bottom: 1px solid rgba(212,175,55,.28); padding-bottom: 6px; }
+.lede { color: #b9ad97; margin: 0 0 20px; max-width: 70ch; font-size: .92rem; }
+.layout { display: grid; grid-template-columns: minmax(0,1fr) 320px; gap: 24px; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+/* ---------- 舞台 ---------- */
+.stage-wrap {
+    background: var(--panel);
+    border: 1px solid rgba(212,175,55,.22);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.stage-wrap .caption { color: #b9ad97; font-size: .82rem; }
+
+/* 書本容器：正方形 + object-fit:contain，跟遊戲裡 .hat-char 一致 */
+.book { position: relative; width: 340px; height: 340px; flex: 0 0 auto; }
+.book img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,.5));
+    transform-origin: 50% 88%;
+}
+
+/* 五官覆蓋層：對齊圖片在方框內的實際矩形（JS 依原圖比例設定 --img-top/--img-h） */
+.face {
+    position: absolute; left: 0; width: 100%;
+    top: var(--img-top, 22.73%);
+    height: var(--img-h, 54.55%);
+    pointer-events: none;
+}
+.eye, .brow, .mouth, .pupil { position: absolute; }
+
+.eye {
+    top: var(--eye-y);
+    width: var(--eye-w); height: var(--eye-h);
+    border-radius: 50%;
+    overflow: hidden;
+    transition: height .15s ease, transform .2s ease, border-radius .2s ease;
+}
+.eye.left  { left: calc(var(--eye-cx) - var(--eye-gap) / 2 - var(--eye-w)); }
+.eye.right { left: calc(var(--eye-cx) + var(--eye-gap) / 2); }
+.eye.solo  { display: none; left: calc(var(--eye-cx) - var(--solo-w) / 2); top: var(--solo-y); width: var(--solo-w); height: var(--solo-h); }
+.pupil {
+    left: 50%; top: 52%;
+    width: 38%; aspect-ratio: 1/1;
+    border-radius: 50%;
+    transform: translate(-50%,-50%);
+    transition: transform .18s ease;
+}
+.brow {
+    top: calc(var(--eye-y) - var(--brow-lift));
+    width: calc(var(--eye-w) + 2%); height: var(--brow-h);
+    border-radius: 4px;
+    transition: transform .2s ease, top .2s ease;
+}
+.brow.left  { left: calc(var(--eye-cx) - var(--eye-gap) / 2 - var(--eye-w) - 1%); transform-origin: right center; transform: rotate(-4deg); }
+.brow.right { left: calc(var(--eye-cx) + var(--eye-gap) / 2 - 1%);                transform-origin: left center;  transform: rotate(4deg); }
+.mouth {
+    left: calc(var(--eye-cx) - var(--mouth-w) / 2);
+    top: var(--mouth-y);
+    width: var(--mouth-w); height: var(--mouth-h);
+    /* 百分比圓角：任何尺寸都會彎成弧線（絕對 px 圓角在小尺寸會變成方框） */
+    border-radius: 0 0 50% 50% / 0 0 100% 100%;
+    transition: all .2s ease;
+}
+
+/* ---------- 變體 A：封面墨線五官（沿用分類帽的畫法）---------- */
+.v-cover .eye   { background: #f7f2e4; border: 1.5px solid #6b5535; box-shadow: inset 0 -2px 3px rgba(0,0,0,.15), 0 1px 3px rgba(0,0,0,.5); }
+.v-cover .pupil { background: radial-gradient(circle at 35% 30%, #555, #000 60%); }
+.v-cover .brow  { background: var(--parchment); box-shadow: 0 1px 2px rgba(0,0,0,.7); }
+.v-cover .mouth { border: 2.5px solid var(--parchment); border-top-color: transparent; filter: drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
+
+/* ---------- 變體 B：符文光眼（藍色魔法光，無眼白）---------- */
+.v-rune .eye    { background: radial-gradient(circle at 50% 45%, #dff6ff 0%, var(--cyan) 42%, #1d6f9c 100%); box-shadow: 0 0 12px rgba(111,216,255,.9), inset 0 0 6px rgba(255,255,255,.6); border: none; }
+.v-rune .pupil  { background: #06212f; width: 34%; }
+.v-rune .brow   { background: var(--cyan); box-shadow: 0 0 8px rgba(111,216,255,.85); }
+.v-rune .mouth  { border: 2.5px solid var(--cyan); border-top-color: transparent; filter: drop-shadow(0 0 6px rgba(111,216,255,.9)); }
+
+/* ---------- 變體 C：光靈臉（半透明藍光，浮在書前）---------- */
+.v-spirit .face  { filter: drop-shadow(0 0 14px rgba(111,216,255,.7)); }
+.v-spirit .eye   { background: radial-gradient(circle at 50% 45%, #ffffff 0%, #bdeeff 40%, rgba(111,216,255,.35) 100%); border: none; box-shadow: 0 0 16px rgba(111,216,255,.8); }
+.v-spirit .pupil { background: rgba(6,33,47,.75); width: 30%; }
+.v-spirit .brow  { background: rgba(189,238,255,.85); box-shadow: 0 0 10px rgba(111,216,255,.9); }
+.v-spirit .mouth { border: 3px solid rgba(189,238,255,.9); border-top-color: transparent; filter: drop-shadow(0 0 8px rgba(111,216,255,.9)); }
+
+/* ---------- 變體 D：寶石獨眼（讓封面那顆藍寶石「本身」就是眼睛）----------
+   不畫眼白也不畫瞳孔，只用一圈光暈把寶石框成眼睛；表情靠眉毛＋嘴巴演。 */
+.v-gem .eye.solo { display: block; background: none; border-radius: 50%; box-shadow: 0 0 16px 4px rgba(111,216,255,.45); }
+.v-gem .eye.solo .pupil { display: none; }
+.v-gem .eye.left, .v-gem .eye.right { display: none; }
+.v-gem .brow { background: var(--parchment); box-shadow: 0 1px 2px rgba(0,0,0,.7); }
+.v-gem .mouth { border: 2.5px solid var(--parchment); border-top-color: transparent; filter: drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
+
+/* ---------- 變體 E：無臉（現況，只有動作）---------- */
+.v-none .face { display: none; }
+
+/* ---------- 表情（各變體共用幾何）---------- */
+.book:not(.surprised):not(.sleepy):not(.sleep) .eye { animation: blink 4.2s infinite; }
+.book:not(.surprised):not(.sleepy):not(.sleep) .eye.right { animation-delay: .05s; }
+@keyframes blink { 0%,92%,100% { transform: scaleY(1); } 96% { transform: scaleY(.08); } }
+
+.happy .eye { height: calc(var(--eye-h) * .55); border-radius: 0 0 50% 50% / 0 0 100% 100%; border-top-color: transparent; }
+.happy .pupil { display: none; }
+.happy .brow { top: calc(var(--eye-y) - var(--brow-lift) - 3%); }
+.happy .brow.left  { transform: rotate(-10deg); }
+.happy .brow.right { transform: rotate(10deg); }
+.happy .mouth { width: calc(var(--mouth-w) * 1.25); height: calc(var(--mouth-h) * 1.5); left: calc(var(--eye-cx) - var(--mouth-w) * 0.625); }
+
+.sad .pupil { transform: translate(-50%, 18%); }
+.sad .brow.left  { transform: rotate(20deg)  translateY(12%); }
+.sad .brow.right { transform: rotate(-20deg) translateY(12%); }
+.sad .mouth { border-top-width: 2.5px; border-top-color: inherit; border-bottom-color: transparent; border-radius: 50% 50% 0 0 / 100% 100% 0 0; top: calc(var(--mouth-y) + 4%); }
+.v-cover .sad .mouth, .v-gem .sad .mouth { border-top-color: var(--parchment); }
+.v-rune .sad .mouth, .v-spirit .sad .mouth { border-top-color: var(--cyan); }
+
+.surprised .eye { height: calc(var(--eye-h) * 1.3); transform: translateY(-4%); }
+.surprised .pupil { width: 24%; }
+.surprised .brow { top: calc(var(--eye-y) - var(--brow-lift) - 5%); }
+.surprised .mouth { width: calc(var(--mouth-w) * .55); height: calc(var(--mouth-h) * 1.7); border-radius: 50%; border-top-color: inherit; background: rgba(0,0,0,.35); left: calc(var(--eye-cx) - var(--mouth-w) * .275); }
+.v-cover .surprised .mouth, .v-gem .surprised .mouth { border: 2.5px solid var(--parchment); }
+.v-rune .surprised .mouth, .v-spirit .surprised .mouth { border: 2.5px solid var(--cyan); background: rgba(6,33,47,.55); }
+
+.thinking .pupil { transform: translate(-25%, -85%); }
+.thinking .brow.right { top: calc(var(--eye-y) - var(--brow-lift) - 4%); transform: rotate(-14deg); }
+.thinking .mouth { width: calc(var(--mouth-w) * .55); height: 0; border: none; border-bottom: 2.5px solid var(--parchment); border-radius: 0; transform: rotate(-8deg); }
+.v-rune .thinking .mouth, .v-spirit .thinking .mouth { border-bottom-color: var(--cyan); }
+
+.wink .eye.right { height: calc(var(--eye-h) * .18); border-radius: 0 0 50% 50% / 0 0 100% 100%; border-top-color: transparent; animation: none; }
+.wink .eye.right .pupil { display: none; }
+.wink .eye.left { height: calc(var(--eye-h) * .62); border-radius: 0 0 50% 50% / 0 0 100% 100%; border-top-color: transparent; }
+.wink .eye.left .pupil { display: none; }
+.wink .brow.right { transform: rotate(8deg) translateY(6%); }
+.wink .mouth { width: calc(var(--mouth-w) * 1.15); transform: rotate(-5deg); }
+
+.annoyed .eye { height: calc(var(--eye-h) * .7); }
+.annoyed .brow.left  { transform: rotate(14deg)  translateY(10%); }
+.annoyed .brow.right { transform: rotate(-14deg) translateY(10%); }
+.annoyed .mouth { width: calc(var(--mouth-w) * .8); height: 0; border: none; border-bottom: 2.5px solid var(--parchment); border-radius: 0; }
+.v-rune .annoyed .mouth, .v-spirit .annoyed .mouth { border-bottom-color: var(--cyan); }
+
+.sleepy .eye { height: calc(var(--eye-h) * .35); border-radius: 0 0 50% 50% / 0 0 100% 100%; border-top-color: transparent; animation: none; }
+.sleepy .pupil { display: none; }
+.sleepy .brow { top: calc(var(--eye-y) - var(--brow-lift) + 2%); }
+.sleepy .mouth { width: calc(var(--mouth-w) * .5); height: calc(var(--mouth-h) * .8); }
+
+.sleep .eye { height: calc(var(--eye-h) * .16); border-radius: 0 0 50% 50% / 0 0 100% 100%; border-top-color: transparent; animation: none; }
+.sleep .pupil { display: none; }
+.sleep .mouth { width: calc(var(--mouth-w) * .45); height: calc(var(--mouth-h) * 1.2); border-radius: 50%; }
+
+/* ---------- 動作（沿用遊戲裡 sorting-hat.css 的規則）---------- */
+.motion .happy  img, .book.happy img  { }
+.book.happy  img { animation: bounce .55s ease-out; filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) brightness(1.08) drop-shadow(0 0 14px rgba(212,175,55,.7)); }
+.book.sad    img { transform: rotate(-6deg) translateY(4%); filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) saturate(.6) brightness(.85); }
+.book.surprised img { animation: jolt .45s cubic-bezier(.2,1.6,.4,1); filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) brightness(1.12); }
+.book.thinking img { animation: sway 2.6s ease-in-out infinite; }
+.book.wink   img { animation: tip .6s ease-out; filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(212,175,55,.55)); }
+.book.annoyed img { animation: shake .4s ease-in-out; filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) saturate(1.15) contrast(1.05); }
+.book.sleepy img { animation: breathe 3.2s ease-in-out infinite; filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) brightness(.8) saturate(.75); }
+.book.sleep  img { transform: rotate(-8deg) translateY(5%); filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) brightness(.6) saturate(.55); }
+@keyframes bounce { 0%{transform:translateY(0) scale(1);} 35%{transform:translateY(-9%) scale(1.05);} 70%{transform:translateY(0) scale(.99);} 100%{transform:translateY(0) scale(1);} }
+@keyframes jolt { 0%{transform:scale(1);} 40%{transform:scale(1.12) rotate(2deg);} 100%{transform:scale(1);} }
+@keyframes sway { 0%,100%{transform:rotate(-4deg);} 50%{transform:rotate(4deg);} }
+@keyframes tip { 0%{transform:rotate(0);} 30%{transform:rotate(7deg) translateY(-3%);} 100%{transform:rotate(0);} }
+@keyframes shake { 0%,100%{transform:translateX(0);} 20%{transform:translateX(-5%);} 40%{transform:translateX(4%);} 60%{transform:translateX(-3%);} 80%{transform:translateX(2%);} }
+@keyframes breathe { 0%,100%{transform:translateY(0) rotate(-1deg);} 50%{transform:translateY(2.5%) rotate(-2deg);} }
+
+/* 模擬 prefers-reduced-motion（使用者的 Windows 就是這個狀態） */
+body.sim-reduce .book img, body.sim-reduce .eye { animation: none !important; }
+body.sim-reduce .book.happy img     { transform: translateY(-4%) scale(1.03); }
+body.sim-reduce .book.surprised img { transform: scale(1.08) rotate(2deg); }
+body.sim-reduce .book.thinking img  { transform: rotate(4deg); }
+body.sim-reduce .book.wink img      { transform: rotate(5deg) translateY(-2%); }
+body.sim-reduce .book.annoyed img   { transform: rotate(-7deg) translateY(2%); }
+body.sim-reduce .book.sleepy img    { transform: translateY(2.5%) rotate(-2deg); }
+
+/* ---------- 控制面板 ---------- */
+.panel { background: var(--panel); border: 1px solid rgba(212,175,55,.22); border-radius: 12px; padding: 16px; }
+.panel h3 { color: var(--gold); font-size: .9rem; margin: 0 0 10px; letter-spacing: .05em; }
+.panel + .panel { margin-top: 16px; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+button {
+    background: rgba(47,36,32,.9); color: var(--parchment);
+    border: 1px solid rgba(212,175,55,.35); border-radius: 6px;
+    padding: 6px 11px; font-size: .82rem; cursor: pointer; font-family: inherit;
+}
+button:hover { border-color: var(--gold); color: #fff5c0; }
+button.active { background: var(--gold); color: #2a2118; font-weight: 700; border-color: var(--gold); }
+label.slider { display: block; font-size: .78rem; color: #b9ad97; margin: 9px 0 2px; }
+label.slider span { color: var(--gold); float: right; font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--gold); }
+label.chk { display: flex; align-items: center; gap: 8px; font-size: .84rem; margin: 8px 0; cursor: pointer; }
+pre.out {
+    background: #14101a; border: 1px solid rgba(212,175,55,.25); border-radius: 6px;
+    padding: 10px; font-size: .74rem; color: #cfe6a0; overflow-x: auto; margin: 8px 0 0;
+    white-space: pre; max-height: 200px;
+}
+
+/* ---------- 尺寸預覽 ---------- */
+.sizes { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-end; }
+.size-item { text-align: center; }
+.size-item .lbl { font-size: .74rem; color: #b9ad97; margin-top: 4px; }
+.size-item .lbl b { color: var(--gold); }
+.s61  { width: 61px;  height: 61px; }
+.s100 { width: 100px; height: 100px; }
+.s124 { width: 124px; height: 124px; }
+.s200 { width: 200px; height: 200px; }
+.note { color: #b9ad97; font-size: .82rem; max-width: 74ch; }
+.note b { color: var(--gold); }
+</style>
+</head>
+<body>
+
+<h1>📖 魔導書的臉 — 五官方案比較</h1>
+<p class="lede">
+    分類帽用 CSS 疊眼睛/眉毛/嘴巴做表情；魔導書目前只有「動作＋光影」沒有臉。
+    這頁把幾種畫臉的方式放在一起比，並可用滑桿即時調整五官位置。
+    <b>重點是看最下方的「實際尺寸預覽」</b>——遊戲裡首頁只有約 100px，臉太細緻會糊掉。
+</p>
+
+<div class="layout">
+    <div>
+        <div class="stage-wrap">
+            <div class="book v-cover neutral" id="mainBook">
+                <img src="../assets/images/character/magicbook.webp" alt="魔導書" id="bookImg">
+                <div class="face">
+                    <div class="brow left"></div><div class="brow right"></div>
+                    <div class="eye left"><div class="pupil"></div></div>
+                    <div class="eye right"><div class="pupil"></div></div>
+                    <div class="eye solo"><div class="pupil"></div></div>
+                    <div class="mouth"></div>
+                </div>
+            </div>
+            <div class="caption">放大檢視（340px）</div>
+        </div>
+
+        <h2>實際尺寸預覽（遊戲裡真正的大小）</h2>
+        <div class="sizes" id="sizes"></div>
+        <p class="note" style="margin-top:14px">
+            <b>61px</b> 是修好前的首頁尺寸（被 menu.css 蓋掉）；<b>100px</b> 是修好後 1366×768 的首頁尺寸；
+            <b>124px</b> 是 1920×1080 首頁；<b>200px</b> 是劇情畫面。
+        </p>
+    </div>
+
+    <div>
+        <div class="panel">
+            <h3>五官方案</h3>
+            <div class="btn-row" id="variants"></div>
+            <p class="note" id="variantNote" style="font-size:.78rem"></p>
+        </div>
+
+        <div class="panel">
+            <h3>表情</h3>
+            <div class="btn-row" id="exprs"></div>
+            <label class="chk"><input type="checkbox" id="autoplay"> 自動輪播（模擬首頁待機）</label>
+            <label class="chk"><input type="checkbox" id="simReduce"> 模擬「減少動態效果」（你的 Windows 就是這個狀態）</label>
+        </div>
+
+        <div class="panel">
+            <h3>微調五官位置</h3>
+            <div id="sliders"></div>
+            <button id="resetBtn" style="margin-top:10px">還原此方案預設值</button>
+        </div>
+
+        <div class="panel">
+            <h3>輸出 CSS 變數</h3>
+            <button id="copyBtn">複製到剪貼簿</button>
+            <pre class="out" id="cssOut"></pre>
+        </div>
+    </div>
+</div>
+
+<script>
+const VARIANTS = [
+    { key: 'v-cover',  label: 'A 封面墨線五官', note: '沿用分類帽的畫法：米白墨線眉毛/嘴巴＋眼白。最像「有臉的角色」，但封面本身很花，小尺寸容易糊。' },
+    { key: 'v-rune',   label: 'B 符文光眼',     note: '藍色魔法光的眼睛與嘴，跟書上的藍色魔法元素同調。小尺寸下靠發光仍看得見。' },
+    { key: 'v-spirit', label: 'C 光靈臉',       note: '半透明藍光五官＋外光暈，像書的魔力凝聚成臉。最不干擾原畫，氣氛最好。' },
+    { key: 'v-gem',    label: 'D 寶石獨眼',     note: '把封面上那顆藍寶石當成單眼，加眉毛與嘴。最省像素、辨識度高，但比較「怪物感」。' },
+    { key: 'v-none',   label: 'E 無臉（現況）',  note: '目前遊戲的樣子：沒有五官，只靠動作與光影表達情緒。' },
+];
+const EXPRS = ['neutral','happy','sad','surprised','thinking','wink','annoyed','sleepy','sleep'];
+const EXPR_ZH = { neutral:'平常', happy:'開心', sad:'難過', surprised:'驚訝', thinking:'思考', wink:'眨眼', annoyed:'不悅', sleepy:'想睡', sleep:'睡著' };
+
+// 五官座標（% 以「圖片實際矩形」為基準，不是方框）
+const VAR_DEFAULTS = {
+    // 右封面（面向觀眾）大約落在 x 50%~77%、y 17%~83%；藍寶石中心約 (62.5%, 46%)
+    'v-cover':  { '--eye-cx':'64%', '--eye-y':'33%', '--eye-gap':'10%', '--eye-w':'6.5%', '--eye-h':'13%', '--brow-lift':'7%', '--brow-h':'3.5%', '--mouth-y':'64%', '--mouth-w':'12%', '--mouth-h':'8%', '--solo-y':'38%', '--solo-w':'11%', '--solo-h':'20%' },
+    'v-rune':   { '--eye-cx':'64%', '--eye-y':'33%', '--eye-gap':'10%', '--eye-w':'6.5%', '--eye-h':'13%', '--brow-lift':'7%', '--brow-h':'3.5%', '--mouth-y':'64%', '--mouth-w':'12%', '--mouth-h':'8%', '--solo-y':'38%', '--solo-w':'11%', '--solo-h':'20%' },
+    'v-spirit': { '--eye-cx':'63%', '--eye-y':'32%', '--eye-gap':'11%', '--eye-w':'7.5%', '--eye-h':'15%', '--brow-lift':'8%', '--brow-h':'3.5%', '--mouth-y':'63%', '--mouth-w':'14%', '--mouth-h':'9%', '--solo-y':'38%', '--solo-w':'11%', '--solo-h':'20%' },
+    // D：寶石本身當獨眼 → 眉毛拉高到寶石上方，嘴放在 ELARA 上方
+    'v-gem':    { '--eye-cx':'62.5%', '--eye-y':'40%', '--eye-gap':'12%', '--eye-w':'7%', '--eye-h':'14%', '--brow-lift':'14%', '--brow-h':'3.5%', '--mouth-y':'64%', '--mouth-w':'11%', '--mouth-h':'7%', '--solo-y':'37%', '--solo-w':'10%', '--solo-h':'19%' },
+    'v-none':   { '--eye-cx':'64%', '--eye-y':'33%', '--eye-gap':'10%', '--eye-w':'6.5%', '--eye-h':'13%', '--brow-lift':'7%', '--brow-h':'3.5%', '--mouth-y':'64%', '--mouth-w':'12%', '--mouth-h':'8%', '--solo-y':'38%', '--solo-w':'11%', '--solo-h':'20%' },
+};
+const SLIDERS = [
+    ['--eye-cx',    '眼睛中心 X', 40, 80, .5],
+    ['--eye-y',     '眼睛 Y',     5, 70, .5],
+    ['--eye-gap',   '兩眼間距',   2, 30, .5],
+    ['--eye-w',     '眼寬',       3, 16, .25],
+    ['--eye-h',     '眼高',       5, 32, .5],
+    ['--brow-lift', '眉毛抬高',   0, 25, .5],
+    ['--brow-h',    '眉毛粗細',   1, 9, .25],
+    ['--mouth-y',   '嘴巴 Y',    30, 85, .5],
+    ['--mouth-w',   '嘴寬',       4, 30, .5],
+    ['--mouth-h',   '嘴高',       2, 20, .5],
+    ['--solo-y',    '獨眼 Y（方案D）', 15, 70, .5],
+    ['--solo-w',    '獨眼寬（方案D）', 4, 25, .5],
+    ['--solo-h',    '獨眼高（方案D）', 6, 40, .5],
+];
+
+const stage = document.body;
+const mainBook = document.getElementById('mainBook');
+let curVariant = 'v-cover';
+let curExpr = 'neutral';
+
+// 依原圖比例算出「方框內圖片實際矩形」的 top/height（object-fit: contain）
+function syncImageRect() {
+    const img = document.getElementById('bookImg');
+    const r = (img.naturalWidth && img.naturalHeight) ? img.naturalWidth / img.naturalHeight : 1.8333;
+    const h = 100 / r;                       // 圖片高佔方框高的百分比
+    document.documentElement.style.setProperty('--img-h', h.toFixed(3) + '%');
+    document.documentElement.style.setProperty('--img-top', ((100 - h) / 2).toFixed(3) + '%');
+}
+document.getElementById('bookImg').addEventListener('load', syncImageRect);
+syncImageRect();
+
+// 尺寸預覽：複製主書的結構
+const SIZES = [[61,'61px<br>修好前首頁'], [100,'100px<br>首頁 1366×768'], [124,'124px<br>首頁 1920×1080'], [200,'200px<br>劇情畫面']];
+const sizesEl = document.getElementById('sizes');
+SIZES.forEach(([px, lbl]) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'size-item';
+    const b = mainBook.cloneNode(true);
+    b.id = '';
+    b.style.width = px + 'px'; b.style.height = px + 'px';
+    b.classList.add('preview-book');
+    wrap.appendChild(b);
+    const l = document.createElement('div');
+    l.className = 'lbl'; l.innerHTML = lbl;
+    wrap.appendChild(l);
+    sizesEl.appendChild(wrap);
+});
+const allBooks = () => document.querySelectorAll('.book');
+
+function applyVariant(v) {
+    curVariant = v;
+    allBooks().forEach(b => { VARIANTS.forEach(x => b.classList.remove(x.key)); b.classList.add(v); });
+    document.querySelectorAll('#variants button').forEach(btn => btn.classList.toggle('active', btn.dataset.v === v));
+    document.getElementById('variantNote').textContent = VARIANTS.find(x => x.key === v).note;
+    loadDefaults(v);
+}
+function applyExpr(e) {
+    curExpr = e;
+    allBooks().forEach(b => { EXPRS.forEach(x => b.classList.remove(x)); void b.offsetWidth; b.classList.add(e); });
+    document.querySelectorAll('#exprs button').forEach(btn => btn.classList.toggle('active', btn.dataset.e === e));
+}
+function setVar(k, v) { document.documentElement.style.setProperty(k, v); renderOut(); }
+function loadDefaults(v) {
+    const d = VAR_DEFAULTS[v];
+    Object.entries(d).forEach(([k, val]) => document.documentElement.style.setProperty(k, val));
+    SLIDERS.forEach(([k]) => {
+        const input = document.querySelector('input[data-k="' + k + '"]');
+        if (input) { input.value = parseFloat(d[k]); input.nextElementSibling.textContent = d[k]; }
+    });
+    renderOut();
+}
+function renderOut() {
+    const lines = SLIDERS.map(([k]) => '    ' + k + ': ' + getComputedStyle(document.documentElement).getPropertyValue(k).trim() + ';');
+    document.getElementById('cssOut').textContent = '/* ' + VARIANTS.find(x => x.key === curVariant).label + ' */\n.hat-char.is-grimoire {\n' + lines.join('\n') + '\n}';
+}
+
+// 建 UI
+const varsEl = document.getElementById('variants');
+VARIANTS.forEach(v => {
+    const b = document.createElement('button');
+    b.textContent = v.label; b.dataset.v = v.key;
+    b.onclick = () => applyVariant(v.key);
+    varsEl.appendChild(b);
+});
+const exprEl = document.getElementById('exprs');
+EXPRS.forEach(e => {
+    const b = document.createElement('button');
+    b.textContent = EXPR_ZH[e]; b.dataset.e = e;
+    b.onclick = () => { document.getElementById('autoplay').checked = false; stopAuto(); applyExpr(e); };
+    exprEl.appendChild(b);
+});
+const slidersEl = document.getElementById('sliders');
+SLIDERS.forEach(([k, label, min, max, step]) => {
+    const l = document.createElement('label');
+    l.className = 'slider';
+    l.innerHTML = label + '<span></span>';
+    const i = document.createElement('input');
+    i.type = 'range'; i.min = min; i.max = max; i.step = step; i.dataset.k = k;
+    const out = document.createElement('span');
+    i.oninput = () => { const val = i.value + '%'; setVar(k, val); l.querySelector('span').textContent = val; };
+    slidersEl.appendChild(l); slidersEl.appendChild(i);
+    i.nextElementSibling = l.querySelector('span');
+    Object.defineProperty(i, 'nextElementSibling', { value: l.querySelector('span') });
+});
+
+// 自動輪播
+let autoTimer = null;
+const IDLE_SEQ = ['neutral','happy','thinking','wink','surprised','neutral','sleepy'];
+let idleIdx = 0;
+function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } }
+document.getElementById('autoplay').onchange = (e) => {
+    if (e.target.checked) {
+        autoTimer = setInterval(() => { idleIdx = (idleIdx + 1) % IDLE_SEQ.length; applyExpr(IDLE_SEQ[idleIdx]); }, 2800);
+    } else stopAuto();
+};
+document.getElementById('simReduce').onchange = (e) => document.body.classList.toggle('sim-reduce', e.target.checked);
+document.getElementById('resetBtn').onclick = () => loadDefaults(curVariant);
+document.getElementById('copyBtn').onclick = () => {
+    navigator.clipboard.writeText(document.getElementById('cssOut').textContent);
+    const b = document.getElementById('copyBtn'); const t = b.textContent;
+    b.textContent = '已複製 ✓'; setTimeout(() => b.textContent = t, 1200);
+};
+
+applyVariant('v-cover');
+applyExpr('neutral');
+</script>
+</body>
+</html>
