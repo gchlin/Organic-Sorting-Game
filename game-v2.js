@@ -71,8 +71,6 @@
     let _currentScreen = 'main-menu';
     let _subMenuContext = null; // { kind: 'difficulty'|'duel', difficulty?, opponent? }
     let _pendingConfirm = null; // { onYes, onNo, text }
-    let _tutorialState = null;  // { pages, idx, onDone, key }
-    let _storyState = null;     // { lines, idx, playerName, onDone }
     let _quickHintOpen = false;
     let _wrongHintFlashSeq = 0;
     let _activeWrongHintKey = '';       // 最近一次答錯的閃爍識別碼（''＝目前沒有答錯）
@@ -506,9 +504,9 @@
             case 'codex': UICodex.render(); break;
             case 'wrong-book': UIWrongBook.render(); break;
             case 'settings': renderSettingsScreen(); break;
-            case 'story': renderStoryScreen(); break;
+            case 'story': UIStory.renderStory(); break;
         }
-        renderTutorialModal();
+        UIStory.renderTutorialModal();
         renderConfirmModal();
         renderDevBanner();
         syncHatChars();  // 依皮膚設定同步所有 .hat-char（切換 hat/grimoire 後重繪）
@@ -684,7 +682,7 @@
                 const btn = document.createElement('button');
                 setMenuButtonContent(btn, '', mod.title || key);
                 btn.addEventListener('click', function () {
-                    _openTutorialPages(mod.pages, 'module:' + key, function () { goToScreen('sub-menu'); });
+                    UIStory.openTutorialPages(mod.pages, 'module:' + key, function () { goToScreen('sub-menu'); });
                 });
                 listEl.appendChild(btn);
             }
@@ -917,26 +915,6 @@
         }
     }
 
-    function _tutorialPagesFor(family, difficulty) {
-        if (!family || !difficulty || typeof LevelTutorials === 'undefined') return null;
-        const key = family + '-' + difficulty;
-        const mapped = (typeof LevelTutorialMap !== 'undefined' && LevelTutorialMap[key]) ? LevelTutorialMap[key] : key;
-        const tut = LevelTutorials[mapped];
-        return (tut && Array.isArray(tut.pages)) ? tut.pages
-             : (tut && Array.isArray(tut)) ? tut
-             : null;
-    }
-    function _openTutorialPages(pages, key, onDone) {
-        if (!Array.isArray(pages) || !pages.length) return false;
-        _tutorialState = {
-            pages: pages,
-            idx: 0,
-            key: key || '',
-            onDone: typeof onDone === 'function' ? onDone : function () { render(); }
-        };
-        render();
-        return true;
-    }
     // 提示泡泡內容（由「看教學」按鈕切換）。一律顯示當題正解類別的
     // 「辨識重點＋常見陷阱＋官能基小圖」；查無對應提示才用通用提示。
     // 回傳 HTML 字串（動態文字均已跳脫）。
@@ -994,7 +972,7 @@
         const tutBtn = document.querySelector('[data-action="show-tutorial"]');
         if (!tutBtn) return;
         const pages = (state && state.family && state.difficulty)
-            ? _tutorialPagesFor(state.family, state.difficulty) : null;
+            ? UIStory.pagesFor(state.family, state.difficulty) : null;
         const hasTut = !!(pages && pages.length > 0);
         tutBtn.style.display = hasTut ? '' : 'none';
 
@@ -1416,114 +1394,10 @@
         if (label) label.textContent = pct + '%';
     }
 
-    function renderStoryScreen() {
-        const whoEl  = document.getElementById('story-who');
-        const textEl = document.getElementById('story-text');
-        if (!whoEl || !textEl || !_storyState) return;
-        const line = _storyState.lines[_storyState.idx];
-        if (!line) return;
-        const mentorLabel = _characterSkin() === 'grimoire' ? '📖 分類魔導書' : '🎩 分類帽';
-        const WHO_LABEL = { hat: mentorLabel, wiz: '🧙 魔法師' };
-        whoEl.textContent = WHO_LABEL[line.who] || line.who;
-        const raw = line.text || '';
-        const name = _storyState.playerName || '';
-        textEl.textContent = name ? raw.replace(/\{name\}/g, name) : raw.replace(/\{name\}/g, '你');
-
-        // Drive the sorting-hat character. hat lines use their author-given expr;
-        // wiz lines (no other speaker exists) keep the hat present but neutral.
-        const hatEl = document.getElementById('story-hat');
-        if (hatEl) {
-            ensureHatChar(hatEl);
-            const expr = (line.who === 'hat') ? (line.expr || 'neutral') : 'neutral';
-            setHatExpression(hatEl, expr);
-        }
-    }
-
     // Advance to next family/difficulty after settle.
     // Order: iterate Families in declaration order, for each difficulty in
     // [beginner, intermediate, advanced]; after the last → show "all done" alert.
     // Duel mode: "再來一場" (same family+difficulty, same opponent).
-    // Open story player. familyKey → looks up StoryScripts[familyKey].
-    // onDone() is called after the last line (or if story is empty).
-    function _openStory(familyKey, onDone) {
-        const scripts = (_characterSkin() === 'grimoire' && typeof StoryScriptsGrimoire !== 'undefined')
-            ? StoryScriptsGrimoire
-            : (typeof StoryScripts !== 'undefined') ? StoryScripts : {};
-        const lines = scripts[familyKey];
-        if (!lines || lines.length === 0) {
-            if (typeof onDone === 'function') onDone();
-            return;
-        }
-        const saveData = (typeof Save !== 'undefined' && Save.get) ? Save.get() : {};
-        const playerName = saveData && saveData.playerName ? saveData.playerName : '';
-        _storyState = { lines: lines, idx: 0, playerName: playerName, onDone: onDone || null };
-        goToScreen('story');
-    }
-
-    function _advanceStory() {
-        if (!_storyState) return;
-        if (_storyState.idx < _storyState.lines.length - 1) {
-            _storyState.idx++;
-            render();
-        } else {
-            // Last line — end story
-            const cb = _storyState.onDone;
-            _storyState = null;
-            if (typeof cb === 'function') {
-                cb();
-            } else {
-                goToScreen('main-menu');
-            }
-        }
-    }
-
-    function renderTutorialModal() {
-        const modal = document.getElementById('modal-tutorial');
-        if (!modal) return;
-        if (!_tutorialState) { modal.classList.remove('is-open'); return; }
-        modal.classList.add('is-open');
-        const title = document.getElementById('modal-tutorial-title');
-        const body = document.getElementById('modal-tutorial-body');
-        const page = _tutorialState.pages[_tutorialState.idx] || {};
-        if (title) title.textContent = page.title || '教學';
-        if (!body) return;
-
-        // Build slide: [hat + img(s)] on top, text below.
-        // page.img may be a string, array, or undefined.
-        const imgs = Array.isArray(page.img) ? page.img.slice()
-                   : (page.img ? [page.img] : []);
-        const expr = page.expr || 'neutral';
-        const text = page.text || page.body || page.content || '';
-
-        // Escape helper for src attribute (paths are author-controlled but be safe)
-        function attr(s) { return String(s).replace(/"/g, '&quot;'); }
-        function esc(s) {
-            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        }
-
-        let mediaHTML = '';
-        if (imgs.length > 0 || expr) {
-            const iconClass = imgs.length > 1 ? 'tutorial-icon multi' : 'tutorial-icon';
-            const imgHTML = imgs.map(src =>
-                '<img class="tutorial-img" src="' + attr(src) + '" alt="">'
-            ).join('');
-            mediaHTML =
-                '<div class="tutorial-slide-media">' +
-                    '<div id="tutorial-hat" class="hat-char ' + esc(expr) + '"></div>' +
-                    (imgs.length ? '<div class="' + iconClass + '">' + imgHTML + '</div>' : '') +
-                '</div>';
-        }
-        body.innerHTML =
-            '<div class="tutorial-slide">' +
-                mediaHTML +
-                '<p class="tutorial-text">' + esc(text) + '</p>' +
-            '</div>';
-
-        // Inject hat inner DOM so CSS face renders.
-        const hatEl = body.querySelector('#tutorial-hat');
-        ensureHatChar(hatEl);
-    }
-
     function renderConfirmModal() {
         const modal = document.getElementById('modal-confirm');
         if (!modal) return;
@@ -1536,53 +1410,6 @@
     function requestConfirm(text, onYes, onNo) {
         _pendingConfirm = { text: text, onYes: onYes, onNo: onNo || function () {} };
         render();
-    }
-
-    function openHelp(kind) {
-        if (kind === 'wrong-book') {
-            _tutorialState = {
-                pages: [
-                    {
-                        title: '卡片盒記憶法',
-                        expr: 'happy',
-                        text: '卡片盒記憶法會把題目放進不同熟練度的盒子：越不熟越常練，越熟越往後放，讓複習集中在真正需要訂正的卡片。'
-                    },
-                    {
-                        title: '頁籤代表什麼',
-                        expr: 'neutral',
-                        text: '待訂正是還沒有訂正成功的卡片；訂正一次、訂正兩次代表已連續答對後升到下一盒；已克服代表已進入第 4 盒，可以批次刪除。'
-                    },
-                    {
-                        title: '訂正規則',
-                        expr: 'neutral',
-                        text: '訂正答對會累積熟練度並往後升盒；若再次答錯，卡片會回到待訂正。你也可以按單張卡片右上角的 × 自己刪除。'
-                    }
-                ],
-                idx: 0,
-                onDone: function () { goToScreen('wrong-book'); }
-            };
-            render();
-            return;
-        }
-        if (kind === 'codex') {
-            _tutorialState = {
-                pages: [
-                    {
-                        title: '圖鑑頁籤',
-                        expr: 'neutral',
-                        text: '分子會顯示已解鎖的化合物；闖關進度記錄各子關完成狀態；勳章是累積成就；劇情會在通關後解鎖。'
-                    },
-                    {
-                        title: '卡片內容',
-                        expr: 'happy',
-                        text: '已解鎖的分子卡可以點開，查看結構圖、名稱、分類與簡短說明。未解鎖卡片會先以 ??? 顯示。'
-                    }
-                ],
-                idx: 0,
-                onDone: function () { goToScreen('codex'); }
-            };
-            render();
-        }
     }
 
     function renderDevBanner() {
@@ -1602,19 +1429,8 @@
     // -----------------------------------------------------------------------
     function startMode(opts) {
         // Tutorial gate
-        const tutKey = opts.family + '-' + opts.difficulty;
         if (typeof Save !== 'undefined' && Save.isTutorialSeenV2 && !Save.isTutorialSeenV2(opts.family, opts.difficulty)) {
-            const pages = _tutorialPagesFor(opts.family, opts.difficulty);
-            if (pages && pages.length > 0) {
-                _tutorialState = {
-                    pages: pages,
-                    idx: 0,
-                    key: tutKey,
-                    family: opts.family,
-                    difficulty: opts.difficulty,
-                    onDone: function () { beginMode(opts); }
-                };
-                render();
+            if (UIStory.openLevelTutorial(opts.family, opts.difficulty, function () { beginMode(opts); })) {
                 return;
             }
         }
@@ -1908,7 +1724,7 @@
                 case 'enter-wrong-book': goToScreen('wrong-book'); break;
                 case 'enter-settings': goToScreen('settings'); break;
                 case 'open-help':
-                    openHelp(arg);
+                    UIStory.openHelp(arg);
                     break;
                 case 'back-to-main':
                 case 'back-to-menu':
@@ -1931,7 +1747,7 @@
                         const sKey = fam ? fam.storyKey : state.family;
                         if (sKey) {
                             const prevScreen = _currentScreen;
-                            _openStory(sKey, function () { goToScreen(prevScreen); });
+                            UIStory.openStory(sKey, function () { goToScreen(prevScreen); });
                         }
                     }
                     break;
@@ -1941,39 +1757,23 @@
                             _toggleQuickHint();
                             break;
                         }
-                        const tutKey = state.family + '-' + state.difficulty;
-                        const pages = _tutorialPagesFor(state.family, state.difficulty);
-                        if (pages && pages.length > 0) {
-                            _tutorialState = {
-                                pages: pages, idx: 0, key: tutKey,
-                                family: state.family, difficulty: state.difficulty,
-                                onDone: function () { goToScreen('settle'); }
-                            };
-                            render();
-                        }
+                        UIStory.openLevelTutorial(state.family, state.difficulty, function () { goToScreen('settle'); });
                     }
                     break;
                 case 'next-level':
                     UISettle.goNextLevel();
                     break;
                 case 'story-advance':
-                    _advanceStory();
+                    UIStory.advanceStory();
                     break;
                 case 'tutorial-prev':
-                    if (_tutorialState && _tutorialState.idx > 0) { _tutorialState.idx--; render(); }
+                    UIStory.tutorialPrev();
                     break;
                 case 'tutorial-next':
-                    if (_tutorialState) {
-                        if (_tutorialState.idx < _tutorialState.pages.length - 1) {
-                            _tutorialState.idx++;
-                            render();
-                        } else {
-                            _closeTutorialAndContinue();
-                        }
-                    }
+                    UIStory.tutorialNext();
                     break;
                 case 'tutorial-close':
-                    _closeTutorialAndContinue();
+                    UIStory.closeTutorialAndContinue();
                     break;
                 case 'confirm-yes':
                     if (_pendingConfirm && _pendingConfirm.onYes) _pendingConfirm.onYes();
@@ -1994,7 +1794,7 @@
                     && e.target.closest('button, [data-action], a, input, select, textarea')) {
                     return;
                 }
-                if (_currentScreen === 'story') _advanceStory();
+                if (_currentScreen === 'story') UIStory.advanceStory();
             });
         }
 
@@ -2033,8 +1833,8 @@
                 return;
             }
             if (_currentScreen === 'story') {
-                if (e.code === 'Space' || e.code === 'Enter') { _advanceStory(); e.preventDefault(); return; }
-                if (e.code === 'Escape') { _storyState = null; goToScreen('main-menu'); e.preventDefault(); return; }
+                if (e.code === 'Space' || e.code === 'Enter') { UIStory.advanceStory(); e.preventDefault(); return; }
+                if (e.code === 'Escape') { UIStory.escapeStory(); e.preventDefault(); return; }
             }
         });
     }
@@ -2050,17 +1850,6 @@
     function _clickAction(name) {
         const btn = document.querySelector('[data-action="' + name + '"]');
         if (btn) btn.click();
-    }
-    function _closeTutorialAndContinue() {
-        if (!_tutorialState) return;
-        const cb = _tutorialState.onDone;
-        if (_tutorialState.family && _tutorialState.difficulty
-            && typeof Save !== 'undefined' && Save.markTutorialSeenV2) {
-            Save.markTutorialSeenV2(_tutorialState.family, _tutorialState.difficulty);
-        }
-        _tutorialState = null;
-        render();
-        if (typeof cb === 'function') cb();
     }
 
     // 快速鍵捕捉：一次只允許一個格子處於捕捉狀態
@@ -2355,7 +2144,8 @@
             });
         }
 
-        UICodex.init({ goToScreen: goToScreen, openStory: _openStory, famCompoundKeys: _famCompoundKeys });
+        UIStory.init({ goToScreen: goToScreen, render: render, getState: function () { return state; }, characterSkin: _characterSkin, ensureHatChar: ensureHatChar, setHatExpression: setHatExpression, syncHatChars: syncHatChars });
+        UICodex.init({ goToScreen: goToScreen, openStory: UIStory.openStory, famCompoundKeys: _famCompoundKeys });
         UIWrongBook.init({ findImageFor: _findImageFor, startMode: startMode, render: render, goToScreen: goToScreen, requestConfirm: requestConfirm });
         UISettle.init({ getState: function () { return state; }, goToScreen: goToScreen, startMode: startMode, findImageFor: _findImageFor, requestConfirm: requestConfirm, getWrongChosenMap: function () { return _wrongChosenMap; } });
         attachMenuListeners();
