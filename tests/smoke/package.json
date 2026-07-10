@@ -1,0 +1,11 @@
+{
+  "name": "organic-sorting-game-smoke",
+  "private": true,
+  "description": "重構護欄：puppeteer 煙霧測試（node run.js）",
+  "scripts": {
+    "test": "node run.js"
+  },
+  "dependencies": {
+    "puppeteer-core": "^25.3.0"
+  }
+}
