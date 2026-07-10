@@ -60,8 +60,9 @@ function requestConfirm(text, onYes, onNo) {
 - 直接用的全域（不經 ctx）：`Families`、`QuestionImages`、`AnswerBank`、`CompoundFacts`、`Save`。
 - core 改動：render() switch `case 'codex': UICodex.render()`；init() 加 `UICodex.init({...})`。
 - 不搬：`_famCompoundKeys`（renderMainMenu 也用）、`openHelp` 的 codex 分支（留 core，3d 再處理）。
-- 已知潛在 bug（**不要修**，記錄即可）：settle 的「看圖鑑 →」按鈕期待
-  `#codex-mol-<key>` 元素，但 codex 卡片只有 `data-mol` 沒有 id——搬移前後行為一致即可。
+- ~~已知潛在 bug：settle 的「看圖鑑 →」按鈕期待 `#codex-mol-<key>` 元素，
+  但 codex 卡片只有 `data-mol` 沒有 id~~——切檔完成後已修：UICodex 開
+  `scrollToMol(molKey)` API（切分子 tab ＋捲動），settle 經 ctx.scrollToCodexMol 呼叫。
 
 ### 3b. ui-wrong-book.js（UIWrongBook）
 

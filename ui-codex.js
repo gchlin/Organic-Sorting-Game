@@ -214,5 +214,15 @@ const UICodex = (function () {
         });
     }
 
-    return { init, render: renderCodexScreen };
+    // 深連結：切到「分子」tab 後捲動到指定分子卡（結算頁「看圖鑑 →」用）。
+    // 未解鎖的分子沒有 data-mol 卡片，找不到就只停在分子 tab。
+    function scrollToMol(molKey) {
+        _codexTab = 'molecules';
+        renderCodexScreen();
+        const sel = (typeof CSS !== 'undefined' && CSS.escape) ? CSS.escape(molKey) : molKey;
+        const card = document.querySelector('.codex-mol-card[data-mol="' + sel + '"]');
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    return { init, render: renderCodexScreen, scrollToMol };
 })();

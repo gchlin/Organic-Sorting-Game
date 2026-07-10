@@ -1,6 +1,6 @@
 // ui-settle.js - 結算畫面（core 的 render() 分派進來）
 const UISettle = (function () {
-    let ctx = null; // core 注入的依賴：{ getState, goToScreen, startMode, findImageFor, requestConfirm, getWrongChosenMap }
+    let ctx = null; // core 注入的依賴：{ getState, goToScreen, startMode, findImageFor, requestConfirm, getWrongChosenMap, scrollToCodexMol }
     function init(context) { ctx = context; }
 
     function renderSettleScreen() {
@@ -104,11 +104,7 @@ const UISettle = (function () {
                         codexLink.addEventListener('click', function (e) {
                             e.stopPropagation();
                             ctx.goToScreen('codex');
-                            // Scroll to the molecule card after render
-                            setTimeout(function () {
-                                const target = document.getElementById('codex-mol-' + molKey);
-                                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }, 80);
+                            ctx.scrollToCodexMol(molKey);
                         });
                     })(ck);
                     card.appendChild(codexLink);

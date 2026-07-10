@@ -1781,7 +1781,7 @@
         UIStory.init({ goToScreen: goToScreen, render: render, getState: function () { return state; }, characterSkin: _characterSkin, ensureHatChar: ensureHatChar, setHatExpression: setHatExpression, syncHatChars: syncHatChars });
         UICodex.init({ goToScreen: goToScreen, openStory: UIStory.openStory, famCompoundKeys: _famCompoundKeys });
         UIWrongBook.init({ findImageFor: _findImageFor, startMode: startMode, render: render, goToScreen: goToScreen, requestConfirm: requestConfirm });
-        UISettle.init({ getState: function () { return state; }, goToScreen: goToScreen, startMode: startMode, findImageFor: _findImageFor, requestConfirm: requestConfirm, getWrongChosenMap: function () { return _wrongChosenMap; } });
+        UISettle.init({ getState: function () { return state; }, goToScreen: goToScreen, startMode: startMode, findImageFor: _findImageFor, requestConfirm: requestConfirm, getWrongChosenMap: function () { return _wrongChosenMap; }, scrollToCodexMol: UICodex.scrollToMol });
         UISettings.init({ render: render, syncMusicForScreen: _syncMusicForScreen, formatKeyCode: _formatKeyCode, escapeHtml: _escapeHtml, requestConfirm: requestConfirm, getCurrentScreen: function () { return _currentScreen; } });
         attachMenuListeners();
         UISettings.attachListeners();
