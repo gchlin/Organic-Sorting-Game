@@ -40,6 +40,8 @@ function serve() {
 
 // 固定種子 PRNG（mulberry32），讓題目抽選/選項洗牌每次一樣
 const SEED_SNIPPET = `(function () {
+    // 關掉首頁魔導書待機表情循環，讓主選單截圖決定性
+    window.__NO_HAT_IDLE__ = true;
     let s = 42;
     Math.random = function () {
         s |= 0; s = (s + 0x6D2B79F5) | 0;
@@ -70,6 +72,13 @@ async function newPage(browser, w, h) {
     await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 });
     // 固定媒體特徵：headless 會繼承主機的 reduce 設定，鎖住才能跨機器決定性
     await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
+    // 擋掉外部字體（Google Fonts）：載入時機是競態來源，一律用本地 fallback 才決定性
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+        const u = req.url();
+        if (u.includes('googleapis.com') || u.includes('gstatic.com')) req.abort();
+        else req.continue();
+    });
     await page.evaluateOnNewDocument(SEED_SNIPPET);
     await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle2' });
     await page.addStyleTag({ content: FREEZE_CSS });
@@ -175,6 +184,31 @@ async function captureAll(dir) {
     await browser.close();
 }
 
+// 容差式像素比對：位元組級太脆（放大的 webp 重新取樣會產生 ±1 次像素噪點，
+// 視覺相同卻位元組不同）。改用 Chrome 解碼兩張圖，統計「每通道差 > THRESH」
+// 的像素數，超過 MAX_DIFF_PX 才判定為真正的視覺變化。
+const PX_THRESH = 16;      // 單通道差異門檻（濾掉 AA 噪點）
+const MAX_DIFF_PX = 120;   // 容許的雜訊像素上限；真正的改動是數千像素起跳
+async function diffCount(page, bufA, bufB) {
+    const a = 'data:image/png;base64,' + bufA.toString('base64');
+    const b = 'data:image/png;base64,' + bufB.toString('base64');
+    return page.evaluate(async (a, b, thresh) => {
+        function load(src) { return new Promise((r, rej) => { const i = new Image(); i.onload = () => r(i); i.onerror = rej; i.src = src; }); }
+        const ia = await load(a), ib = await load(b);
+        if (ia.width !== ib.width || ia.height !== ib.height) return { size: true };
+        const w = ia.width, h = ia.height;
+        const ca = new OffscreenCanvas(w, h), cb = new OffscreenCanvas(w, h);
+        const xa = ca.getContext('2d'), xb = cb.getContext('2d');
+        xa.drawImage(ia, 0, 0); xb.drawImage(ib, 0, 0);
+        const da = xa.getImageData(0, 0, w, h).data, db = xb.getImageData(0, 0, w, h).data;
+        let count = 0;
+        for (let i = 0; i < da.length; i += 4) {
+            if (Math.abs(da[i] - db[i]) + Math.abs(da[i + 1] - db[i + 1]) + Math.abs(da[i + 2] - db[i + 2]) > thresh) count++;
+        }
+        return { count };
+    }, a, b, PX_THRESH);
+}
+
 (async () => {
     const mode = process.argv.includes('--compare') ? 'compare' : 'baseline';
     const server = await serve();
@@ -186,21 +220,25 @@ async function captureAll(dir) {
         } else {
             const curDir = path.join(__dirname, 'shots', 'current');
             await captureAll(curDir);
+            const exe = BROWSERS.find(p => fs.existsSync(p));
+            const browser = await puppeteer.launch({ executablePath: exe, headless: 'new' });
+            const page = await browser.newPage();
             const names = fs.readdirSync(baseDir).filter(f => f.endsWith('.png'));
             let fail = 0;
             for (const n of names) {
-                const a = fs.readFileSync(path.join(baseDir, n));
                 const cur = path.join(curDir, n);
                 if (!fs.existsSync(cur)) { console.log('MISSING ', n); fail++; continue; }
-                const b = fs.readFileSync(cur);
-                const same = a.equals(b);
-                console.log((same ? 'SAME    ' : 'DIFFERS ') + n);
-                if (!same) fail++;
+                const res = await diffCount(page, fs.readFileSync(path.join(baseDir, n)), fs.readFileSync(cur));
+                const bad = res.size || res.count > MAX_DIFF_PX;
+                const detail = res.size ? 'size changed' : res.count + ' px';
+                console.log((bad ? 'DIFFERS ' : 'SAME    ') + n + '  (' + detail + ')');
+                if (bad) fail++;
             }
             const extra = fs.readdirSync(curDir).filter(f => f.endsWith('.png') && !names.includes(f));
             extra.forEach(n => { console.log('EXTRA   ', n); fail++; });
+            await browser.close();
             if (fail) { console.log(`\n${fail} screenshot(s) differ`); process.exit(1); }
-            console.log('\nALL SCREENSHOTS IDENTICAL');
+            console.log('\nALL SCREENSHOTS MATCH (within tolerance)');
         }
     } finally {
         server.close();

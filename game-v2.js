@@ -862,6 +862,7 @@
         }
 
         _syncTutorialBtn();
+        _syncGameMentor();
         _updateFeedbackOverlay();
         _checkComboPopup();
     }
@@ -1750,6 +1751,7 @@
     }
     function initHatChars() {
         syncHatChars();
+        _startHomeMentorIdle();
         if (_hatMouseBound) return;
         _hatMouseBound = true;
         document.addEventListener('mousemove', (ev) => {
@@ -1763,6 +1765,39 @@
                 p.style.transform = 'translate(' + (-50 + Math.cos(ang) * 18) + '%, ' + (-50 + Math.sin(ang) * 18) + '%)';
             });
         });
+    }
+
+    // 首頁魔導書待機表情：每隔幾秒換一個友善表情。用「切換表情」而非持續動畫
+    // 來表現個性——即使使用者開了 prefers-reduced-motion（動畫被關），靜態姿勢
+    // 與光暈濾鏡仍會隨切換而變，表情依然讀得出來。只在主選單作用。
+    const _HOME_IDLE_SEQ = ['neutral', 'happy', 'thinking', 'wink', 'surprised', 'neutral', 'sleepy'];
+    let _homeIdleTimer = null;
+    let _homeIdleIdx = 0;
+    function _startHomeMentorIdle() {
+        // 測試種子開關：截圖工具設 window.__NO_HAT_IDLE__ 以固定表情、確保決定性
+        if (typeof window !== 'undefined' && window.__NO_HAT_IDLE__) return;
+        if (_homeIdleTimer !== null) return;
+        _homeIdleTimer = setInterval(function () {
+            if (_currentScreen !== 'main-menu') return;
+            const el = document.getElementById('main-menu-hat');
+            if (!el) return;
+            _homeIdleIdx = (_homeIdleIdx + 1) % _HOME_IDLE_SEQ.length;
+            setHatExpression(el, _HOME_IDLE_SEQ[_homeIdleIdx]);
+        }, 2800);
+    }
+
+    // 練習模式導師表情：依當前 phase 反應。只在表情改變時才重設 class，
+    // 避免每次 render 重播一次性動畫（happy 彈跳等）。
+    function _syncGameMentor() {
+        const el = document.getElementById('game-mentor');
+        if (!el || !state) return;
+        let expr = 'neutral';
+        if (state.mode === 'practice') {
+            if (state.phase === 'resolvingCorrect') expr = 'happy';
+            else if (state.phase === 'resolvingWrong') expr = 'annoyed';
+            else if (state.phase === 'canAnswer') expr = 'thinking';
+        }
+        if (!el.classList.contains(expr)) setHatExpression(el, expr);
     }
 
     function init() {

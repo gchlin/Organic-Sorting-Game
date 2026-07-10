@@ -1,8 +1,8 @@
 /* --- Sorting Hat character, coach, tutorial, and story styles --- */
 
 .title-hat {
-    width: clamp(56px, 12vw, 88px);
-    height: clamp(56px, 12vw, 88px);
+    width: clamp(80px, 16vw, 128px);
+    height: clamp(80px, 16vw, 128px);
     flex-shrink: 0;
     filter: drop-shadow(0 4px 8px rgba(0,0,0,.5));
 }
@@ -200,7 +200,7 @@
     .hat-char.is-grimoire.surprised .grimoire-img { transform: scale(1.08) rotate(2deg); }
     .hat-char.is-grimoire.thinking .grimoire-img  { transform: rotate(4deg); }
     .hat-char.is-grimoire.wink .grimoire-img      { transform: rotate(5deg) translateY(-2%); }
-    .hat-char.is-grimoire.annoyed .grimoire-img   { transform: rotate(-3deg); }
+    .hat-char.is-grimoire.annoyed .grimoire-img   { transform: rotate(-7deg) translateY(2%); }
     .hat-char.is-grimoire.sleepy .grimoire-img    { transform: translateY(2.5%) rotate(-2deg); }
 }
 
@@ -213,14 +213,14 @@
 }
 /* 手機：帽子小 */
 #tutorial-hat {
-    width: 72px;
-    height: 80px;
+    width: 88px;
+    height: 96px;
     flex-shrink: 0;
     filter: drop-shadow(0 2px 6px rgba(0,0,0,.45));
 }
 /* 大螢幕：帽子較大 */
 @media (min-width: 560px) {
-    #tutorial-hat { width: 110px; height: 122px; }
+    #tutorial-hat { width: 132px; height: 146px; }
 }
 
 /* ============================================================
@@ -256,8 +256,8 @@
     }
 }
 #story-hat {
-    width: clamp(90px, 18vh, 160px);
-    height: clamp(100px, 20vh, 178px);
+    width: clamp(120px, 22vh, 200px);
+    height: clamp(132px, 24vh, 222px);
     flex-shrink: 0;
     filter: drop-shadow(0 4px 12px rgba(0,0,0,.5));
 }
@@ -301,4 +301,27 @@
         width: clamp(48px, 14vh, 72px);
         height: clamp(54px, 16vh, 80px);
     }
+}
+
+/* ============================================================
+   練習模式導師（角落魔導書）
+   #screen-game 是 position:relative + overflow:hidden，導師用 absolute
+   釘在左下角空白處，只在練習模式顯示；對決模式版面滿、直式空間窄→隱藏。
+   ============================================================ */
+#game-mentor {
+    display: none;
+    position: absolute;
+    left: clamp(6px, 1.5vw, 24px);
+    top: 46%;
+    transform: translateY(-50%);
+    width: clamp(84px, 10vw, 140px);
+    height: clamp(84px, 10vw, 140px);
+    z-index: 30;
+    pointer-events: none;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,.5));
+}
+/* 練習橫向：選項置底滿寬、分子卡置中，左側邊欄留白 → 導師擺左側垂直置中。
+   直式與窄橫向空間不夠會壓到內容，收起不顯示。 */
+@media (orientation: landscape) and (min-width: 900px) and (min-height: 600px) {
+    #screen-game.mode-practice #game-mentor { display: block; }
 }
