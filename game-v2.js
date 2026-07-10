@@ -79,6 +79,11 @@
     let _lastAnswerPlayer = null;
 
     function dispatch(action) {
+        // 回顧是唯讀的：作答類 action 一律擋在門口，不讓它們碰到 reducer。
+        if (_isReviewing() && action && (action.type === 'SUBMIT_ANSWER'
+            || action.type === 'BUZZ' || action.type === 'CONTINUE')) {
+            return;
+        }
         if (action && typeof action === 'object' && typeof action.now !== 'number') {
             action.now = Date.now();
         }
@@ -164,7 +169,9 @@
                     // re-answer toward its mastery streak (Leitner-spirit promote).
                     if (Save.promoteWrongV2) Save.promoteWrongV2(state.family, state.difficulty, preCompoundKey);
                 }
-                // 答對了，答案已揭曉 → 導師順便講這個分子能幹嘛。
+                // 答對了，答案已揭曉 → 導師順便講這個分子能幹嘛，並留一份給回顧用。
+                // 必須在 reduce 之後、LOAD_NEXT_QUESTION 之前拍快照（options 此時仍是本題的）。
+                _reviewPush();
                 _mentorSayFact(preCompoundKey);
             } else if (state.mode === 'practice' && !wasCorrect) {
                 state.wrongInRound.add(preCompoundKey);
@@ -418,6 +425,8 @@
         _quickHintOpen = false;
         _clearHintFlash();
         if (hint) { hint.classList.remove('visible', 'quick-hint'); hint.textContent = ''; }
+        // 導師的話跟著題目走：換題前一定收掉，不然學生會看到上一題的講解。
+        _mentorHush();
         const img = document.getElementById('game-image');
         if (img) {
             img.classList.remove('dyn-zoom', 'dyn-blur', 'dyn-rotate-zoom', 'dyn-playing', 'dyn-paused', 'dyn-completing', 'dyn-complete');
@@ -439,6 +448,9 @@
 
     function resetRuntimeAfterLeavingGame() {
         _mentorHush();
+        _reviewHistory = [];
+        _reviewIdx = null;
+        if (typeof document !== 'undefined') document.body.classList.remove('is-reviewing');
         if (!state) return;
         state.phase = 'idle';
         state.globalInputLocked = false;
@@ -483,9 +495,11 @@
         document.body.classList.remove(
             'phase-resolving-correct', 'phase-resolving-wrong',
             'phase-revealing', 'phase-revealed', 'phase-cleanup',
-            'phase-buzzed', 'buzz-owner-p1', 'buzz-owner-p2', 'input-locked'
+            'phase-buzzed', 'buzz-owner-p1', 'buzz-owner-p2', 'input-locked',
+            'phase-awaiting-continue'
         );
         if (state) {
+            if (state.phase === 'awaitingContinue') document.body.classList.add('phase-awaiting-continue');
             if (state.phase === 'resolvingCorrect') document.body.classList.add('phase-resolving-correct');
             if (state.phase === 'resolvingWrong') document.body.classList.add('phase-resolving-wrong');
             if (state.phase === 'revealing') document.body.classList.add('phase-revealing');
@@ -821,8 +835,10 @@
                         btns[i].classList.toggle('correct-reveal',
                             (state.phase === 'revealing' || state.phase === 'revealed')
                             && opt.key === state.question.correctKey);
+                        // awaitingContinue 也要留著綠色高亮：導師還在講解，正解得掛在畫面上。
                         btns[i].classList.toggle('correct-chosen',
-                            feedbackApplies && state.phase === 'resolvingCorrect' && opt.key === state.question.correctKey);
+                            feedbackApplies && opt.key === state.question.correctKey
+                            && (state.phase === 'resolvingCorrect' || state.phase === 'awaitingContinue'));
                     } else {
                         btns[i].setAttribute('data-option-key', '');
                         btns[i].innerHTML = '';
@@ -864,6 +880,7 @@
             _stopBuzzedTickLoop();
         }
 
+        _renderReview();
         _syncTutorialBtn();
         _syncGameMentor();
         _updateFeedbackOverlay();
@@ -1245,6 +1262,16 @@
         return code;                                                          // Space, Enter, Tab, …
     }
 
+    // 這個鍵是否已被玩家綁成選項鍵？（方向鍵是合法的綁定目標，見 _formatKeyCode）
+    function _isBoundOptionKey(code) {
+        const kb = (typeof Save !== 'undefined' && Save.readSettings)
+            ? (Save.readSettings().keybindings || {}) : {};
+        for (let i = 0; i < 4; i++) {
+            if (kb['optionLeft' + i] === code || kb['optionRight' + i] === code) return true;
+        }
+        return false;
+    }
+
     function _escapeHtml(s) {
         return String(s == null ? '' : s)
             .replace(/&/g, '&amp;')
@@ -1311,6 +1338,8 @@
         if (aiController) { try { aiController.stop(); } catch (e) {} aiController = null; }
         _teardownAudio();
         _mentorHush();
+        _reviewHistory = [];
+        _reviewIdx = null;
 
         _wrongChosenMap = {};
         _prevCombo.p1 = '';
@@ -1596,6 +1625,21 @@
                     }
                     goToScreen('main-menu');
                     break;
+                case 'practice-continue':
+                    dispatch({ type: 'CONTINUE' });
+                    break;
+                case 'mentor-toggle':
+                    _mentorToggleBubble();
+                    break;
+                case 'review-prev':
+                    _reviewStep(-1);
+                    break;
+                case 'review-next':
+                    _reviewStep(1);
+                    break;
+                case 'review-exit':
+                    _reviewExit();
+                    break;
                 case 'continue-practice':
                     if (state && state.mode === 'practice') {
                         startMode({ mode: 'practice', family: state.family, difficulty: state.difficulty, opponent: 'human' });
@@ -1657,6 +1701,39 @@
                 if (_currentScreen === 'story') UIStory.advanceStory();
             });
         }
+
+        // 練習模式專用鍵：Space/Enter 繼續、← → 翻閱已答對的題、Esc 回到最新。
+        // 註冊在 InputController 之外（那邊只管作答/搶答），兩者互不干擾：
+        // 停等與回顧期間 phase 是 locked 或被 dispatch 擋掉，不會誤送 SUBMIT_ANSWER。
+        document.addEventListener('keydown', function (e) {
+            if (_currentScreen !== 'game' || !state || state.mode !== 'practice') return;
+            // 焦點在魔導書上時，Enter/Space 是「按下這顆按鈕」，不該同時觸發繼續。
+            // 只擋這兩顆：點過魔導書之後焦點留在它身上，← → Esc 仍要能用。
+            if (e.target && e.target.id === 'game-mentor'
+                && (e.code === 'Enter' || e.code === 'Space')) return;
+
+            if (_isReviewing()) {
+                // stopImmediatePropagation：本監聽器註冊在「選單快速鍵」之前，攔下 Esc
+                // 才不會在離開回顧的同時又被那邊解讀成「離開遊戲」。
+                if (e.code === 'ArrowLeft')       { _reviewStep(-1); }
+                else if (e.code === 'ArrowRight') { _reviewStep(1); }
+                else if (e.code === 'Escape')     { _reviewExit(); }
+                else return;
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return;
+            }
+            // 方向鍵可能被玩家改綁成選項鍵；那樣就讓它作答，別搶走。
+            if (e.code === 'ArrowLeft' && _reviewHistory.length && !_isBoundOptionKey(e.code)) {
+                _reviewStep(-1);
+                e.preventDefault();
+                return;
+            }
+            if (state.phase === 'awaitingContinue' && (e.code === 'Space' || e.code === 'Enter')) {
+                dispatch({ type: 'CONTINUE' });
+                e.preventDefault();
+            }
+        });
 
         // Keyboard shortcuts for menu screens (game-screen input is handled by InputController)
         document.addEventListener('keydown', function (e) {
@@ -1802,30 +1879,47 @@
         }, 2800);
     }
 
-    // 練習模式：答對後由導師講解該分子的用途（沿用圖鑑的 CompoundFacts）。
-    // 只在答對後才說，因為說明常常直接點名類別（「最簡單的烷類」），
-    // 在作答前顯示等於送答案。7 秒後自動收起。
-    let _mentorSayTimer = null;
+    // 練習模式：導師說的話。內容分兩種，取決於當題答案是否已經揭曉：
+    //   未答對 → 官能基辨識重點（WhyHints，跟「看教學」同源，不劇透分子）
+    //   已答對 → 該分子的用途（CompoundFacts）
+    // 用途說明常常直接點名類別（「最簡單的烷類」），作答前講等於送答案。
+    // 泡泡不自動消失：答對後停在 awaitingContinue，學生按「繼續」才收（換題必收）。
+    function _mentorShow(html) {
+        const b = document.getElementById('game-mentor-bubble');
+        if (!b) return;
+        b.innerHTML = html;
+        b.classList.add('is-visible');
+    }
     function _mentorHush() {
-        if (_mentorSayTimer !== null) { clearTimeout(_mentorSayTimer); _mentorSayTimer = null; }
         const b = document.getElementById('game-mentor-bubble');
         if (b) { b.classList.remove('is-visible'); b.textContent = ''; }
     }
     function _mentorSayFact(compoundKey) {
-        const b = document.getElementById('game-mentor-bubble');
-        if (!b) return;
         const fact = (typeof CompoundFacts !== 'undefined') ? CompoundFacts[compoundKey] : null;
         if (!fact) { _mentorHush(); return; }
         const entry = (typeof AnswerBank !== 'undefined') ? AnswerBank[compoundKey] : null;
         const name = entry ? entry.content : compoundKey;
-        b.innerHTML = '<strong>' + _escapeHtml(name) + '</strong>' + _escapeHtml(fact);
-        b.classList.add('is-visible');
-        if (_mentorSayTimer !== null) clearTimeout(_mentorSayTimer);
-        _mentorSayTimer = setTimeout(function () {
-            _mentorSayTimer = null;
-            const el = document.getElementById('game-mentor-bubble');
-            if (el) el.classList.remove('is-visible');
-        }, 7000);
+        _mentorShow('<strong>' + _escapeHtml(name) + '</strong>' + _escapeHtml(fact));
+    }
+
+    // 答案已揭曉？（答對停等中，或正在回顧已答對的舊題）
+    function _answerRevealed() {
+        return _isReviewing() || (!!state && state.phase === 'awaitingContinue');
+    }
+
+    // 點魔導書：開著就收，收著就講。講什麼看答案揭曉了沒。
+    function _mentorToggleBubble() {
+        if (!state || state.mode !== 'practice') return;
+        const b = document.getElementById('game-mentor-bubble');
+        if (!b) return;
+        if (b.classList.contains('is-visible')) { _mentorHush(); return; }
+        if (_isReviewing()) {
+            _mentorSayFact(_reviewHistory[_reviewIdx].compoundKey);
+        } else if (state.phase === 'awaitingContinue' && state.question && state.question.current) {
+            _mentorSayFact(state.question.current.compoundKey);
+        } else {
+            _mentorShow(_quickHintText());
+        }
     }
 
     // 練習模式導師表情：依當前 phase 反應。只在表情改變時才重設 class，
@@ -1834,12 +1928,120 @@
         const el = document.getElementById('game-mentor');
         if (!el || !state) return;
         let expr = 'neutral';
-        if (state.mode === 'practice') {
-            if (state.phase === 'resolvingCorrect') expr = 'happy';
+        if (_isReviewing()) {
+            expr = 'neutral';
+        } else if (state.mode === 'practice') {
+            if (state.phase === 'resolvingCorrect' || state.phase === 'awaitingContinue') expr = 'happy';
             else if (state.phase === 'resolvingWrong') expr = 'annoyed';
             else if (state.phase === 'canAnswer') expr = 'thinking';
         }
         if (!el.classList.contains(expr)) setHatExpression(el, expr);
+    }
+
+    // -----------------------------------------------------------------------
+    // 練習回顧（唯讀）
+    // 答對的題目壓進 _reviewHistory，學生可用 ◀ ▶ 往回翻，只看不能答。
+    // 刻意不進 reducer：回顧是純檢視，不產生任何 phase 轉移，也不寫存檔。
+    // dispatch() 在回顧期間擋掉作答類 action，render 由 _renderReview() 覆寫畫面。
+    // -----------------------------------------------------------------------
+    let _reviewHistory = [];
+    let _reviewIdx = null;   // null = 正在作答當前題
+
+    function _isReviewing() { return _reviewIdx !== null; }
+
+    function _reviewPush() {
+        if (!state || !state.question || !state.question.current) return;
+        const q = state.question.current;
+        _reviewHistory.push({
+            compoundKey: q.compoundKey,
+            qContent: q.qContent || '',
+            correctKey: state.question.correctKey,
+            options: (state.question.options || []).map(function (o) { return { key: o.key, content: o.content }; }),
+            askedIndex: (state.players && state.players.p1) ? (state.players.p1.totalAsked || _reviewHistory.length + 1) : _reviewHistory.length + 1,
+        });
+    }
+
+    function _reviewGo(idx) {
+        if (!_reviewHistory.length) return;
+        _reviewIdx = Math.max(0, Math.min(_reviewHistory.length - 1, idx));
+        _mentorSayFact(_reviewHistory[_reviewIdx].compoundKey);
+        render();
+    }
+    function _reviewExit() {
+        if (!_isReviewing()) return;
+        _reviewIdx = null;
+        _mentorHush();
+        // 回到停等中的那題就把講解接回來，否則保持安靜。
+        if (state && state.phase === 'awaitingContinue' && state.question && state.question.current) {
+            _mentorSayFact(state.question.current.compoundKey);
+        }
+        render();
+    }
+    function _reviewStep(delta) {
+        if (!_isReviewing()) {
+            if (delta < 0 && _reviewHistory.length) _reviewGo(_reviewHistory.length - 1);
+            return;
+        }
+        // 從最後一題再往後 → 離開回顧，回到當前題
+        if (delta > 0 && _reviewIdx === _reviewHistory.length - 1) { _reviewExit(); return; }
+        _reviewGo(_reviewIdx + delta);
+    }
+
+    // 覆寫遊戲畫面成「唯讀的舊題」。renderGameScreen() 已依 state 畫完一次，
+    // 這裡只改需要看起來不一樣的東西（圖、選項、進度），其餘 HUD 維持真實數值。
+    function _renderReview() {
+        const game = document.getElementById('screen-game');
+        if (!game || !state) return;
+        const reviewing = _isReviewing();
+        const canReview = state.mode === 'practice' && _reviewHistory.length > 0;
+
+        game.classList.toggle('is-reviewing', reviewing);
+        document.body.classList.toggle('is-reviewing', reviewing);
+
+        // CSS 預設 display:none（避免 render 之前閃一下），所以這裡要給明確的值。
+        const nav = document.getElementById('game-review-nav');
+        if (nav) nav.style.display = canReview ? 'flex' : 'none';
+        const prevBtn = document.querySelector('[data-action="review-prev"]');
+        const nextBtn = document.querySelector('[data-action="review-next"]');
+        const exitBtn = document.querySelector('[data-action="review-exit"]');
+        if (prevBtn) prevBtn.disabled = reviewing ? _reviewIdx === 0 : !canReview;
+        if (nextBtn) nextBtn.disabled = !reviewing;
+        if (exitBtn) exitBtn.style.display = reviewing ? 'inline-block' : 'none';
+
+        const continueBtn = document.getElementById('game-continue');
+        if (continueBtn) {
+            continueBtn.style.display =
+                (!reviewing && state.mode === 'practice' && state.phase === 'awaitingContinue') ? 'inline-flex' : 'none';
+        }
+
+        if (!reviewing) return;
+        const entry = _reviewHistory[_reviewIdx];
+
+        const imgEl = document.getElementById('game-image');
+        if (imgEl && entry.qContent && imgEl.getAttribute('src') !== entry.qContent) {
+            imgEl.setAttribute('src', entry.qContent);
+        }
+
+        const settings = (typeof Save !== 'undefined' && Save.readSettings) ? Save.readSettings() : {};
+        const keybindings = settings.keybindings || {};
+        const btns = document.querySelectorAll('#game-options .option-btn');
+        for (let i = 0; i < btns.length; i++) {
+            const opt = entry.options[i];
+            btns[i].classList.remove('eliminated', 'wrong-chosen', 'correct-chosen');
+            if (!opt) { btns[i].setAttribute('data-option-key', ''); btns[i].innerHTML = ''; btns[i].classList.remove('correct-reveal'); continue; }
+            btns[i].setAttribute('data-option-key', opt.key);
+            btns[i].innerHTML =
+                '<span class="option-key-hint">[' + _escapeHtml(_formatKeyCode(keybindings['optionLeft' + i])) + ']</span>' +
+                '<span class="option-label">' + _escapeHtml(opt.content || '') + '</span>' +
+                '<span class="option-key-hint">[' + _escapeHtml(_formatKeyCode(keybindings['optionRight' + i])) + ']</span>';
+            btns[i].classList.toggle('correct-reveal', opt.key === entry.correctKey);
+        }
+
+        const progressEl = document.getElementById('game-question-progress');
+        if (progressEl) {
+            const total = (state.round && state.round.size) ? state.round.size : _reviewHistory.length;
+            progressEl.textContent = '複習 ' + entry.askedIndex + ' / ' + total;
+        }
     }
 
     function init() {

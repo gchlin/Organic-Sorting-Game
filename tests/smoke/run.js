@@ -91,6 +91,52 @@ async function assertHintBubbleWorks(page, label, failures) {
     return true;
 }
 
+// 答對後不自動換題：停在 awaitingContinue，導師講解該分子的用途。
+async function assertCorrectPause(page, failures) {
+    const st = await page.evaluate(() => {
+        const cont = document.getElementById('game-continue');
+        const bub = document.getElementById('game-mentor-bubble');
+        return {
+            awaiting: document.body.classList.contains('phase-awaiting-continue'),
+            contShown: !!cont && cont.style.display !== 'none',
+            bubbleText: bub ? bub.textContent.trim() : '',
+        };
+    });
+    if (!st.awaiting) { failures.push('practice: correct answer did not pause at awaitingContinue'); return; }
+    if (!st.contShown) failures.push('practice: continue button hidden while awaiting continue');
+    if (!st.bubbleText) failures.push('practice: mentor said nothing after a correct answer');
+
+    // ← 進入唯讀回顧：看得到正解，但點選項不能改變 phase。
+    await page.keyboard.press('ArrowLeft');
+    await sleep(250);
+    const rv = await page.evaluate(() => {
+        const reviewing = document.body.classList.contains('is-reviewing');
+        const revealed = !!document.querySelector('#game-options .option-btn.correct-reveal');
+        const before = document.body.className;
+        const o = document.querySelector('#game-options .option-btn[data-option-key]');
+        if (o) o.click();
+        return { reviewing, revealed, changed: document.body.className !== before };
+    });
+    if (!rv.reviewing) failures.push('practice: ArrowLeft did not enter review');
+    if (!rv.revealed) failures.push('practice: review does not mark the correct option');
+    if (rv.changed) failures.push('practice: clicking an option during review changed state');
+    await page.keyboard.press('Escape');
+    await sleep(250);
+    const back = await page.evaluate(() => ({
+        reviewing: document.body.classList.contains('is-reviewing'),
+        onGame: !!document.querySelector('#screen-game.is-active'),
+    }));
+    if (back.reviewing) failures.push('practice: Escape did not leave review');
+    if (!back.onGame) failures.push('practice: Escape during review left the game screen');
+}
+
+async function pressContinue(page) {
+    await page.evaluate(() => {
+        const c = document.getElementById('game-continue');
+        if (c && c.style.display !== 'none') c.click();
+    });
+}
+
 // 場景 1：練習流程 — 泡泡、答錯閃爍、一路打到結算畫面
 async function scenarioPractice(browser, failures) {
     const page = await browser.newPage();
@@ -120,7 +166,10 @@ async function scenarioPractice(browser, failures) {
             if (!st.flash) failures.push('practice: wrong answer but no hint-flash-text on label');
             break;
         }
-        await sleep(2600); // 答對 → 等下一題
+        await sleep(1400);          // 答對 → 停在 awaitingContinue
+        await assertCorrectPause(page, failures);
+        await pressContinue(page);
+        await sleep(400);
     }
 
     // 打完整輪到結算。practice 答錯不換題（同一題重選），而 .eliminated class
@@ -133,6 +182,9 @@ async function scenarioPractice(browser, failures) {
         const snap = await page.evaluate((tried) => {
             if (document.querySelector('#screen-settle.is-active')) return { settled: true };
             const prog = (document.getElementById('game-question-progress') || {}).textContent || '';
+            // 答對後停在 awaitingContinue，要按「繼續」才會換題
+            const cont = document.getElementById('game-continue');
+            if (cont && cont.style.display !== 'none') { cont.click(); return { prog, continued: true }; }
             if (document.body.classList.contains('input-locked')) return { prog };
             const opts = Array.from(document.querySelectorAll('#game-options .option-btn[data-option-key]'));
             const o = opts.find(x => tried.indexOf(x.getAttribute('data-option-key')) === -1);

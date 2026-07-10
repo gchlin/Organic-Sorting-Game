@@ -198,7 +198,11 @@
 body.phase-resolving-correct .option-btn:not(.wrong-chosen):not(.correct-reveal) { pointer-events: none; }
 body.phase-resolving-wrong .option-btn:not(.wrong-chosen):not(.correct-reveal) { pointer-events: none; }
 body.phase-cleanup .option-btn { pointer-events: none; }
-body.input-locked { cursor: progress; }
+/* awaitingContinue 也是 input-locked（不再接受作答），但那是在等玩家、不是在忙，
+   游標不該變成 progress。 */
+body.input-locked:not(.phase-awaiting-continue) { cursor: progress; }
 body.input-locked .option-btn,
 body.input-locked .v2-buzz button { pointer-events: none; }
+/* 唯讀回顧：看得到正解，但不能作答 */
+body.is-reviewing .option-btn { pointer-events: none; }
 

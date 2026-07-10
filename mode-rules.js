@@ -153,7 +153,18 @@ const ModeRulesV2 = {
                       { type: 'anim', name: 'markChosen', ms: 800 }] };
     },
 
+    // 答對後不自動換題：停在 awaitingContinue，導師講解該分子的用途，學生按
+    // 「繼續」才進下一題。刻意不發 cleanup —— 正解高亮要留在畫面上陪著講解。
     'practice.resolvingCorrect.EFFECT_COMPLETE': (s) => ({
+        nextPhase: 'awaitingContinue',
+        stateDiff: {},
+        effects: [],
+    }),
+
+    // 停在這裡等玩家；期間若有殘餘 effect 回報完成，不對應任何 phase 轉移。
+    'practice.awaitingContinue.EFFECT_COMPLETE': (s) => ({ nextPhase: s.phase, stateDiff: {}, effects: [] }),
+
+    'practice.awaitingContinue.CONTINUE': (s) => ({
         nextPhase: 'cleanup',
         stateDiff: {},
         effects: [{ type: 'cleanupAndDispatch', next: { type: 'LOAD_NEXT_QUESTION' } }],

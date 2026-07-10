@@ -54,10 +54,13 @@
     --g-eye-w: 9%; --g-eye-h: 22%;
     --g-brow-lift: 11%; --g-brow-h: 5%;
     --g-mouth-y: 62%; --g-mouth-w: 17%; --g-mouth-h: 13%;
+    /* 圖片在方框內的實際矩形（預設值算的是正方形方框）。方框若做成圖的比例，
+       書會填滿整個框，改寫成 0% / 100%（見 #tutorial-hat.is-grimoire）。 */
+    --g-face-top: 22.73%; --g-face-h: 54.55%;
 }
 .grimoire-face {
     position: absolute; left: 0; width: 100%;
-    top: 22.73%; height: 54.55%;
+    top: var(--g-face-top); height: var(--g-face-h);
     pointer-events: none;
 }
 .g-eye, .g-brow, .g-mouth, .g-pupil { position: absolute; }
@@ -339,6 +342,19 @@
     #tutorial-hat { width: 132px; height: 146px; }
 }
 
+/* 新手導覽的魔導書要跟旁邊的官能基圖差不多高（.tutorial-img max-height:190px）。
+   書是 1.83:1 的橫圖：方框若是正方形，object-fit:contain 會讓書只佔中間 54.55%，
+   200px 的方框其實只畫出 109px 高的書。所以這裡直接把方框做成圖的比例，
+   書就填滿整個框 —— 五官的定位框也隨之改成滿框（見 --g-face-*）。
+   flex-shrink:0 保住比例：框一旦被壓窄，contain 會改成靠寬度貼齊，五官就歪了。 */
+#tutorial-hat.is-grimoire {
+    width: auto;
+    height: clamp(96px, 22vw, 190px);
+    aspect-ratio: 1408 / 768;
+    --g-face-top: 0%;
+    --g-face-h: 100%;
+}
+
 /* ============================================================
    Story screen
    ============================================================ */
@@ -417,39 +433,63 @@
         width: clamp(48px, 14vh, 72px);
         height: clamp(54px, 16vh, 80px);
     }
+    #tutorial-hat.is-grimoire {
+        width: auto;
+        height: clamp(72px, 24vh, 130px);
+    }
 }
 
 /* ============================================================
    練習模式導師（角落魔導書）
    #screen-game 是 position:relative + overflow:hidden，導師用 absolute
-   釘在左下角空白處，只在練習模式顯示；對決模式版面滿、直式空間窄→隱藏。
+   釘在左側邊欄；只在練習模式顯示（直式空間不夠 → 隱藏）。
+   絕對定位的基準是 padding box，所以導師就站在下面那條 padding-left 裡。
    ============================================================ */
-#screen-game { --mentor-size: clamp(84px, 10vw, 140px); }
+/* --mentor-col 是左側邊欄的寬度：由「泡泡」而非「書」決定，因為泡泡比書寬。
+   邊欄用 padding-left 撐出來，泡泡才不會蓋到分子卡（手機橫放踩過這個坑）。
+   書就把邊欄佔滿：方框直接做成圖的比例（1408:768），不留 object-fit 的上下留白，
+   同寬之下書比正方形方框大將近一倍。五官定位框隨之改成滿框（--g-face-*）。 */
+#screen-game {
+    --mentor-col: clamp(140px, 20vw, 210px);
+    --mentor-h: calc(var(--mentor-col) / 1.8333);
+}
 #game-mentor {
     display: none;
     position: absolute;
-    left: clamp(6px, 1.5vw, 24px);
-    top: 46%;
+    left: 8px;
+    top: 42%;
     transform: translateY(-50%);
-    width: var(--mentor-size);
-    height: var(--mentor-size);
+    width: var(--mentor-col);
+    height: var(--mentor-h);
+    --g-face-top: 0%;
+    --g-face-h: 100%;
     z-index: 30;
-    pointer-events: none;
+    /* <button> 重置：只當作可點的角色立繪，不要按鈕外觀 */
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+}
+#game-mentor:focus-visible {
+    outline: 2px solid var(--hp-gold);
+    outline-offset: 4px;
+    border-radius: 8px;
 }
 
-/* 答對後的講解泡泡：接在導師正下方，寬度受左側邊欄限制。 */
+/* 導師說的話：接在導師正下方，寬度受左側邊欄限制。 */
 .mentor-bubble {
     display: none;
     position: absolute;
-    left: clamp(6px, 1.5vw, 24px);
-    top: calc(46% + var(--mentor-size) / 2 + 10px);
+    left: 8px;
+    top: calc(42% + var(--mentor-h) / 2 + 8px);
     z-index: 30;
-    width: clamp(150px, 17vw, 240px);
+    width: var(--mentor-col);
+    max-height: min(34dvh, 190px);
+    overflow: auto;
     padding: 9px 11px;
     background: rgba(22, 18, 12, 0.94);
-    border: 1px solid rgba(212, 175, 55, 0.72);
-    border-left: 3px solid var(--hp-gold);
-    border-radius: 8px;
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    border-radius: 12px;
     box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
     color: var(--hp-parchment);
     font-size: clamp(.68rem, 1.5vh, .8rem);
@@ -463,9 +503,23 @@
     color: var(--hp-gold);
     font-size: 1.05em;
 }
-/* 練習橫向：選項置底滿寬、分子卡置中，左側邊欄留白 → 導師擺左側垂直置中。
-   直式與窄橫向空間不夠會壓到內容，收起不顯示。 */
-@media (orientation: landscape) and (min-width: 900px) and (min-height: 600px) {
+/* 借用「看教學」提示的排版，但官能基小圖要縮到泡泡塞得下 */
+.mentor-bubble .why-hint-img {
+    width: 44px;
+    height: 44px;
+    float: left;
+    margin: 0 8px 4px 0;
+}
+.mentor-bubble .why-hint-trap {
+    display: block;
+    margin-top: 4px;
+    color: #ffcf7a;
+}
+
+/* 練習橫向：選項置底滿寬、分子卡置中 → 導師擺左側，並把整個畫面往右推出
+   一條邊欄給它站。門檻放寬到手機橫放（高度只有 ~390px）也顯示。 */
+@media (orientation: landscape) and (min-width: 640px) and (min-height: 320px) {
+    #screen-game.mode-practice { padding-left: calc(var(--mentor-col) + 16px); }
     #screen-game.mode-practice #game-mentor { display: block; }
     #screen-game.mode-practice .mentor-bubble.is-visible { display: block; }
 }

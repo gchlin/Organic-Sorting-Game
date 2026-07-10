@@ -291,3 +291,56 @@
 #game-image.dyn-rotate-zoom { transform: scale(2.8) rotate(-18deg); }
 #game-image.dyn-complete { transform: scale(1); filter: none; }
 
+
+/* ============================================================
+   練習：答對後的「繼續」＋ 回顧已答對題目的 ◀ ▶
+   ============================================================ */
+/* 借用 buzz 的格線位置：練習模式那一列本來就空著（#game-buzz display:none）。 */
+#game-continue {
+    display: none;
+    grid-area: buzz;
+    justify-self: center;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 26px;
+    border: 1px solid var(--hp-gold);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(122, 92, 24, .95), rgba(74, 55, 12, .95));
+    color: var(--hp-parchment);
+    font-size: clamp(.86rem, 2vh, 1rem);
+    letter-spacing: .04em;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .4);
+}
+#game-continue:hover { filter: brightness(1.12); }
+#game-continue small { opacity: .68; font-size: .78em; }
+
+.v2-review-nav {
+    display: none;
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    z-index: 5;
+    align-items: center;
+    gap: 6px;
+    padding: 4px;
+    border-radius: 10px;
+    background: rgba(30, 24, 16, .55);
+}
+.v2-review-nav button {
+    min-width: 34px;
+    padding: 4px 8px;
+    border: 1px solid rgba(212, 175, 55, .55);
+    border-radius: 8px;
+    background: rgba(30, 24, 16, .8);
+    color: var(--hp-parchment);
+    font-size: .82rem;
+    cursor: pointer;
+}
+.v2-review-nav button:hover:not(:disabled) { border-color: var(--hp-gold); }
+.v2-review-nav button:disabled { opacity: .32; cursor: default; }
+.v2-review-exit { display: none; }
+
+/* 唯讀回顧：把分子卡調成「翻舊帳」的樣子，一眼看得出不是在作答 */
+#screen-game.is-reviewing .v2-image-frame { border-color: rgba(212, 175, 55, .45); filter: saturate(.85); }
+#screen-game.is-reviewing #game-question-progress { color: var(--hp-gold); }

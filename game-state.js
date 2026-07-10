@@ -203,7 +203,9 @@ const GameState = (function () {
             || phase === 'resolvingWrong'
             || phase === 'revealing'
             || phase === 'revealed'
-            || phase === 'cleanup';
+            || phase === 'cleanup'
+            // 練習答對後等玩家按「繼續」：題目已結束，不該再接受作答輸入。
+            || phase === 'awaitingContinue';
     }
 
     return {
