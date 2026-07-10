@@ -1,0 +1,379 @@
+/* 橫向/直向 orientation media 區塊（含對戰版面）＋ duel 手機旋轉鎖定動畫 */
+@media (orientation: landscape) {
+    #screen-game.mode-duel.is-active {
+        grid-template-columns:
+            minmax(0, var(--duel-side-fr))
+            minmax(0, var(--duel-card-fr))
+            minmax(0, var(--duel-side-fr));
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        grid-template-areas:
+            "hud hud hud"
+            "options image options-right"
+            "buzz buzz buzz";
+        column-gap: 14px;
+    }
+    #screen-game.mode-duel .v2-hud {
+        position: relative;
+        display: grid;
+        grid-template-columns:
+            minmax(0, var(--duel-side-fr))
+            minmax(0, var(--duel-card-fr))
+            minmax(0, var(--duel-side-fr));
+        grid-template-areas:
+            "p1 title p2"
+            "p1 progress p2";
+        align-items: stretch;
+        gap: 5px 8px;
+        min-height: 64px;
+        padding: 6px 8px;
+        background: rgba(18, 15, 16, .82);
+        border: 1px solid rgba(212,175,55,.18);
+        border-radius: 8px;
+    }
+    #screen-game.mode-duel .player-area {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-rows: 1fr;
+        gap: 6px;
+        align-items: center;
+        width: 100%;
+        min-width: 0;
+        min-height: 50px;
+        padding: 5px 8px;
+        background: rgba(0,0,0,.36);
+        border-radius: 7px;
+    }
+    #screen-game.mode-duel .player-area[data-player="p1"] {
+        grid-area: p1;
+        border-color: rgba(190, 33, 30, .78);
+    }
+    #screen-game.mode-duel .player-area[data-player="p2"] {
+        grid-area: p2;
+        border-color: rgba(38, 125, 54, .78);
+    }
+    #screen-game.mode-duel .player-area::after {
+        content: "";
+        display: block;
+        width: 100%;
+        height: 10px;
+        min-width: 0;
+        grid-column: 2;
+        grid-row: 1;
+        border-radius: 999px;
+        background: linear-gradient(to bottom,
+            #fff5c0 0%,
+            var(--hp-gold-light) 0%,
+            var(--hp-gold) 50%,
+            var(--hp-gold-deep) 100%);
+        box-shadow:
+            inset 0 1px 2px rgba(255, 245, 200, 0.65),
+            inset 0 -2px 4px rgba(0, 0, 0, 0.35),
+            0 0 8px rgba(212, 175, 55, 0.45);
+        transform: scaleX(var(--score-fill));
+        transform-origin: left center;
+    }
+    #screen-game.mode-duel .player-area .player-label {
+        grid-column: 1;
+        grid-row: 1;
+        font-family: "Cinzel", "Georgia", serif;
+        font-size: .88rem;
+    }
+    #screen-game.mode-duel .player-area .score {
+        grid-column: 3;
+        grid-row: 1;
+        font-family: "Cinzel", "Georgia", serif;
+        font-size: 1rem;
+        line-height: 1;
+    }
+    #screen-game.mode-duel .player-area .streak,
+    #screen-game.mode-duel .player-area .combo-level,
+    #screen-game.mode-duel #opponent-label {
+        display: none;
+    }
+    #screen-game.mode-duel .v2-duel-hud-title {
+        grid-area: title;
+        display: grid;
+        align-self: end;
+    }
+    #screen-game.mode-duel .v2-duel-hud-title strong {
+        font-size: var(--duel-question-font-size);
+    }
+    #screen-game.mode-duel .v2-question-progress {
+        grid-area: progress;
+        display: block;
+        align-self: start;
+        justify-self: center;
+        padding-right: 0;
+    }
+    #screen-game.mode-duel .v2-image-frame {
+        align-self: stretch;
+        justify-self: stretch;
+        width: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        min-width: 0;
+        padding: clamp(8px, 1.5vw, 14px);
+    }
+    #screen-game.mode-duel .v2-options {
+        align-self: stretch;
+        width: 100%;
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(4, minmax(0, 1fr));
+        align-content: stretch;
+        gap: 6px;
+        max-width: none;
+        min-height: 0;
+    }
+    #screen-game.mode-duel .option-btn {
+        min-height: 0;
+        padding: 7px 8px;
+        gap: 6px;
+        font-size: var(--duel-option-font-size);
+        border-radius: 7px;
+        line-height: 1.16;
+    }
+    #screen-game.mode-duel .option-key-hint { font-size: .76rem; }
+    #screen-game.mode-duel .v2-buzz {
+        display: grid !important;
+        grid-template-columns:
+            minmax(0, var(--duel-side-fr))
+            minmax(0, var(--duel-card-fr))
+            minmax(0, var(--duel-side-fr));
+        gap: 14px;
+        width: 100%;
+        margin: 0;
+    }
+    #screen-game.mode-duel #buzz-p1 { grid-column: 1; }
+    #screen-game.mode-duel #buzz-p2 { grid-column: 3; }
+    #screen-game.mode-duel .v2-buzz button {
+        width: 100%;
+        max-width: none;
+        padding: 8px 12px;
+        font-size: .9rem;
+    }
+}
+
+/* Landscape phone: similar layout but tighter margins. */
+@media (orientation: landscape) and (max-height: 520px) {
+    #screen-game.is-active {
+        grid-template-columns: minmax(0, 1fr) minmax(190px, 270px);
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        grid-template-areas:
+            "hud hud"
+            "image options"
+            "buzz buzz";
+        padding: 6px;
+        gap: 6px;
+    }
+    .v2-hud { min-height: 42px; padding: 6px 8px; margin-bottom: 0; }
+    .v2-image-frame {
+        width: min(100%, max(220px, calc(133.333dvh - 168px)));
+        padding: 10px 14px;
+    }
+    #game-image {
+        width: 100%;
+        max-width: none;
+    }
+    #screen-game .v2-options {
+        align-self: stretch;
+        width: 100%;
+        grid-template-columns: 1fr;
+        align-content: start;
+        gap: 6px;
+        max-width: none;
+    }
+    #screen-game .option-btn { padding: 8px; font-size: 0.9rem; }
+    #screen-game .v2-buzz button { padding: 8px; font-size: 0.9rem; }
+
+    #screen-game.mode-duel.is-active {
+        --v2-action-button-width: clamp(104px, 19vw, 142px);
+        grid-template-columns:
+            minmax(0, var(--duel-side-fr))
+            minmax(0, var(--duel-card-fr))
+            minmax(0, var(--duel-side-fr));
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        grid-template-areas:
+            "hud hud hud"
+            "options image options-right"
+            "buzz buzz buzz";
+    }
+    #screen-game.mode-duel .v2-image-frame {
+        width: 100%;
+        max-height: 100%;
+        padding: 7px 10px;
+    }
+    #screen-game.mode-duel .v2-options {
+        align-self: stretch;
+        width: 100%;
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(4, minmax(0, 1fr));
+        align-content: stretch;
+        gap: 6px;
+        max-width: none;
+        min-height: 0;
+    }
+
+    body.phase-buzzed #screen-game.mode-duel.is-active {
+        grid-template-columns:
+            minmax(0, var(--duel-side-fr))
+            minmax(0, var(--duel-card-fr))
+            minmax(0, var(--duel-side-fr));
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        grid-template-areas:
+            "hud hud hud"
+            "options image options-right"
+            "buzz buzz buzz";
+        column-gap: 8px;
+    }
+    body.phase-buzzed #screen-game.mode-duel .v2-image-frame {
+        width: 100%;
+        padding: 8px 12px;
+    }
+    body.phase-buzzed #screen-game.mode-duel #game-buzz {
+        display: grid !important;
+    }
+    body.phase-buzzed #screen-game.mode-duel #buzz-p1,
+    body.phase-buzzed #screen-game.mode-duel #buzz-p2 {
+        display: none;
+    }
+}
+
+@media (orientation: landscape) {
+    body.phase-buzzed #screen-game.mode-duel #buzz-countdown {
+        position: fixed;
+        top: max(78px, calc(env(safe-area-inset-top) + 78px));
+        width: 44px;
+        height: 44px;
+        font-size: 1.55rem;
+        pointer-events: none;
+        z-index: 9000;
+    }
+    body.phase-buzzed #screen-game.mode-duel #btn-giveup {
+        position: fixed;
+        top: max(124px, calc(env(safe-area-inset-top) + 124px));
+        width: 52px;
+        min-width: 52px;
+        min-height: 32px;
+        padding: 4px 2px;
+        font-size: 0.56rem;
+        line-height: 1.25;
+        margin: 0;
+        z-index: 9000;
+    }
+    body.phase-buzzed #screen-game.mode-duel .v2-options {
+        padding-top: 52px;
+    }
+    body.phase-buzzed #screen-game.mode-duel #buzz-countdown[data-side="left"] { left: 10px; right: auto; }
+    body.phase-buzzed #screen-game.mode-duel #btn-giveup[data-side="left"] { left: 10px; right: auto; }
+    body.phase-buzzed #screen-game.mode-duel #buzz-countdown[data-side="right"] { right: 10px; left: auto; }
+    body.phase-buzzed #screen-game.mode-duel #btn-giveup[data-side="right"] { right: 10px; left: auto; }
+}
+
+#screen-game.mode-practice .v2-options-p2 {
+    display: none;
+}
+#screen-game.mode-practice .option-btn {
+    font-size: var(--duel-option-font-size);
+}
+#screen-game.mode-duel .v2-options-p1 .option-btn,
+#screen-game.mode-duel .v2-options-p2 .option-btn {
+    grid-template-columns: minmax(34px, auto) minmax(0, 1fr);
+}
+#screen-game.mode-duel .v2-options-p2 .option-btn {
+    grid-template-columns: minmax(0, 1fr) minmax(34px, auto);
+}
+
+@media (orientation: portrait), (max-width: 520px) {
+    #screen-game.is-active {
+        padding: 8px;
+        gap: 8px;
+    }
+
+    /* 直式：HUD 改兩列——玩家/進度一列、標題列（返回｜題目｜看教學）獨佔一列。
+       沿用桌機三欄會把中欄擠到剩 <90px，看教學按鈕整顆溢出視窗右緣。 */
+    .v2-hud {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        padding: 8px;
+    }
+    .v2-hud .player-area[data-player="p1"] { grid-column: 1; grid-row: 1; }
+    .v2-hud .player-area[data-player="p2"] { grid-column: 1 / -1; grid-row: 3; }
+    .v2-hud #game-question-progress { grid-column: 2; grid-row: 1; }
+    .v2-hud .v2-duel-hud-title { grid-column: 1 / -1; grid-row: 2; }
+
+    .v2-image-frame {
+        width: min(100%, max(240px, calc(133.333dvh - 387px)));
+    }
+
+    #screen-game .v2-options {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #screen-game .option-btn {
+        min-height: 62px;
+    }
+
+    #screen-game.mode-duel.is-active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100dvh;
+        max-height: none;
+    }
+    #screen-game.mode-duel.is-active > :not(.duel-orientation-lock) {
+        display: none !important;
+    }
+    #screen-game.mode-duel.is-active .duel-orientation-lock {
+        display: flex;
+        position: relative;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: min(88vw, 360px);
+        min-height: 180px;
+        padding: 24px;
+        color: var(--hp-parchment);
+        background: rgba(20,15,15,.86);
+        border: 1px solid rgba(212,175,55,.55);
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 16px 36px rgba(0,0,0,.35);
+        overflow: hidden;
+    }
+    #screen-game.mode-duel.is-active .duel-orientation-lock::before {
+        content: "";
+        width: 76px;
+        height: 46px;
+        border: 3px solid var(--hp-gold);
+        border-radius: 10px;
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,.08), 0 0 20px rgba(212,175,55,.28);
+        animation: duel-phone-rotate 1.8s ease-in-out infinite;
+    }
+    #screen-game.mode-duel.is-active .duel-orientation-lock::after {
+        content: "";
+        position: absolute;
+        inset: auto 20% 20px;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(212,175,55,.7), transparent);
+        animation: duel-lock-glow 1.8s ease-in-out infinite;
+    }
+    #screen-game.mode-duel.is-active .duel-orientation-lock strong {
+        color: var(--hp-gold);
+        font-size: 1.35rem;
+        font-family: "Cinzel", "Georgia", serif;
+    }
+    #screen-game.mode-duel.is-active .duel-orientation-lock span {
+        color: var(--hp-parchment-dark);
+    }
+}
+
+@keyframes duel-phone-rotate {
+    0%, 100% { transform: rotate(0deg) scale(.92); opacity: .72; }
+    45%, 70% { transform: rotate(90deg) scale(1); opacity: 1; }
+}
+@keyframes duel-lock-glow {
+    0%, 100% { opacity: .28; transform: scaleX(.7); }
+    50% { opacity: 1; transform: scaleX(1); }
+}
+

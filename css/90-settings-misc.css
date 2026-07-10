@@ -1,0 +1,344 @@
+/* 設定畫面 settings（分頁/按鍵設定）、scroll fix、combo popup、codex 分子/家族/成就補充、settle 錯題卡補充 */
+/* --- Settings screen --- */
+.v2-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: clamp(4px, .8vw, 12px);
+    padding: 0 clamp(14px, 2.5vw, 28px);
+    background: rgba(20,15,15,.85);
+    border-bottom: 1px solid rgba(212,175,55,.2);
+    margin: 0 auto 16px;
+    max-width: 720px;
+}
+.v2-tab {
+    padding: 0 clamp(10px, 1.5vw, 18px);
+    min-height: 40px;
+    background: transparent;
+    color: var(--hp-parchment-dark);
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    cursor: pointer;
+    font-family: "Cinzel", "Georgia", serif;
+    font-size: clamp(.78rem, 1.9vh, 1rem);
+    letter-spacing: .03em;
+    white-space: nowrap;
+}
+.v2-tab:hover {
+    color: var(--hp-parchment);
+    background: rgba(212,175,55,.06);
+}
+.v2-tab.is-active {
+    color: var(--hp-gold);
+    border-bottom-color: var(--hp-gold);
+    text-shadow: 0 0 6px rgba(212,175,55,.4);
+}
+.v2-tab .dev-tag { color: var(--hp-red-bright); font-weight: bold; }
+.v2-tab-panel { display: none; max-width: 720px; margin: 0 auto; }
+.v2-tab-panel.is-active { display: block; }
+.v2-setting-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(60, 47, 42, 0.4);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    color: var(--hp-parchment);
+}
+.v2-setting-row input[type="number"] {
+    width: 80px;
+    padding: 4px 8px;
+    background: var(--hp-bg-dark);
+    color: var(--hp-parchment);
+    border: 1px solid var(--hp-gold);
+    border-radius: 3px;
+    font-family: inherit;
+}
+.v2-setting-btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 8px;
+    background: var(--hp-wood-dark);
+    color: var(--hp-parchment);
+    border: 1px solid var(--hp-gold);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+}
+.v2-setting-btn:hover { background: var(--hp-gold); color: var(--hp-bg-dark); }
+.v2-setting-btn.danger { border-color: var(--hp-red-bright); color: var(--hp-red-bright); }
+.v2-setting-btn.danger:hover { background: var(--hp-red-bright); color: white; }
+
+/* PvE AI params grid (5 columns: label + 4 fields) */
+.v2-setting-details { margin-top: 12px; }
+.v2-setting-summary { cursor: pointer; color: var(--hp-gold); margin-bottom: 8px; }
+.v2-pveai-grid {
+    display: grid;
+    grid-template-columns: 4em repeat(4, 1fr);
+    gap: 4px 6px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.v2-pveai-header { font-size: 0.75em; color: var(--hp-gold); text-align: center; }
+.v2-pveai-label  { font-size: 0.85em; color: var(--hp-parchment, #f5e6c8); }
+.v2-pveai-input  { width: 100%; box-sizing: border-box; background: var(--hp-bg-dark, #1a1a2e); color: var(--hp-parchment, #f5e6c8); border: 1px solid var(--hp-gold, #c9a84c); border-radius: 4px; padding: 2px 4px; font-size: 0.8em; }
+
+/* Keybindings tab */
+.v2-setting-hint { color: var(--hp-parchment); opacity: 0.75; font-size: 0.85em; margin: 0 0 12px; }
+.v2-keybindings { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.v2-kb-group-title { color: var(--hp-gold); font-size: 0.85em; margin: 10px 0 6px; text-transform: uppercase; letter-spacing: 1px; }
+.v2-kb-grid { display: grid; gap: 8px; }
+.v2-kb-grid.v2-kb-grid2x2 { grid-template-columns: 1fr 1fr; }
+.v2-kb-grid.v2-kb-row2    { grid-template-columns: 1fr 1fr; }
+.v2-kb-grid.v2-kb-list    { grid-template-columns: 1fr; }
+.v2-kb-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 10px 12px;
+    background: rgba(60, 47, 42, 0.4);
+    border-radius: 4px;
+    color: var(--hp-parchment);
+}
+.v2-kb-label { font-size: 0.85em; opacity: 0.85; text-align: center; }
+.v2-kb-key {
+    padding: 10px 12px;
+    background: var(--hp-bg-dark);
+    color: var(--hp-parchment);
+    border: 1px solid var(--hp-gold);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 1px;
+}
+.v2-kb-key:hover { background: var(--hp-wood-dark); }
+.v2-kb-key.is-capturing { background: var(--hp-gold); color: var(--hp-bg-dark); animation: kb-pulse 0.8s ease-in-out infinite; }
+.v2-kb-key.is-conflict { border-color: var(--hp-red-bright); color: var(--hp-red-bright); }
+.v2-kb-key.is-readonly {
+    cursor: default;
+    opacity: 0.65;
+    border-style: dashed;
+    background: transparent;
+}
+.v2-kb-key.is-readonly:hover { background: transparent; }
+@keyframes kb-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* ============================================================
+   1) Scroll fix for v2 screens
+   Override the legacy body/html centering that clips tall v2 content.
+   The v2 init code adds .v2-active to both <html> and <body>.
+   ============================================================ */
+html.v2-active,
+body.v2-active {
+    height: auto;
+    overflow: auto;
+}
+body.v2-active {
+    display: block;
+}
+body.v2-active .screen:not(#screen-game) .v2-back-btn {
+    position: sticky;
+    top: 8px;
+    z-index: 100;
+}
+
+/* ============================================================
+   2) Combo popup (spawned by _spawnComboPopup in game-v2.js)
+   ============================================================ */
+.combo-popup {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 48%;
+    transform: translateY(-50%) scale(.98);
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: clamp(8px, 1.7vw, 18px);
+    font-family: "Cinzel", "Georgia", serif;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: 0;
+    color: #fff;
+    background: linear-gradient(90deg, transparent, rgba(48,132,82,.72), transparent);
+    border-block: 1px solid rgba(255,255,255,.18);
+    padding: 12px 18px;
+    text-shadow: 0 2px 6px rgba(0,0,0,.7);
+    z-index: 9500;
+    pointer-events: none;
+    white-space: nowrap;
+    text-align: center;
+    animation: comboPopupAnim 1.15s ease forwards;
+}
+.combo-popup .combo-mid {
+    font-size: clamp(2.6rem, 8vw, 5.4rem);
+    white-space: nowrap;
+}
+.combo-popup .combo-big {
+    color: #ffd86a;
+    font-size: clamp(3.4rem, 10vw, 6.4rem);
+    text-shadow: 0 2px 6px rgba(0,0,0,.72), 0 0 16px rgba(212,175,55,.48);
+    white-space: nowrap;
+}
+.combo-popup.tier-good { background: linear-gradient(90deg, transparent, rgba(48,132,82,.72), transparent); }
+.combo-popup.tier-great {
+    background: linear-gradient(90deg, transparent, rgba(58,142,88,.78), transparent);
+}
+.combo-popup.tier-brilliant {
+    background: linear-gradient(90deg, transparent, rgba(68,152,96,.84), transparent);
+    border-block-color: rgba(255,245,192,.42);
+}
+@keyframes comboPopupAnim {
+    0%   { transform: translateY(-50%) scale(.98); opacity: 0; }
+    18%  { transform: translateY(-50%) scale(1);   opacity: 1; }
+    72%  { transform: translateY(-50%) scale(1);   opacity: 1; }
+    100% { transform: translateY(-70%) scale(.98); opacity: 0; }
+}
+
+/* ============================================================
+   Codex molecule card enhancements
+   ============================================================ */
+.codex-mol-en {
+    font-size: 0.65rem;
+    color: var(--hp-parchment-dark);
+    margin-top: 2px;
+    font-style: italic;
+}
+.codex-mol-stamps {
+    display: flex;
+    gap: 3px;
+    justify-content: center;
+    margin-top: 4px;
+}
+.codex-diff-stamp {
+    font-size: 0.6rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: rgba(60,47,42,0.5);
+    color: var(--hp-parchment-dark);
+    border: 1px solid rgba(100,80,60,0.3);
+}
+.codex-diff-stamp.seen {
+    background: var(--hp-green-dark);
+    color: var(--hp-parchment);
+    border-color: var(--hp-green-bright);
+}
+
+/* ============================================================
+   Codex family overview cards
+   ============================================================ */
+.codex-family-overview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.codex-family-card {
+    background: rgba(30, 24, 18, 0.85);
+    border: 1px solid var(--hp-gold);
+    border-radius: 6px;
+    padding: 10px 14px;
+    min-width: 120px;
+    flex: 1 1 120px;
+}
+.codex-family-card-name {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--hp-gold);
+    margin-bottom: 4px;
+}
+.codex-family-card-progress {
+    font-size: 0.75rem;
+    color: var(--hp-parchment-dark);
+    margin-bottom: 4px;
+}
+.codex-family-card-badges {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.codex-family-badge {
+    font-size: 1.1rem;
+    cursor: default;
+}
+
+/* ============================================================
+   Codex global achievements section
+   ============================================================ */
+.codex-achievements-section {
+    margin-top: 24px;
+}
+.codex-ach-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+.codex-ach-item {
+    background: rgba(25, 20, 14, 0.9);
+    border: 1px solid var(--hp-gold);
+    border-radius: 6px;
+    padding: 10px 12px;
+    text-align: center;
+    min-width: 90px;
+    flex: 1 1 90px;
+}
+.codex-ach-item.locked {
+    filter: grayscale(1) opacity(0.5);
+    border-color: rgba(100,80,60,0.3);
+}
+.codex-ach-icon {
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+}
+.codex-ach-name {
+    font-size: 0.8rem;
+    color: var(--hp-parchment);
+    font-weight: bold;
+}
+.codex-ach-desc {
+    font-size: 0.68rem;
+    color: var(--hp-parchment-dark);
+    margin-top: 2px;
+}
+.codex-ach-desc.locked-hint {
+    font-style: italic;
+}
+.codex-ach-empty {
+    color: var(--hp-parchment-dark);
+    font-style: italic;
+}
+
+/* ============================================================
+   Settle wrong card enhancements
+   ============================================================ */
+.v2-wrong-card-chosen {
+    font-size: 0.72rem;
+    color: var(--hp-red-bright);
+    margin-top: 3px;
+    text-align: center;
+}
+.v2-wrong-card-codex-link {
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    padding: 3px 0;
+    background: transparent;
+    border: 1px solid var(--hp-gold);
+    border-radius: 4px;
+    color: var(--hp-gold);
+    font-size: 0.7rem;
+    cursor: pointer;
+    font-family: var(--font-serif);
+}
+.v2-wrong-card-codex-link:hover {
+    background: rgba(212,175,55,0.12);
+}
+

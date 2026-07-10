@@ -1,0 +1,96 @@
+/* v2 框架：v2-root、screen 切換、modal 彈窗、畫面標題、返回按鈕 */
+/* =====================================================================
+   v2 styles (data-driven rewrite, per README "UI 結構 → state→class 對照").
+   These are layered on top of legacy styles. When game-v2.js sets
+   window.__GAME_V2_ENABLED__, the legacy DOM trees are hidden and v2
+   screens take over.
+   ===================================================================== */
+
+.v2-root {
+    display: none;
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    background: var(--hp-bg-dark);
+    color: var(--hp-parchment);
+    font-family: var(--font-serif);
+}
+body.v2-active .v2-root { display: block; }
+
+/* --- Screens (only .is-active is visible) --- */
+.screen { display: none; padding: 24px; }
+.screen.is-active { display: block; }
+
+/* --- Modals --- */
+/* z-index 10000: must sit ABOVE #feedback-overlay (9999) so the confirm modal
+   doesn't get covered by mid-round resolve-correct/wrong feedback. */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+}
+.modal.is-open { display: flex; }
+.modal .modal-content {
+    background: var(--hp-wood-dark);
+    border: 2px solid var(--hp-gold);
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 560px;
+    width: 90%;
+    color: var(--hp-parchment);
+}
+.modal .modal-button-row {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+.modal .modal-button-row button {
+    padding: 8px 16px;
+    background: var(--hp-wood-light);
+    color: var(--hp-parchment);
+    border: 1px solid var(--hp-gold);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+}
+.modal .modal-button-row button:hover { background: var(--hp-gold); color: var(--hp-bg-dark); }
+
+/* [USED: tutorial modal] cream parchment background so dark text is readable */
+#modal-tutorial .modal-content {
+    background: var(--hp-parchment);
+    color: #2c2416;
+    border-color: var(--hp-gold);
+}
+#modal-tutorial .modal-content h2 { color: #7f0909; }
+#modal-tutorial .tutorial-text { color: #2c2416; }
+#modal-tutorial .modal-button-row button {
+    background: #ede2c8;
+    color: #2c2416;
+    border-color: var(--hp-wood-dark);
+}
+#modal-tutorial .modal-button-row button:hover {
+    background: var(--hp-gold);
+    color: #2c2416;
+}
+
+.v2-screen-title {
+    font-family: "Cinzel", "Georgia", serif;
+    color: var(--hp-gold);
+    text-align: center;
+    margin: 16px 0 24px;
+}
+.v2-back-btn, .v2-back-btn-sm {
+    background: var(--hp-wood-dark);
+    color: var(--hp-parchment);
+    border: 1px solid var(--hp-gold);
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-family: inherit;
+}
+.v2-back-btn:hover, .v2-back-btn-sm:hover { background: var(--hp-gold); color: var(--hp-bg-dark); }

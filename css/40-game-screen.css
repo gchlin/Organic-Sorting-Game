@@ -1,0 +1,293 @@
+/* 遊戲畫面：HUD、player-area 血條、對戰標題列、圖片框、game-image 動態變體 */
+/* --- Game screen --- */
+.v2-hud {
+    display: grid;
+    grid-template-columns: minmax(160px, 240px) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(60, 47, 42, 0.4);
+    border-radius: 8px;
+    margin-bottom: 0;
+}
+.player-area {
+    --score-fill: 0;
+    display: grid;
+    grid-template-columns: auto minmax(84px, 1fr) auto;
+    gap: 6px;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    border: 1px solid transparent;
+    transition: border 0.2s, opacity 0.2s;
+}
+.player-area[data-player="p1"] { border-color: var(--hp-red-dark); }
+.player-area[data-player="p2"] { border-color: var(--hp-green-dark); }
+.player-area::before {
+    content: "";
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    width: 100%;
+    height: 10px;
+    border-radius: 999px;
+    background: linear-gradient(to bottom,
+        var(--hp-glass-dark) 0%,
+        var(--hp-glass-mid) 50%,
+        var(--hp-glass-dark) 100%);
+    box-shadow:
+        inset 0 1px 3px rgba(0,0,0,.8),
+        inset 0 -1px 0 rgba(255,255,255,.08);
+    pointer-events: none;
+    z-index: 0;
+}
+.player-area::after {
+    content: "";
+    grid-column: 2;
+    grid-row: 1;
+    display: block;
+    width: 100%;
+    height: 10px;
+    min-width: 0;
+    border-radius: 999px;
+    background: linear-gradient(to bottom,
+        #fff5c0 0%,
+        var(--hp-gold-light) 0%,
+        var(--hp-gold) 50%,
+        var(--hp-gold-deep) 100%);
+    box-shadow:
+        inset 0 1px 2px rgba(255, 245, 200, 0.65),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.35),
+        0 0 8px rgba(212, 175, 55, 0.45);
+    overflow: hidden;
+    transform: scaleX(var(--score-fill));
+    transform-origin: left center;
+    transition: transform .28s ease;
+    z-index: 1;
+}
+.player-area .player-label {
+    grid-column: 1;
+    grid-row: 1;
+    position: relative;
+    z-index: 2;
+    font-weight: bold;
+    color: var(--hp-gold);
+}
+.player-area .score {
+    grid-column: 3;
+    grid-row: 1;
+    position: relative;
+    z-index: 2;
+    min-width: 1.4em;
+    text-align: right;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--hp-parchment);
+}
+.player-area .streak,
+.player-area .combo-level { display: none; }
+.player-area.locked-area { opacity: 0.35; pointer-events: none; }
+.v2-duel-hud-title {
+    display: grid;
+    grid-template-columns: minmax(86px, auto) minmax(0, 1fr) minmax(86px, auto);
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    text-align: center;
+}
+.v2-duel-hud-title .v2-back-btn-sm {
+    align-self: center;
+    justify-self: center;
+}
+.v2-hud-title-text { min-width: 0; }
+.v2-duel-mode-label {
+    display: block;
+    color: var(--hp-gold);
+    font-family: "Cinzel", "Georgia", serif;
+    font-size: clamp(.72rem, 1.7vh, .88rem);
+    font-weight: 800;
+    letter-spacing: .08em;
+}
+.v2-duel-hud-title strong {
+    display: block;
+    overflow: hidden;
+    color: #fff5c0;
+    font-size: clamp(.84rem, 2.1vh, 1.04rem);
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.v2-question-progress {
+    display: block;
+    color: #fff5c0;
+    font-family: "Cinzel", "Georgia", serif;
+    font-size: clamp(.88rem, 2vh, 1.05rem);
+    font-weight: 800;
+    white-space: nowrap;
+}
+.v2-hud .v2-back-btn-sm {
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0;
+    overflow: hidden;
+    color: var(--hp-gold);
+    font-size: 0;
+    border-radius: 7px;
+    background: rgba(47, 36, 32, .9);
+}
+.v2-hud .v2-back-btn-sm::before {
+    margin: 0;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
+    font-size: 18px;
+}
+.v2-back-btn[data-icon]::before,
+.v2-back-btn-sm[data-icon]::before,
+.v2-help-btn[data-icon]::before {
+    min-width: 1.15em;
+    min-height: 1.15em;
+}
+.v2-game-tutorial-btn {
+    justify-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: auto;
+    min-width: 86px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0 9px;
+    overflow: hidden;
+    color: var(--hp-parchment);
+    font-size: clamp(.72rem, 1.8vh, .86rem);
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    border-radius: 7px;
+    background: rgba(47, 36, 32, .9);
+}
+.v2-game-tutorial-btn:hover {
+    background: var(--hp-gold);
+    color: var(--hp-bg-dark);
+}
+.v2-game-tutorial-icon {
+    flex: 0 0 17px;
+    width: 17px;
+    height: 17px;
+    background-color: var(--hp-gold);
+    -webkit-mask: url('../assets/images/icons/quill.svg') center / contain no-repeat;
+    mask: url('../assets/images/icons/quill.svg') center / contain no-repeat;
+}
+.v2-game-tutorial-btn:hover .v2-game-tutorial-icon {
+    background-color: var(--hp-bg-dark);
+}
+.v2-game-tutorial-label {
+    display: inline-block;
+    min-width: 3em;
+    color: inherit;
+    text-align: left;
+}
+/* Practice mode hides p2 area */
+#screen-game.mode-practice .player-area[data-player="p2"] { display: none; }
+#screen-game.mode-practice #buzz-p1, #screen-game.mode-practice #buzz-p2 { display: none; }
+#screen-game.mode-duel #game-hint-bubble { display: none !important; }
+/* Duel PvE hides p2 buzz (AI doesn't press buttons) */
+#screen-game.mode-duel-pve #buzz-p2 { display: none; }
+
+.v2-opp-label { color: var(--hp-gold); font-size: 0.9rem; }
+/* Viewport-fit game screen: HUD + image + options + buzz all fit without scroll.
+   The molecule card keeps the same ratio as the generated SVG image. */
+#screen-game.is-active {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto minmax(0, 1fr);
+    grid-template-areas:
+        "hud"
+        "image"
+        "options"
+        "buzz"
+        "hint";
+    min-height: 100dvh;
+    max-height: 100dvh;
+    padding: 12px;
+    box-sizing: border-box;
+    gap: 10px;
+    overflow: hidden;
+}
+#screen-game #game-hud { grid-area: hud; }
+#screen-game #game-options { grid-area: options; }
+#screen-game #game-options-p2 { grid-area: options-right; }
+#screen-game #game-buzz { grid-area: buzz; }
+#screen-game #game-hint-bubble { grid-area: hint; }
+.duel-orientation-lock { display: none; }
+.v2-image-frame {
+    grid-area: image;
+    align-self: start;
+    justify-self: center;
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: min(760px, 100%, max(220px, calc(133.333dvh - 293px)));
+    aspect-ratio: var(--game-image-ratio);
+    border: 2px solid var(--hp-gold);
+    border-radius: 8px;
+    padding: clamp(10px, 2.4vw, 28px);
+    margin: 0 auto;
+    min-height: 0;
+    background:
+        linear-gradient(180deg, rgba(245,239,222,.94), rgba(232,220,194,.96));
+    box-shadow: 0 16px 36px rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,255,255,.42);
+    overflow: hidden;
+}
+.dynamic-score-pct {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: none;
+    min-width: 54px;
+    padding: 5px 8px;
+    border: 1px solid rgba(212, 175, 55, 0.72);
+    border-radius: 6px;
+    background: rgba(15, 12, 8, 0.78);
+    color: var(--hp-gold);
+    font-size: 0.86rem;
+    font-weight: 800;
+    line-height: 1;
+    text-align: center;
+    z-index: 5;
+}
+.dynamic-score-pct.visible { display: block; }
+.dynamic-score-pct.urgent {
+    border-color: var(--hp-red-bright);
+    color: #fff;
+    background: rgba(127, 9, 9, 0.84);
+}
+#game-image {
+    display: block;
+    width: min(100%, 640px);
+    height: auto;
+    aspect-ratio: var(--game-image-ratio);
+    object-fit: contain;
+    transform-origin: center;
+    transition: none;
+    background: #fff;
+    border-radius: 2px;
+}
+/* Dynamic variants — JS sets inline transform/filter via onTick(elapsedMs).
+   Static fallback only for no-JS state: */
+#game-image.dyn-zoom { transform: scale(5); }
+#game-image.dyn-blur { filter: blur(18px); }
+#game-image.dyn-rotate-zoom { transform: scale(2.8) rotate(-18deg); }
+#game-image.dyn-complete { transform: scale(1); filter: none; }
+

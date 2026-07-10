@@ -1,0 +1,204 @@
+/* 選項 v2-options/option-btn、feedback-overlay 結算橫幅、搶答 buzz、phase body class */
+.v2-options {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(110px, 1fr));
+    gap: 12px;
+    width: min(860px, 100%);
+    max-width: none;
+    margin: 0 auto;
+    align-self: start;
+    align-content: start;
+    animation: v2-options-fade-in 0.4s ease-out;
+}
+#screen-game {
+    --v2-action-button-width: clamp(118px, 21vw, 178px);
+    --duel-side-fr: 1.1fr;
+    --duel-card-fr: 1.05fr;
+    --duel-option-font-size: 20.6px;
+    --duel-question-font-size: 17.3px;
+}
+#screen-game.mode-duel .option-btn[data-option-key],
+#screen-game.mode-duel .v2-buzz button {
+    min-width: var(--v2-action-button-width);
+}
+@media (orientation: landscape) {
+    #screen-game.mode-duel .option-btn[data-option-key],
+    #screen-game.mode-duel .v2-buzz button {
+        min-width: min(100%, var(--v2-action-button-width));
+    }
+}
+@keyframes v2-options-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.option-btn {
+    min-height: 54px;
+    padding: 12px 16px;
+    background: linear-gradient(180deg, rgba(96,73,65,.82), rgba(44,34,32,.94));
+    color: var(--hp-parchment);
+    border: 2px solid var(--hp-gold);
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1.1rem;
+    font-weight: 700;
+    display: grid;
+    grid-template-columns: minmax(34px, auto) minmax(0, 1fr) minmax(34px, auto);
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 2px 0 rgba(0,0,0,.35);
+    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+.option-label {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.option-key-hint {
+    align-self: center;
+    color: rgba(245,239,222,.72);
+    font-family: "Consolas", monospace;
+    font-size: .82rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    white-space: nowrap;
+}
+.option-btn:hover {
+    color: #fff5c0;
+    border-color: var(--hp-gold);
+    box-shadow: 0 0 16px rgba(212,175,55,.25);
+}
+.option-btn:active { transform: scale(0.98); }
+.option-btn.eliminated {
+    text-decoration: line-through;
+    opacity: 0.4;
+    pointer-events: none;
+}
+.option-btn.wrong-chosen {
+    background: var(--hp-red-bright);
+    border-color: var(--hp-red-bright);
+    color: white;
+    animation: v2-flash-red 0.4s ease-out;
+}
+.option-btn.correct-reveal,
+.option-btn.correct-chosen {
+    background: var(--hp-green-bright);
+    border-color: var(--hp-green-bright);
+    color: white;
+    animation: v2-pulse-green 0.6s ease-in-out;
+}
+@keyframes v2-flash-red {
+    0% { background: white; }
+    100% { background: var(--hp-red-bright); }
+}
+@keyframes v2-pulse-green {
+    0%, 100% { background: var(--hp-green-bright); }
+    50% { background: #5fd084; }
+}
+
+/* Resolving feedback band, matched to level_UI. */
+#feedback-overlay {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 48%;
+    display: grid;
+    justify-items: center;
+    gap: 3px;
+    padding: 18px 20px;
+    transform: translateY(-50%) scale(.98);
+    text-align: center;
+    white-space: nowrap;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    background: rgba(0,0,0,.48);
+    border-block: 1px solid rgba(255,255,255,.18);
+    transition: opacity .18s ease, transform .18s ease;
+}
+#feedback-overlay span {
+    color: var(--hp-parchment-dark);
+    font-family: "Cinzel", Georgia, serif;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    font-size: clamp(.72rem, 1.8vw, .95rem);
+    line-height: 1;
+}
+#feedback-overlay strong {
+    color: #fff;
+    font-family: "Cinzel", Georgia, serif;
+    font-size: clamp(2.6rem, 8vw, 5.4rem);
+    line-height: 1;
+    font-weight: 900;
+    white-space: nowrap;
+}
+#feedback-overlay small {
+    color: #fff5c0;
+    font-size: clamp(.78rem, 2vw, 1rem);
+    line-height: 1.1;
+    white-space: nowrap;
+}
+#feedback-overlay.combo-suppressed {
+    opacity: 0 !important;
+}
+#feedback-overlay.show-correct {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+    background: linear-gradient(90deg, transparent, rgba(48,132,82,.72), transparent);
+    animation: v2-feedback-pop .18s ease-out;
+}
+#feedback-overlay.show-wrong {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+    background: linear-gradient(90deg, transparent, rgba(150,32,28,.75), transparent);
+    animation: v2-feedback-shake .22s ease-out;
+}
+@keyframes v2-feedback-pop {
+    0% { transform: translateY(-50%) scale(.98); opacity: 0; }
+    100% { transform: translateY(-50%) scale(1); opacity: 1; }
+}
+@keyframes v2-feedback-shake {
+    0%, 100% { transform: translateY(-50%) translateX(0) scale(1); }
+    25% { transform: translateY(-50%) translateX(-4px) scale(1); }
+    50% { transform: translateY(-50%) translateX(4px) scale(1); }
+    75% { transform: translateY(-50%) translateX(-2px) scale(1); }
+}
+
+.v2-buzz {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin: 16px 0;
+}
+.v2-buzz button {
+    flex: 1;
+    max-width: 240px;
+    padding: 16px;
+    background: var(--hp-red-dark);
+    color: var(--hp-parchment);
+    border: 2px solid var(--hp-gold);
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1rem;
+}
+.v2-buzz button:hover { background: var(--hp-red-bright); }
+.v2-buzz button:disabled { opacity: 0.4; cursor: not-allowed; }
+.v2-buzz.buzz-open button { animation: v2-buzz-glow 1.2s infinite; }
+.v2-buzz.buzz-owner-p1 #buzz-p1 { background: var(--hp-green-bright); }
+.v2-buzz.buzz-owner-p2 #buzz-p2 { background: var(--hp-green-bright); }
+.v2-buzz.buzz-owner-p1 #buzz-p2,
+.v2-buzz.buzz-owner-p2 #buzz-p1 { opacity: 0.3; pointer-events: none; }
+@keyframes v2-buzz-glow {
+    0%, 100% { box-shadow: 0 0 0 var(--hp-gold-glow); }
+    50% { box-shadow: 0 0 16px var(--hp-gold-glow); }
+}
+
+/* Phase-based body classes */
+body.phase-resolving-correct .option-btn:not(.wrong-chosen):not(.correct-reveal) { pointer-events: none; }
+body.phase-resolving-wrong .option-btn:not(.wrong-chosen):not(.correct-reveal) { pointer-events: none; }
+body.phase-cleanup .option-btn { pointer-events: none; }
+body.input-locked { cursor: progress; }
+body.input-locked .option-btn,
+body.input-locked .v2-buzz button { pointer-events: none; }
+

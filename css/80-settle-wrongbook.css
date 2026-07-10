@@ -1,0 +1,296 @@
+/* 結算 settle、錯題本 wrong-book、倒數/放棄/交接 overlay、Leitner 錯題卡補充 */
+/* --- Settle screen --- */
+.v2-stats {
+    background: rgba(60, 47, 42, 0.4);
+    padding: 16px;
+    border-radius: 8px;
+    margin: 0 auto 16px;
+    max-width: 720px;
+}
+.v2-stats .stat-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px dotted var(--hp-parchment-dark);
+}
+.v2-stats .stat-line:last-child { border-bottom: none; }
+.v2-wrong-review {
+    background: rgba(127, 9, 9, 0.2);
+    border: 1px solid var(--hp-red-dark);
+    padding: 16px;
+    border-radius: 8px;
+    margin: 0 auto 16px;
+    max-width: 720px;
+}
+.v2-wrong-review h3 { margin: 0 0 12px; color: var(--hp-red-bright); }
+.v2-wrong-review.empty { display: none; }
+.v2-wrong-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+}
+.v2-wrong-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--hp-parchment-dark);
+    border-radius: 4px;
+    padding: 8px;
+    text-align: center;
+    font-size: 0.85rem;
+}
+.v2-wrong-card img {
+    width: 100%;
+    height: 80px;
+    object-fit: contain;
+    background: var(--hp-parchment);
+    border-radius: 2px;
+    margin-bottom: 4px;
+}
+.v2-wrong-card .name-zh { color: var(--hp-gold); font-weight: bold; }
+.v2-wrong-card .chosen-wrong { color: var(--hp-red-bright); font-style: italic; font-size: 0.8rem; }
+.v2-button-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 720px;
+    margin: 0 auto;
+}
+.v2-button-row button {
+    padding: 10px 18px;
+    background: var(--hp-wood-dark);
+    color: var(--hp-parchment);
+    border: 1px solid var(--hp-gold);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+}
+.v2-button-row button:hover { background: var(--hp-gold); color: var(--hp-bg-dark); }
+
+/* --- Wrong-book screen --- */
+.v2-wrong-groups {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+.v2-screen-heading {
+    position: relative;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+.v2-screen-heading .v2-screen-title { margin-right: 48px; }
+.v2-help-btn {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(20,15,15,.72);
+    color: var(--hp-gold);
+    border: 1px solid rgba(212,175,55,.55);
+    border-radius: 6px;
+    cursor: pointer;
+}
+.v2-help-btn:hover {
+    background: rgba(212,175,55,.16);
+    color: var(--hp-parchment);
+}
+.v2-wrong-tabs {
+    margin-bottom: 16px;
+    border: 1px solid rgba(212,175,55,.2);
+    border-radius: 8px 8px 0 0;
+}
+.v2-wrong-group-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+.v2-wrong-group-list.is-flat {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+.v2-wrong-group {
+    background: rgba(60, 47, 42, 0.4);
+    border: 1px solid var(--hp-gold);
+    border-radius: 8px;
+    padding: 0;
+    overflow: hidden;
+}
+.v2-wrong-summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    list-style: none;
+}
+.v2-wrong-summary::-webkit-details-marker { display: none; }
+.v2-wrong-summary::before {
+    content: '▾';
+    color: var(--hp-gold);
+    transition: transform .15s;
+}
+.v2-wrong-group:not([open]) .v2-wrong-summary::before { transform: rotate(-90deg); }
+.v2-wrong-summary-title {
+    color: var(--hp-gold);
+    font-weight: 700;
+    font-family: "Cinzel", "Georgia", serif;
+}
+.v2-wrong-summary-meta {
+    margin-left: auto;
+    color: var(--hp-parchment-dark);
+    font-size: .86rem;
+    white-space: nowrap;
+}
+.v2-wrong-group .count { color: var(--hp-red-bright); font-weight: bold; }
+.v2-wrong-group button {
+    margin-top: 12px;
+    padding: 8px 16px;
+    background: var(--hp-red-dark);
+    color: var(--hp-parchment);
+    border: 1px solid var(--hp-gold);
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+}
+.v2-wrong-group button:hover { background: var(--hp-red-bright); }
+.v2-wrong-group > .v2-wrong-cards,
+.v2-wrong-group > .v2-wrong-actions {
+    margin-left: 16px;
+    margin-right: 16px;
+}
+.v2-wrong-group > .v2-wrong-actions { margin-bottom: 16px; }
+.v2-wrong-empty {
+    text-align: center;
+    padding: 32px;
+    color: var(--hp-parchment-dark);
+    font-style: italic;
+}
+
+/* --- Buzz countdown (buzzed phase, big integer seconds) ---
+   Position swings to the side of the current buzz owner so P1 / P2 are
+   visually symmetric: left for P1, right for P2. */
+#buzz-countdown {
+    position: fixed;
+    top: 12vh;
+    right: 18px;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.65);
+    border: 3px solid var(--hp-gold);
+    color: var(--hp-parchment);
+    font-size: 2.2rem;
+    font-weight: 900;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 8000;
+    pointer-events: none;
+    box-shadow: 0 0 12px rgba(0,0,0,0.6);
+    transition: color 0.2s, border-color 0.2s, transform 0.2s, left 0.25s, right 0.25s;
+}
+#buzz-countdown.visible { display: flex; }
+#buzz-countdown[data-side="left"]  { left: 18px;  right: auto; }
+#buzz-countdown[data-side="right"] { right: 18px; left:  auto; }
+
+/* 放棄作答按鈕：對齊倒數圓圈正下方，與倒數同側 */
+#btn-giveup {
+    position: fixed;
+    top: calc(12vh + 72px);
+    width: 52px;
+    min-height: 32px;
+    padding: 4px 2px;
+    background: rgba(60, 47, 42, 0.85);
+    color: var(--hp-parchment);
+    border: 2px solid var(--hp-red-bright);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.58rem;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 8000;
+    display: none;
+    text-align: center;
+    transition: background 0.15s, transform 0.15s, left 0.25s, right 0.25s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+#btn-giveup.visible { display: block; }
+#btn-giveup:hover { background: var(--hp-red-bright); transform: scale(1.05); }
+#btn-giveup:active { transform: scale(0.96); }
+#btn-giveup[data-side="left"]  { left: 18px;  right: auto; }
+#btn-giveup[data-side="right"] { right: 18px; left:  auto; }
+#buzz-countdown.urgent {
+    color: #ff5a5a;
+    border-color: #ff5a5a;
+    animation: v2-countdown-pulse 0.6s infinite;
+}
+@keyframes v2-countdown-pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(255,90,90,0.5); }
+    50%      { transform: scale(1.15); box-shadow: 0 0 22px rgba(255,90,90,0.9); }
+}
+
+/* --- Handoff overlay (⚡ 輪到 P2 short flash on answer-switch) --- */
+#handoff-overlay {
+    position: fixed;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(192, 57, 43, 0.85);
+    border: 2px solid var(--hp-gold);
+    border-radius: 10px;
+    padding: 12px 28px;
+    color: white;
+    font-size: 1.6rem;
+    font-weight: bold;
+    z-index: 8500;
+    pointer-events: none;
+    display: none;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.7);
+    box-shadow: 0 0 24px rgba(255,140,80,0.6);
+}
+#handoff-overlay.visible { display: block; }
+
+/* --- Wrong-book Leitner-spirit additions --- */
+.v2-wrong-card {
+    position: relative;
+}
+.v2-wrong-card.box-1 { border-color: var(--hp-red-bright); }
+.v2-wrong-card.box-2 { border-color: #d99441; }
+.v2-wrong-card.box-3 { border-color: #d4af37; }
+.v2-wrong-card.box-4,
+.v2-wrong-card.box-5 { border-color: #6fe09c; }
+.v2-wrong-card.mastered { opacity: 0.85; }
+.v2-wrong-card .box-indicator {
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    color: var(--hp-gold);
+    margin-top: 4px;
+}
+.v2-wrong-card .v2-wrong-delete {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(0,0,0,0.55);
+    color: var(--hp-parchment);
+    border: 1px solid var(--hp-red-bright);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    line-height: 1;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.v2-wrong-card .v2-wrong-delete:hover { background: var(--hp-red-bright); }
+.v2-wrong-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+.v2-wrong-actions button { margin-top: 0; }
+.v2-wrong-actions .v2-wrong-purge { background: #2d5a3d; }
+.v2-wrong-actions .v2-wrong-purge:hover { background: #4a9166; }
+
