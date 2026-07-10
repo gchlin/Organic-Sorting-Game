@@ -1274,11 +1274,17 @@ body.v2-active .v2-root { display: block; }
         gap: 8px;
     }
 
+    /* 直式：HUD 改兩列——玩家/進度一列、標題列（返回｜題目｜看教學）獨佔一列。
+       沿用桌機三欄會把中欄擠到剩 <90px，看教學按鈕整顆溢出視窗右緣。 */
     .v2-hud {
-        flex-wrap: wrap;
+        grid-template-columns: minmax(0, 1fr) auto;
         gap: 8px;
         padding: 8px;
     }
+    .v2-hud .player-area[data-player="p1"] { grid-column: 1; grid-row: 1; }
+    .v2-hud .player-area[data-player="p2"] { grid-column: 1 / -1; grid-row: 3; }
+    .v2-hud #game-question-progress { grid-column: 2; grid-row: 1; }
+    .v2-hud .v2-duel-hud-title { grid-column: 1 / -1; grid-row: 2; }
 
     .v2-image-frame {
         width: min(100%, max(240px, calc(133.333dvh - 387px)));
