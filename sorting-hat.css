@@ -113,6 +113,97 @@
 .hat-char.wink .brow.right { transform: rotate(8deg) translateY(2%); }
 .hat-char.wink .mouth { width: 30%; height: 14%; transform: translateX(-50%) rotate(-5deg); }
 
+/* ---- 魔導書表情（動作代替五官）----
+   表情 class 由 setHatExpression 落在 .hat-char 容器上（劇情逐句、教學逐頁），
+   魔導書不畫臉，用動作與光影表達情緒；每個 filter 都要帶著基礎 drop-shadow。
+   happy/surprised/wink/annoyed 是一次性動作（表情切換時播一次），
+   thinking/sleepy 是持續的緩慢循環，sad/sleep 是靜態姿勢。 */
+.hat-char.is-grimoire .grimoire-img { transform-origin: 50% 88%; }
+
+.hat-char.is-grimoire.happy .grimoire-img {
+    animation: grimoireBounce .55s ease-out;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) brightness(1.08)
+            drop-shadow(0 0 14px rgba(212,175,55,.7));
+}
+@keyframes grimoireBounce {
+    0%   { transform: translateY(0) scale(1); }
+    35%  { transform: translateY(-9%) scale(1.05); }
+    70%  { transform: translateY(0) scale(.99); }
+    100% { transform: translateY(0) scale(1); }
+}
+
+.hat-char.is-grimoire.sad .grimoire-img {
+    transform: rotate(-6deg) translateY(4%);
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) saturate(.6) brightness(.85);
+}
+
+.hat-char.is-grimoire.surprised .grimoire-img {
+    animation: grimoireJolt .45s cubic-bezier(.2, 1.6, .4, 1);
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) brightness(1.12);
+}
+@keyframes grimoireJolt {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.12) rotate(2deg); }
+    100% { transform: scale(1); }
+}
+
+.hat-char.is-grimoire.thinking .grimoire-img {
+    animation: grimoireSway 2.6s ease-in-out infinite;
+}
+@keyframes grimoireSway {
+    0%, 100% { transform: rotate(-4deg); }
+    50%      { transform: rotate(4deg); }
+}
+
+.hat-char.is-grimoire.wink .grimoire-img {
+    animation: grimoireTip .6s ease-out;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,.5))
+            drop-shadow(0 0 10px rgba(212,175,55,.55));
+}
+@keyframes grimoireTip {
+    0%   { transform: rotate(0); }
+    30%  { transform: rotate(7deg) translateY(-3%); }
+    100% { transform: rotate(0); }
+}
+
+.hat-char.is-grimoire.annoyed .grimoire-img {
+    animation: grimoireShake .4s ease-in-out;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) saturate(1.15) contrast(1.05);
+}
+@keyframes grimoireShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5%); }
+    40% { transform: translateX(4%); }
+    60% { transform: translateX(-3%); }
+    80% { transform: translateX(2%); }
+}
+
+.hat-char.is-grimoire.sleepy .grimoire-img {
+    animation: grimoireBreathe 3.2s ease-in-out infinite;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) brightness(.8) saturate(.75);
+}
+@keyframes grimoireBreathe {
+    0%, 100% { transform: translateY(0) rotate(-1deg); }
+    50%      { transform: translateY(2.5%) rotate(-2deg); }
+}
+
+.hat-char.is-grimoire.sleep .grimoire-img {
+    transform: rotate(-8deg) translateY(5%);
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,.5)) brightness(.6) saturate(.55);
+}
+
+/* 使用者偏好減少動態：關掉循環與彈跳，但換成靜態姿勢，表情仍讀得出來。
+   （注意：本專案使用者的 Windows 即為 reduce 模式——combo 動畫 bug 同源） */
+@media (prefers-reduced-motion: reduce) {
+    .hat-char.is-grimoire .grimoire-img { animation: none !important; }
+    .hat-char.is-grimoire.happy .grimoire-img     { transform: translateY(-4%) scale(1.03); }
+    .hat-char.is-grimoire.surprised .grimoire-img { transform: scale(1.08) rotate(2deg); }
+    .hat-char.is-grimoire.thinking .grimoire-img  { transform: rotate(4deg); }
+    .hat-char.is-grimoire.wink .grimoire-img      { transform: rotate(5deg) translateY(-2%); }
+    .hat-char.is-grimoire.annoyed .grimoire-img   { transform: rotate(-3deg); }
+    .hat-char.is-grimoire.sleepy .grimoire-img    { transform: translateY(2.5%) rotate(-2deg); }
+}
+
 .tutorial-slide-media {
     display: flex;
     align-items: center;

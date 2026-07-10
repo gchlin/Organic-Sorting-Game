@@ -68,6 +68,8 @@ async function closeOverlays(page) {
 async function newPage(browser, w, h) {
     const page = await browser.newPage();
     await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 });
+    // 固定媒體特徵：headless 會繼承主機的 reduce 設定，鎖住才能跨機器決定性
+    await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
     await page.evaluateOnNewDocument(SEED_SNIPPET);
     await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle2' });
     await page.addStyleTag({ content: FREEZE_CSS });
