@@ -523,3 +523,31 @@
     #screen-game.mode-practice #game-mentor { display: block; }
     #screen-game.mode-practice .mentor-bubble.is-visible { display: block; }
 }
+
+/* 手機直式：左側邊欄擺不下，改把魔導書縮到左下角，對話框做成底部橫幅。
+   畫面最底那條 hint（1fr）在練習模式是空的，控制列（繼續）在它上方，
+   所以魔導書＋泡泡站在最底不會蓋到「繼續」鍵，也不會擋到分子圖。
+   --mentor-book 是直式書寬，泡泡靠它算出左邊界。 */
+@media (orientation: portrait) {
+    #screen-game { --mentor-book: clamp(56px, 15vw, 84px); }
+    #screen-game.mode-practice #game-mentor {
+        display: block;
+        left: 8px;
+        top: auto;
+        bottom: 8px;
+        transform: none;
+        width: var(--mentor-book);
+        height: auto;
+        aspect-ratio: 1408 / 768;
+        z-index: 31;
+    }
+    #screen-game.mode-practice .mentor-bubble {
+        left: calc(var(--mentor-book) + 14px);
+        right: 8px;
+        top: auto;
+        bottom: 8px;
+        width: auto;
+        max-height: min(28dvh, 150px);
+    }
+    #screen-game.mode-practice .mentor-bubble.is-visible { display: block; }
+}

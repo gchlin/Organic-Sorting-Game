@@ -77,6 +77,15 @@ body.v2-active .v2-root { display: block; }
     background: var(--hp-gold);
     color: #2c2416;
 }
+/* 整個教學遮罩可點：點任意處翻下一頁，最後一頁才關（見 index.html 的 data-action） */
+#modal-tutorial { cursor: pointer; }
+#modal-tutorial .modal-tap-hint {
+    margin: 8px 0 0;
+    color: #8a6d3b;
+    font-size: .78rem;
+    text-align: center;
+    opacity: .75;
+}
 
 .v2-screen-title {
     font-family: "Cinzel", "Georgia", serif;

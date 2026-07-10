@@ -13,14 +13,14 @@
     <link rel="stylesheet" href="css/00-base.css?v=css-split-1">
     <link rel="stylesheet" href="css/10-codex.css?v=css-split-1">
     <link rel="stylesheet" href="css/20-tutorial-icons.css?v=css-split-1">
-    <link rel="stylesheet" href="css/30-screens-modals.css?v=css-split-1">
-    <link rel="stylesheet" href="css/40-game-screen.css?v=controls-20260710">
+    <link rel="stylesheet" href="css/30-screens-modals.css?v=tap-tutorial-20260711">
+    <link rel="stylesheet" href="css/40-game-screen.css?v=touch-kbd-20260711">
     <link rel="stylesheet" href="css/50-responsive.css?v=css-split-1">
     <link rel="stylesheet" href="css/60-options-buzz.css?v=review-20260710">
     <link rel="stylesheet" href="css/70-hint-dev.css?v=css-split-1">
     <link rel="stylesheet" href="css/80-settle-wrongbook.css?v=css-split-1">
     <link rel="stylesheet" href="css/90-settings-misc.css?v=css-split-1">
-    <link rel="stylesheet" href="sorting-hat.css?v=review-20260710">
+    <link rel="stylesheet" href="sorting-hat.css?v=portrait-mentor-20260711">
     <link rel="stylesheet" href="menu.css?v=tutorial-entry-20260710">
     <!-- Legacy layout.css / menu.css moved to legacy/ — v2 styles in style.css are self-contained. -->
 </head>
@@ -129,8 +129,8 @@
             </div>
 
             <div id="game-buzz" class="v2-buzz">
-                <button id="buzz-p1" data-buzz-player="p1">P1 搶答 [Space]</button>
-                <button id="buzz-p2" data-buzz-player="p2">P2 搶答 [Enter]</button>
+                <button id="buzz-p1" data-buzz-player="p1">P1 搶答 <small class="kbd-hint">[Space]</small></button>
+                <button id="buzz-p2" data-buzz-player="p2">P2 搶答 <small class="kbd-hint">[Enter]</small></button>
             </div>
 
             <!-- 5 秒搶答倒數（buzzed phase 才顯示） -->
@@ -159,7 +159,7 @@
                     <button type="button" data-action="review-next" title="下一題 [→]" aria-label="下一題">▶</button>
                     <button type="button" data-action="review-exit" class="v2-review-exit" title="回到最新題 [Esc]" aria-label="回到最新題">回到最新</button>
                 </div>
-                <button type="button" id="game-continue" data-action="practice-continue">繼續 <small>[Space]</small></button>
+                <button type="button" id="game-continue" data-action="practice-continue">繼續 <small class="kbd-hint">[Space]</small></button>
             </div>
 
             <div id="dev-quickwin-banner" class="v2-dev-banner">🔧 測試模式：答對 N 題即結算</div>
@@ -298,8 +298,8 @@
             <div id="story-hint" class="v2-story-hint">點擊畫面 / Space / Enter 繼續</div>
         </div>
 
-        <!-- 教學 modal -->
-        <div id="modal-tutorial" class="modal">
+        <!-- 教學 modal（點任意處＝翻下一頁，最後一頁才關） -->
+        <div id="modal-tutorial" class="modal" data-action="tutorial-next">
             <div class="modal-content">
                 <h2 id="modal-tutorial-title">教學</h2>
                 <div id="modal-tutorial-body" class="modal-body"></div>
@@ -308,6 +308,7 @@
                     <button data-action="tutorial-next">下一頁 →</button>
                     <button data-action="tutorial-close">略過</button>
                 </div>
+                <p class="modal-tap-hint" aria-hidden="true">點任意處繼續</p>
             </div>
         </div>
 

@@ -346,3 +346,8 @@
 /* 唯讀回顧：把分子卡調成「翻舊帳」的樣子，一眼看得出不是在作答 */
 #screen-game.is-reviewing .v2-image-frame { border-color: rgba(212, 175, 55, .45); filter: saturate(.85); }
 #screen-game.is-reviewing #game-question-progress { color: var(--hp-gold); }
+
+/* 觸控裝置（手機／平板，沒有實體鍵盤）不顯示 [Space] [Enter] 這類快速鍵提示 */
+@media (hover: none) and (pointer: coarse) {
+    .kbd-hint { display: none; }
+}
