@@ -540,17 +540,9 @@
 
         if (molEl && typeof Families !== 'undefined' && typeof QuestionImages !== 'undefined' && typeof AnswerBank !== 'undefined') {
             const unlocked = save.unlockedMols || [];
-            let total = 0;
-            let seen = 0;
-            const famKeys = Object.keys(Families);
-            for (let i = 0; i < famKeys.length; i++) {
-                const items = _famCompoundKeys(Families[famKeys[i]]);
-                total += items.length;
-                for (let j = 0; j < items.length; j++) {
-                    if (unlocked.indexOf(items[j].ck) !== -1) seen++;
-                }
-            }
-            molEl.textContent = seen + ' / ' + total;
+            const items = _allCompoundKeys();
+            const seen = items.filter(function (it) { return unlocked.indexOf(it.ck) !== -1; }).length;
+            molEl.textContent = seen + ' / ' + items.length;
         }
     }
 
@@ -1320,6 +1312,21 @@
                 inc = filter.keys && filter.keys.includes(ck);
             }
             if (inc) out.push({ ck: ck, src: img.src });
+        }
+        return out;
+    }
+
+    // 全題庫的「不重複」分子清單。
+    // 不能用「逐家族相加」來算總數：mixed 和 englishChallenge 都是全題庫（type:'all'），
+    // 一個分子會被算好幾次（81 個分子曾被算成 262）。改成直接掃 QuestionImages 去重。
+    function _allCompoundKeys() {
+        const seen = Object.create(null);
+        const out = [];
+        for (let i = 0; i < QuestionImages.length; i++) {
+            const img = QuestionImages[i];
+            if (!AnswerBank[img.compoundKey] || seen[img.compoundKey]) continue;
+            seen[img.compoundKey] = 1;
+            out.push({ ck: img.compoundKey, src: img.src });
         }
         return out;
     }
@@ -2122,7 +2129,8 @@
         }
 
         UIStory.init({ goToScreen: goToScreen, render: render, getState: function () { return state; }, characterSkin: _characterSkin, ensureHatChar: ensureHatChar, setHatExpression: setHatExpression, syncHatChars: syncHatChars });
-        UICodex.init({ goToScreen: goToScreen, openStory: UIStory.openStory, famCompoundKeys: _famCompoundKeys });
+        UICodex.init({ goToScreen: goToScreen, openStory: UIStory.openStory,
+                       famCompoundKeys: _famCompoundKeys, allCompoundKeys: _allCompoundKeys });
         UIWrongBook.init({ findImageFor: _findImageFor, startMode: startMode, render: render, goToScreen: goToScreen, requestConfirm: requestConfirm });
         UISettle.init({ getState: function () { return state; }, goToScreen: goToScreen, startMode: startMode, findImageFor: _findImageFor, requestConfirm: requestConfirm, getWrongChosenMap: function () { return _wrongChosenMap; }, scrollToCodexMol: UICodex.scrollToMol });
         UISettings.init({ render: render, syncMusicForScreen: _syncMusicForScreen, formatKeyCode: _formatKeyCode, escapeHtml: _escapeHtml, requestConfirm: requestConfirm, getCurrentScreen: function () { return _currentScreen; } });

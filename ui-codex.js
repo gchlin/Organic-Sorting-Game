@@ -21,17 +21,18 @@ const UICodex = (function () {
         // ---- Tab nav ----
         // Compute counts for each tab badge.
         let levelsCleared = 0, levelsTotal = 0;
-        let molUnlockedTotal = 0, molTotalAll = 0;
         let storyUnlocked = 0, storyTotal = 0;
+        // 分子總數要去重：mixed / englishChallenge 都是全題庫，逐家族相加會把同一個分子
+        // 算好幾次（81 個曾被算成 262）。
+        const allMols = ctx.allCompoundKeys ? ctx.allCompoundKeys() : [];
+        const molTotalAll = allMols.length;
+        const molUnlockedTotal = allMols.filter(m => unlockedMols.includes(m.ck)).length;
         for (const fk of famKeys) {
             const fam = Families[fk];
             for (const diff of (fam.difficulties || [])) {
                 levelsTotal++;
                 if (unlockedBadges.includes(fk + '-' + diff + '-completed')) levelsCleared++;
             }
-            const mks = ctx.famCompoundKeys(fam);
-            molTotalAll += mks.length;
-            molUnlockedTotal += mks.filter(m => unlockedMols.includes(m.ck)).length;
             if (fam.storyKey) {
                 storyTotal++;
                 if (typeof Save !== 'undefined' && Save.isStoryUnlockedV2 && Save.isStoryUnlockedV2(fam.storyKey)) storyUnlocked++;
