@@ -567,8 +567,18 @@
         listEl.innerHTML = '';
         if (!_subMenuContext) return;
 
+        // 難度短名（初/中/高）與白話說明（從結構認分類…）。說明統一由 Difficulties[d].label 供給，
+        // 選單與子關標題共用同一份字，不會兩邊寫得不一樣。
         const diffName = function (d) {
-            return { beginner: '初級', intermediate: '中級', advanced: '高級' }[d] || d;
+            return {
+                beginner: '初級', intermediate: '中級', advanced: '高級',
+                formulaBeginner: '示性式 初級', formulaIntermediate: '示性式 中級',
+                formulaAdvanced: '示性式 高級', isomer: '異構物'
+            }[d] || d;
+        };
+        const diffLabel = function (d) {
+            return (typeof Difficulties !== 'undefined' && Difficulties[d] && Difficulties[d].label)
+                ? Difficulties[d].label : '';
         };
 
         function setMenuButtonContent(btn, tag, label) {
@@ -629,7 +639,8 @@
 
         if (_subMenuContext.kind === 'difficulty') {
             const diff = _subMenuContext.difficulty;
-            titleEl.textContent = diffName(diff) + ' 練習 — 選擇主題子關';
+            const lbl = diffLabel(diff);
+            titleEl.textContent = diffName(diff) + (lbl ? '（' + lbl + '）' : '') + ' — 選擇主題子關';
             const familyKeys = Object.keys(Families).filter(k => Families[k].difficulties.indexOf(diff) !== -1);
             for (let i = 0; i < familyKeys.length; i++) {
                 const fk = familyKeys[i];
@@ -778,9 +789,13 @@
         if (questionLabel) {
             const diff = (typeof Difficulties !== 'undefined') ? Difficulties[state.difficulty] : null;
             const answerType = diff ? diff.answerType : 'categoryZh';
-            questionLabel.textContent = answerType === 'compound'
-                ? '這個有機分子的化學式是甚麼?'
-                : '這是甚麼類別的有機分子?';
+            const repr = diff ? diff.repr : 'structure';
+            let stem;
+            if (answerType === 'isomerType') stem = '這兩個分子是哪一種異構物?';
+            else if (answerType === 'compound') {
+                stem = repr === 'formula' ? '這個示性式是哪一個分子?' : '這個有機分子的名稱是甚麼?';
+            } else stem = '這是甚麼類別的有機分子?';
+            questionLabel.textContent = stem;
         }
         if (progressEl) {
             const asked = Math.max(1, state.players && state.players.p1 ? (state.players.p1.totalAsked || 1) : 1);
@@ -789,11 +804,31 @@
         }
         _renderQuickHint();
 
+        // Question stem：結構圖 or 示性式文字。示性式關卡沒有圖，改把式子印在同一個分子卡裡。
+        const qCur = state.question && state.question.current;
+        const isFormulaQ = !!(qCur && qCur.qType === 'formula');
+        const formulaEl = document.getElementById('game-formula');
+        if (formulaEl) {
+            formulaEl.textContent = isFormulaQ ? (qCur.qContent || '') : '';
+            formulaEl.style.display = isFormulaQ ? 'flex' : 'none';
+        }
+        // 分子卡本來是照結構圖（400x300，4:3）的比例撐開的。兩個新題型的題面比例不同：
+        //   示性式 → 只有一行字，維持 4:3 會空掉一大片 → 壓成寬扁型
+        //   異構物 → 合成圖是 800x300（8:3），塞進 4:3 會上下留白、分子被縮小，框還會高到蓋住選項
+        // 兩者各自改 aspect-ratio（見 .is-formula / .is-isomer）。
+        const screenEl = document.getElementById('screen-game');
+        if (screenEl) {
+            const dif = (typeof Difficulties !== 'undefined') ? Difficulties[state.difficulty] : null;
+            screenEl.classList.toggle('is-formula', isFormulaQ);
+            screenEl.classList.toggle('is-isomer', !!(dif && dif.repr === 'isomer'));
+        }
+
         // Question image
         const imgEl = document.getElementById('game-image');
         if (imgEl) {
             const q = state.question && state.question.current;
-            if (q && q.qContent) {
+            imgEl.style.display = isFormulaQ ? 'none' : '';
+            if (q && q.qContent && !isFormulaQ) {
                 if (imgEl.getAttribute('src') !== q.qContent) imgEl.setAttribute('src', q.qContent);
             }
             // Dynamic variant classes
@@ -961,6 +996,24 @@
     // 回傳 HTML 字串（動態文字均已跳脫）。
     function _quickHintText() {
         const q = state && state.question ? state.question.current : null;
+        const diff = (typeof Difficulties !== 'undefined' && state) ? Difficulties[state.difficulty] : null;
+        const repr = diff ? diff.repr : 'structure';
+
+        // 異構物關卡：提示講「怎麼比對兩個分子」，不是官能基。
+        if (q && repr === 'isomer' && typeof IsomerPairs !== 'undefined' && typeof IsomerHints !== 'undefined') {
+            const pair = IsomerPairs.filter(function (p) { return p.pairKey === q.compoundKey; })[0];
+            if (pair && IsomerHints[pair.isomerType]) {
+                return '<div class="why-hint-text">' + _escapeHtml(IsomerHints[pair.isomerType]) + '</div>';
+            }
+        }
+        // 示性式關卡：既有的 WhyHints 是為結構圖寫的（「有塗色的就是官能基」），
+        // 純文字題面用不上，改用 FormulaWrongHints（怎麼從字串裡讀出官能基）。
+        if (q && repr === 'formula' && typeof AnswerBank !== 'undefined' && AnswerBank[q.compoundKey]
+            && typeof FormulaWrongHints !== 'undefined') {
+            const fh = FormulaWrongHints[AnswerBank[q.compoundKey].category];
+            if (fh) return '<div class="why-hint-text">' + _escapeHtml(fh) + '</div>';
+        }
+
         if (q && typeof AnswerBank !== 'undefined' && AnswerBank[q.compoundKey]
             && typeof WhyHints !== 'undefined' && WhyHints[AnswerBank[q.compoundKey].category]) {
             const wh = WhyHints[AnswerBank[q.compoundKey].category];
@@ -1426,7 +1479,9 @@
             answerType: answerType,
             familyScope: family,
             optionCount: 4,
-            preferredDistractorCount: (state.difficulty === 'intermediate' || state.difficulty === 'advanced') ? 2 : null
+            // 命名／英文分類的干擾項要先抽本家族的（比較難分），分類題不用。
+            // 用 answerType 判斷而非難度字串，示性式的中/高級才會一起適用。
+            preferredDistractorCount: (answerType === 'compound' || answerType === 'categoryEn') ? 2 : null
         });
         state.question.eliminatedWrongKeys = new Set();
         state.question.lastChosenWrongKey = null;

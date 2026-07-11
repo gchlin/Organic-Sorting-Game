@@ -110,6 +110,7 @@
 [data-icon="check"]::before { -webkit-mask-image: url('../assets/images/icons/check.svg'); mask-image: url('../assets/images/icons/check.svg'); }
 [data-icon="back"]::before { -webkit-mask-image: url('../assets/images/icons/back.svg'); mask-image: url('../assets/images/icons/back.svg'); }
 [data-icon="books"]::before { -webkit-mask-image: url('../assets/images/icons/books.svg'); mask-image: url('../assets/images/icons/books.svg'); }
+[data-icon="help"]::before { -webkit-mask-image: url('../assets/images/icons/help.svg'); mask-image: url('../assets/images/icons/help.svg'); }
 [data-icon="medal"]::before { -webkit-mask-image: url('../assets/images/icons/medal.svg'); mask-image: url('../assets/images/icons/medal.svg'); }
 [data-icon="help"]::before { -webkit-mask-image: url('../assets/images/icons/help.svg'); mask-image: url('../assets/images/icons/help.svg'); }
 

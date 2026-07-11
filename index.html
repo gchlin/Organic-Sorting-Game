@@ -12,16 +12,16 @@
 
     <link rel="stylesheet" href="css/00-base.css?v=css-split-1">
     <link rel="stylesheet" href="css/10-codex.css?v=css-split-1">
-    <link rel="stylesheet" href="css/20-tutorial-icons.css?v=css-split-1">
+    <link rel="stylesheet" href="css/20-tutorial-icons.css?v=formula-isomer-20260711">
     <link rel="stylesheet" href="css/30-screens-modals.css?v=tap-tutorial-20260711">
-    <link rel="stylesheet" href="css/40-game-screen.css?v=touch-kbd-20260711">
+    <link rel="stylesheet" href="css/40-game-screen.css?v=formula-isomer-20260711">
     <link rel="stylesheet" href="css/50-responsive.css?v=css-split-1">
     <link rel="stylesheet" href="css/60-options-buzz.css?v=review-20260710">
     <link rel="stylesheet" href="css/70-hint-dev.css?v=css-split-1">
     <link rel="stylesheet" href="css/80-settle-wrongbook.css?v=css-split-1">
     <link rel="stylesheet" href="css/90-settings-misc.css?v=css-split-1">
-    <link rel="stylesheet" href="sorting-hat.css?v=portrait-mentor-20260711">
-    <link rel="stylesheet" href="menu.css?v=tutorial-entry-20260710">
+    <link rel="stylesheet" href="sorting-hat.css?v=portrait-mentor-20260711b">
+    <link rel="stylesheet" href="menu.css?v=formula-isomer-20260711">
     <!-- Legacy layout.css / menu.css moved to legacy/ — v2 styles in style.css are self-contained. -->
 </head>
 <body>
@@ -47,9 +47,20 @@
                         <h3 class="v2-section-title" data-icon="flask">自我修煉</h3>
                         <span class="v2-section-sub">Practice</span>
                     </div>
-                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="beginner"><span class="level-tag">L1</span><span class="level-name">初級</span></button>
-                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="intermediate"><span class="level-tag">L3</span><span class="level-name">中級</span></button>
-                    <button class="v2-menu-btn v2-boss-btn" data-action="enter-difficulty" data-arg="advanced"><span class="level-tag">L6</span><span class="level-name">高級</span></button>
+                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="beginner"><span class="level-tag">L1</span><span class="level-name">初級</span><span class="v2-menu-sub">從結構認分類</span></button>
+                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="intermediate"><span class="level-tag">L3</span><span class="level-name">中級</span><span class="v2-menu-sub">從結構認命名</span></button>
+                    <button class="v2-menu-btn v2-boss-btn" data-action="enter-difficulty" data-arg="advanced"><span class="level-tag">L6</span><span class="level-name">高級</span><span class="v2-menu-sub">從結構認英文分類</span></button>
+                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="isomer"><span class="level-tag">ISO</span><span class="level-name">異構物</span><span class="v2-menu-sub">判斷異構物種類</span></button>
+                </div>
+                <!-- 示性式挑戰：題面不看結構圖，改看示性式（如 CH₃COOH）判分類／命名 -->
+                <div class="v2-menu-section">
+                    <div class="v2-section-head">
+                        <h3 class="v2-section-title" data-icon="flask">示性式挑戰</h3>
+                        <span class="v2-section-sub">Formula</span>
+                    </div>
+                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="formulaBeginner"><span class="level-tag">F1</span><span class="level-name">初級</span><span class="v2-menu-sub">從示性式認分類</span></button>
+                    <button class="v2-menu-btn" data-action="enter-difficulty" data-arg="formulaIntermediate"><span class="level-tag">F3</span><span class="level-name">中級</span><span class="v2-menu-sub">從示性式認命名</span></button>
+                    <button class="v2-menu-btn v2-boss-btn" data-action="enter-difficulty" data-arg="formulaAdvanced"><span class="level-tag">F6</span><span class="level-name">高級</span><span class="v2-menu-sub">從示性式認英文分類</span></button>
                 </div>
                 <div class="v2-menu-section">
                     <div class="v2-section-head">
@@ -68,6 +79,7 @@
                     <button class="v2-menu-btn v2-tutorial-btn" data-icon="quill" data-action="enter-tutorial"><span class="level-name">新手導覽</span></button>
                     <button class="v2-menu-btn" data-icon="codex" data-action="enter-codex"><span class="level-name">圖鑑</span></button>
                     <button class="v2-menu-btn" data-icon="wrong-book" data-action="enter-wrong-book"><span class="level-name">錯題本</span></button>
+                    <a class="v2-menu-btn" data-icon="help" href="docs/teacher_pitch_v2.html" target="_blank" rel="noopener"><span class="level-name">遊戲特色</span></a>
                     <button class="v2-menu-btn" data-icon="settings" data-action="enter-settings"><span class="level-name">設定</span></button>
                 </div>
             </div>
@@ -112,6 +124,8 @@
 
             <div id="game-image-container" class="v2-image-frame">
                 <img id="game-image" src="" alt="" />
+                <!-- 示性式挑戰的題面：沒有結構圖，改把式子印在同一張分子卡裡 -->
+                <div id="game-formula" class="v2-formula" aria-live="polite"></div>
                 <div id="dynamic-score-pct" class="dynamic-score-pct" aria-live="polite"></div>
             </div>
 
@@ -325,14 +339,18 @@
 
     </div>
 
-    <script src="data.js"></script>
+    <script src="data.js?v=formula-isomer-20260711"></script>
+    <script src="formulas.js?v=formula-isomer-20260711"></script>
     <script src="story.js"></script>
     <script src="story-grimoire.js"></script>
-    <script src="tutorial.js"></script>
+    <!-- tutorial-formula.js 必須排在 tutorial.js 前面：tutorial.js 檔尾會把
+         FormulaTutorialPages 併進各關教學，晚載入的話那段會被守衛擋掉、教學一頁都不會註冊。 -->
+    <script src="tutorial-formula.js?v=formula-isomer-20260711"></script>
+    <script src="tutorial.js?v=formula-isomer-20260711"></script>
     <script src="save.js"></script>
     <script src="mode-rules.js"></script>
     <script src="game-state.js"></script>
-    <script src="question-engine.js"></script>
+    <script src="question-engine.js?v=formula-isomer-20260711"></script>
     <script src="effect-manager.js"></script>
     <script src="audio-manager.js"></script>
     <script src="input-controller.js"></script>
@@ -343,6 +361,6 @@
     <script src="ui-settle.js?v=codex-deeplink-20260710"></script>
     <script src="ui-story.js?v=ui-split-4"></script>
     <script src="ui-settings.js?v=ui-split-5"></script>
-    <script src="game-v2.js?v=controls-20260710"></script>
+    <script src="game-v2.js?v=formula-isomer-20260711"></script>
 </body>
 </html>

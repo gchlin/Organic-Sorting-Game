@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>有機分類帽｜老師推銷版</title>
+  <style>
+    :root {
+      --ink: #1f2933;
+      --muted: #596673;
+      --line: #d8dee6;
+      --paper: #fbfaf7;
+      --gold: #9b6b16;
+      --green: #206a4b;
+      --blue: #235d8b;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      line-height: 1.65;
+    }
+
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 24px 60px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin: 0 0 8px;
+      line-height: 1.2;
+    }
+
+    h2 {
+      font-size: 1.6rem;
+      margin: 36px 0 16px;
+      border-bottom: 2px solid var(--green);
+      padding-bottom: 10px;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      margin: 18px 0 8px;
+      font-weight: 700;
+    }
+
+    p { margin: 0 0 12px; }
+
+    .intro {
+      padding: 28px;
+      background: linear-gradient(135deg, #ffffff 0%, #f9f6f0 100%);
+      border-left: 4px solid var(--gold);
+      border-radius: 8px;
+      margin-bottom: 32px;
+    }
+
+    .intro p {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      color: #334155;
+    }
+
+    .intro p:last-child { margin-bottom: 0; }
+
+    .modes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin: 20px 0 32px;
+    }
+
+    .mode-card {
+      padding: 20px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .mode-card h3 {
+      color: var(--green);
+      margin-top: 0;
+    }
+
+    .mode-card p {
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      background: #eef4f1;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--ink);
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    td:first-child { font-weight: 600; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .box {
+      padding: 18px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .box p { margin-bottom: 0; }
+
+    .highlight {
+      padding: 14px 18px;
+      background: #fff8e8;
+      border-left: 4px solid var(--gold);
+      border-radius: 4px;
+      margin: 16px 0;
+      font-size: 0.95rem;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 4px 10px;
+      margin: 0 6px 8px 0;
+      background: var(--green);
+      color: #fff;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .tag.secondary { background: var(--blue); }
+
+    ul, ol {
+      margin: 10px 0;
+      padding-left: 1.3rem;
+    }
+
+    li { margin-bottom: 8px; }
+
+    .img-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .mol {
+      display: grid;
+      place-items: center;
+      min-height: 100px;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    .mol img {
+      max-width: 90%;
+      max-height: 80px;
+      object-fit: contain;
+    }
+
+    @media (max-width: 768px) {
+      h1 { font-size: 1.8rem; }
+      h2 { font-size: 1.3rem; }
+      .img-row { grid-template-columns: repeat(2, 1fr); }
+      .modes { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      .page { padding: 0; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <!-- INTRO -->
+    <h1>有機分類帽</h1>
+    <p style="color: var(--gold); font-weight: 700; margin-top: -4px;">給化學老師的推銷版</p>
+
+    <div class="intro">
+      <p><strong>問題：</strong>學生拿到結構式，「看到 OH 就選醇、看到 C=O 就選醛」，常常忽略位置、混淆相似類別。</p>
+      <p><strong>解決方案：</strong>一款有趣的官能基辨識遊戲。學生在 3 種不同玩法中反覆練習，用「看圖、判斷、得到即時回饋」的迴圈，建立官能基辨識直覺。</p>
+      <p><strong>核心玩法：看結構式圖，從 4 個選項選出正確名稱或類別。</strong></p>
+    </div>
+
+    <!-- MODES -->
+    <h2>三種玩法</h2>
+    <div class="modes">
+      <div class="mode-card">
+        <h3>Practice 練習模式</h3>
+        <p>單人無壓力練習。題目逐題出現，答錯可看提示。每輪 10 題後看成績，然後選擇繼續或離開。</p>
+        <p><small>適用：課後練習、複習、補救教學</small></p>
+      </div>
+      <div class="mode-card">
+        <h3>Duel 搶答模式</h3>
+        <p>兩人對戰（真人或與電腦 AI）。題目出現時有視覺干擾（如放大效果），玩家搶答後才看選項。先答對贏的人。</p>
+        <p><small>適用：課堂互動、分組競賽、增加趣味</small></p>
+      </div>
+      <div class="mode-card">
+        <h3>圖鑑查閱</h3>
+        <p>遊戲內的官能基與化合物圖鑑。記錄學生見過哪些分子、在哪些難度答對過。可作為複習清單。</p>
+        <p><small>適用：學習進度追蹤、視覺化成就</small></p>
+      </div>
+    </div>
+
+    <!-- CHEMISTRY CONTENT -->
+    <h2>化學內容涵蓋</h2>
+    <p>目前題庫包含以下官能基與代表化合物：</p>
+    <p style="margin: 12px 0;">
+      <span class="tag">烷</span>
+      <span class="tag">烯</span>
+      <span class="tag">炔</span>
+      <span class="tag">芳香烴</span>
+      <span class="tag">醇</span>
+      <span class="tag">醚</span>
+      <span class="tag">醛</span>
+      <span class="tag">酮</span>
+      <span class="tag">羧酸</span>
+      <span class="tag">酯</span>
+      <span class="tag">胺</span>
+      <span class="tag">鹵化物</span>
+      <span class="tag">酚</span>
+    </p>
+
+    <div class="img-row">
+      <div class="mol"><img src="../assets/images/00_functional_groups/fg_02_alkene.svg" alt="烯"></div>
+      <div class="mol"><img src="../assets/images/00_functional_groups/fg_04_alcohol.svg" alt="醇"></div>
+      <div class="mol"><img src="../assets/images/00_functional_groups/fg_07_carboxylic_acid.svg" alt="羧酸"></div>
+      <div class="mol"><img src="../assets/images/00_functional_groups/fg_13_phenol.svg" alt="酚"></div>
+    </div>
+
+    <!-- CURRICULUM ALIGNMENT -->
+    <h2>與高中化學課本對照</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>課本內容</th>
+          <th>遊戲支援</th>
+          <th>教學活動</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>烷、烯、炔、芳香烴</td>
+          <td><span class="tag">✓ 支援</span></td>
+          <td>Level 1（碳氫骨架）：辨認單、雙、三鍵與苯環</td>
+        </tr>
+        <tr>
+          <td>醇、醚</td>
+          <td><span class="tag">✓ 支援</span></td>
+          <td>Level 2：區分「氧接氫」與「氧夾兩碳」</td>
+        </tr>
+        <tr>
+          <td>醛、酮</td>
+          <td><span class="tag">✓ 支援</span></td>
+          <td>Level 3：判斷 C=O 在末端還是中間</td>
+        </tr>
+        <tr>
+          <td>羧酸、酯</td>
+          <td><span class="tag">✓ 支援</span></td>
+          <td>Level 4：區分 -COOH 與 -COO-C</td>
+        </tr>
+        <tr>
+          <td>胺、鹵化物</td>
+          <td><span class="tag">✓ 支援</span></td>
+          <td>Level 5：辨認 N、F/Cl/Br/I</td>
+        </tr>
+        <tr>
+          <td>苯環衍生物</td>
+          <td><span class="tag">✓ 支援</span></td>
+          <td>苯環陷阱關：區分苯酚 vs 苯甲醇、芳香烴 vs 官能基</td>
+        </tr>
+        <tr>
+          <td>反應與實驗鑑別</td>
+          <td><span class="tag secondary">可擴充</span></td>
+          <td>未來可加：溴水、過錳酸鉀、銀鏡、酯化、水解</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- STRENGTHS -->
+    <h2>為什麼適合你的課堂</h2>
+    <div class="grid-2">
+      <div class="box">
+        <h3>打破「看到就選」的習慣</h3>
+        <p>有專門的苯環陷阱關，訓練學生不靠「關卡主題」和直覺，而是真的看結構判斷。</p>
+      </div>
+      <div class="box">
+        <h3>彈性使用時機</h3>
+        <p>Practice 可作課後練習；Duel 可作課堂暖身或段考複習競賽；圖鑑可作複習清單。</p>
+      </div>
+      <div class="box">
+        <h3>即時回饋，不猜謎</h3>
+        <p>答錯立即標示與提示，學生知道下次要看哪個位置。</p>
+      </div>
+      <div class="box">
+        <h3>難度分層</h3>
+        <p>初級考官能基類別、中級考化合物名稱、高級考英文術語。同一題庫，難度遞進。</p>
+      </div>
+    </div>
+
+    <!-- EXPANSION -->
+    <h2>能不能再加功能？</h2>
+
+    <h3>✓ 適合現在就擴充</h3>
+    <ul>
+      <li><strong>課本明確出現的化合物：</strong>把課本圖片與例題轉成題目。</li>
+      <li><strong>常見錯誤對比：</strong>如「醇 vs 酚」「醛 vs 酮」的對標題。</li>
+      <li><strong>生活連結：</strong>乙醇、乙酸、丙酮等日常用品，加上「用途」與「識別方法」題。</li>
+    </ul>
+
+    <h3>⏸ 建議放進進階關卡</h3>
+    <ul>
+      <li>反應現象與實驗鑑別（需先確保學生學過反應與試劑）。</li>
+      <li>多官能基化合物的主官能基判斷（同一分子有多個官能基時如何選擇）。</li>
+      <li>有機命名規則細節（位置異構、優先序等進階內容）。</li>
+    </ul>
+
+    <h3>✗ 暫時不建議加入基礎關</h3>
+    <ul>
+      <li>多官能基藥物、複雜分子（會混淆初學者）。</li>
+      <li>反應機構、合成路線（超出「辨識」的範圍）。</li>
+    </ul>
+
+    <div class="highlight">
+      <strong>建議流程：</strong><br>
+      1. 先驗證 13 類分類符不符合你的課本 <br>
+      2. 再補充課本常考的生活例子 <br>
+      3. 後期考慮加反應與鑑別題目
+    </div>
+
+    <!-- NEXT STEPS -->
+    <h2>下一步</h2>
+    <div class="grid-2">
+      <div class="box">
+        <h3>立即試用</h3>
+        <p>打開遊戲本體，玩 Practice Level 1、Level 2、苯環陷阱關，看實際效果。</p>
+      </div>
+      <div class="box">
+        <h3>給我反應</h3>
+        <p>分類對不對、例子選得好不好、有什麼課本內容一定要加。我們用你的課本版本對照修改。</p>
+      </div>
+    </div>
+
+    <p style="color: var(--muted); font-size: 0.9rem; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line);">
+      版本：2026-07-11 | 適用版本：Organic Sorting Hat v2 (Practice + Duel Dynamic)
+    </p>
+  </main>
+</body>
+</html>

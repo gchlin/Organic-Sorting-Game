@@ -358,6 +358,66 @@ LevelTutorials['mixed-intermediate']          = LevelTutorials.level6 || [];
 LevelTutorials['shell-intermediate']          = LevelTutorials.levelShell || [];
 LevelTutorials['englishChallenge-advanced']   = LevelTutorials.level99 || [];
 
+// === 示性式挑戰 ===
+// 每一關都先教「怎麼從文字讀出官能基」（tutorial-formula.js 的 4 頁），
+// 因為既有的教學全是為結構圖寫的（「有塗色的就是官能基」），純文字題面用不上。
+// 後面再接該家族原本的結構圖教學，讓學生把「字」和「圖」對得起來。
+(function () {
+    if (typeof FormulaTutorialPages === 'undefined') return;
+    const F = FormulaTutorialPages;
+    const famPages = {
+        hydrocarbon:   LevelTutorials.level1 || [],
+        oxygen:        TutorialModules.oxygen.pages || [],
+        nitrogenHalide: LevelTutorials.level5 || [],
+        mixed:         LevelTutorials.level6 || []
+    };
+    ['hydrocarbon', 'oxygen', 'nitrogenHalide', 'mixed'].forEach(function (fam) {
+        ['formulaBeginner', 'formulaIntermediate'].forEach(function (d) {
+            LevelTutorials[fam + '-' + d] = [].concat(F, famPages[fam]);
+            LevelTutorialMap[fam + '-' + d] = fam + '-' + d;
+        });
+    });
+    LevelTutorials['englishChallenge-formulaAdvanced'] = [].concat(F, LevelTutorials.level99 || []);
+    LevelTutorialMap['englishChallenge-formulaAdvanced'] = 'englishChallenge-formulaAdvanced';
+})();
+
+// === 異構物關卡 ===
+// 課本的異構物分類：結構異構物（鏈／位置／官能基）＋ 立體異構物（順反）。
+// 題面是兩個分子並排，要判斷它們之間是哪一種異構物關係。
+LevelTutorials['isomer-isomer'] = [
+  {
+    expr: 'neutral',
+    title: "異構物是什麼",
+    text: "異構物是「分子式相同、但結構不同」的分子。原子的種類和數目一模一樣，接法卻不一樣，所以是兩個不同的物質、性質也不同。這一關每題會並排給你兩個分子，你要判斷它們之間是哪一種異構物。"
+  },
+  {
+    expr: 'thinking',
+    title: "結構異構物（一）：鏈異構物",
+    text: "先看碳骨架。碳原子接成一直線，還是分了岔？像正丁烷（一直線）和異丁烷（有分岔），分子式都是 C₄H₁₀，但碳鏈的接法不同——這叫鏈異構物。"
+  },
+  {
+    expr: 'thinking',
+    title: "結構異構物（二）：位置異構物",
+    text: "碳骨架一樣、官能基也是同一種，差別只在官能基長在第幾個碳上。像 1-丙醇的 –OH 在頭尾的碳、2-丙醇的 –OH 在中間的碳——這叫位置異構物。雙鍵的位置換了（1-丁烯 vs 2-丁烯）也算。"
+  },
+  {
+    expr: 'surprised',
+    title: "結構異構物（三）：官能基異構物",
+    text: "分子式相同，官能基卻整個換了種類。像乙醇（CH₃CH₂OH，是醇）和二甲醚（CH₃OCH₃，是醚），原子數目一樣多，一個有 –OH、一個是 C–O–C——這叫官能基異構物。它們連分類都不同，性質差很多。"
+  },
+  {
+    expr: 'wink',
+    title: "立體異構物：順反異構物",
+    text: "接法完全一樣，只有「取代基在哪一側」不同。因為碳碳雙鍵不能繞軸旋轉（環也不行），同側的和異側的換不過去，所以是兩個不同的分子：同側叫順式（cis）、異側叫反式（trans）。這一種只看得出來在結構圖上——示性式寫不出來。"
+  },
+  {
+    expr: 'happy',
+    title: "判斷順序",
+    text: "先問：碳骨架一樣嗎？不一樣 → 鏈異構物。一樣的話，再問：官能基是同一種嗎？不同種 → 官能基異構物。同一種但位置不同 → 位置異構物。如果連位置都一樣、只差在同側／異側 → 順反異構物。"
+  }
+];
+LevelTutorialMap['isomer-isomer'] = 'isomer-isomer';
+
 // =====================================================================
 // WhyHints — 練習模式「答錯」時，分類帽點破的一句話（辨識重點＋常見陷阱）。
 //   key   = AnswerBank 的 category

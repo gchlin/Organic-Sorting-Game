@@ -525,11 +525,14 @@
 }
 
 /* 手機直式：左側邊欄擺不下，改把魔導書縮到左下角，對話框做成底部橫幅。
-   畫面最底那條 hint（1fr）在練習模式是空的，控制列（繼續）在它上方，
-   所以魔導書＋泡泡站在最底不會蓋到「繼續」鍵，也不會擋到分子圖。
+   畫面最底那條 hint（1fr）在練習模式是空的，控制列（繼續）在它上方。
+   直式要把分子卡略縮，才有足夠的底部空間讓泡泡不蓋控制列。
    --mentor-book 是直式書寬，泡泡靠它算出左邊界。 */
 @media (orientation: portrait) {
     #screen-game { --mentor-book: clamp(56px, 15vw, 84px); }
+    #screen-game.mode-practice .v2-image-frame {
+        width: min(100%, 78vw, 300px);
+    }
     #screen-game.mode-practice #game-mentor {
         display: block;
         left: 8px;

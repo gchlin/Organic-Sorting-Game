@@ -45,6 +45,17 @@ const QuestionEngine = (function () {
         const dif = Difficulties[difficultyKey];
         if (!fam || !dif || !fam.difficulties.includes(difficultyKey)) return [];
 
+        // 異構物關卡：題源是 IsomerPairs（左右並排的合成圖），答案是異構物種類。
+        if (dif.repr === 'isomer' || fam.source === 'isomer') {
+            if (typeof IsomerPairs === 'undefined') return [];
+            return IsomerPairs.map(p => ({
+                qType: 'img',
+                qContent: p.src,
+                compoundKey: p.pairKey,
+                aKey: 'CAT_ISO_' + p.isomerType.toUpperCase(),
+            }));
+        }
+
         const images = QuestionImages.filter(img => {
             const compound = AnswerBank[img.compoundKey];
             if (!compound) return false;
@@ -55,14 +66,20 @@ const QuestionEngine = (function () {
             return false;
         });
 
-        return images.map(img => ({
-            qType: 'img',
-            qContent: img.src,
-            compoundKey: img.compoundKey,
-            aKey: dif.aKeyPrefix
-                ? dif.aKeyPrefix + AnswerBank[img.compoundKey].category.toUpperCase()
-                : img.compoundKey,
-        }));
+        // 示性式關卡：題面改成文字式子。沒有示性式的分子（環狀、萘）直接不出題
+        // ——示性式表達不出環，硬寫也想像不出結構（見 docs/示性式審核表.md）。
+        const isFormula = dif.repr === 'formula';
+
+        return images.filter(img => !isFormula
+                || (typeof Formulas !== 'undefined' && Formulas[img.compoundKey]))
+            .map(img => ({
+                qType: isFormula ? 'formula' : 'img',
+                qContent: isFormula ? Formulas[img.compoundKey] : img.src,
+                compoundKey: img.compoundKey,
+                aKey: dif.aKeyPrefix
+                    ? dif.aKeyPrefix + AnswerBank[img.compoundKey].category.toUpperCase()
+                    : img.compoundKey,
+            }));
     }
 
     function buildRoundQueueV2({ family, difficulty, seenSet, wrongSet, includeUnseen, includeWrong, limit }) {

@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>有機分類帽｜玩法特色與化學課本對照</title>
+  <style>
+    :root {
+      --ink: #1f2933;
+      --muted: #596673;
+      --line: #d8dee6;
+      --paper: #fbfaf7;
+      --band: #eef4f1;
+      --gold: #9b6b16;
+      --green: #206a4b;
+      --red: #9c3c34;
+      --blue: #235d8b;
+      --panel: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", Arial, sans-serif;
+      line-height: 1.72;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+      border-bottom: 1px solid color-mix(in srgb, var(--blue), transparent 65%);
+    }
+
+    a:hover {
+      border-bottom-color: var(--blue);
+    }
+
+    .page {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 20px 56px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      gap: 28px;
+      align-items: center;
+      padding: 32px;
+      background: linear-gradient(135deg, #ffffff 0%, #f3efe4 100%);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    .kicker {
+      margin: 0 0 8px;
+      color: var(--gold);
+      font-size: 0.92rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    h1,
+    h2,
+    h3 {
+      line-height: 1.25;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 4rem);
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: clamp(1.45rem, 3vw, 2.1rem);
+      margin-bottom: 14px;
+    }
+
+    h3 {
+      font-size: 1.08rem;
+      margin-bottom: 6px;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    .lead {
+      margin-top: 16px;
+      max-width: 760px;
+      color: #334155;
+      font-size: 1.15rem;
+    }
+
+    .hero-visual {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .mol {
+      display: grid;
+      place-items: center;
+      min-height: 118px;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .mol img {
+      max-width: 100%;
+      max-height: 92px;
+      object-fit: contain;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0 0;
+    }
+
+    .stat {
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--green);
+      font-size: 1.75rem;
+      line-height: 1;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    section {
+      margin-top: 34px;
+      padding: 26px 0 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .box {
+      padding: 18px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .box p:last-child,
+    .note p:last-child {
+      margin-bottom: 0;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 2px 10px;
+      margin: 0 6px 8px 0;
+      color: #fff;
+      background: var(--green);
+      border-radius: 999px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .tag.secondary {
+      background: var(--blue);
+    }
+
+    .tag.warn {
+      background: var(--red);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+
+    th {
+      color: #26323d;
+      background: var(--band);
+      font-size: 0.94rem;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    ul,
+    ol {
+      margin: 10px 0 0;
+      padding-left: 1.3rem;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    .note {
+      padding: 16px 18px;
+      background: #fff8e8;
+      border: 1px solid #e8d6a7;
+      border-radius: 8px;
+    }
+
+    .doc-list {
+      columns: 2;
+      column-gap: 28px;
+      padding-left: 1.2rem;
+    }
+
+    .source {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .source code {
+      color: var(--ink);
+      background: #edf1f5;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    .flow-list {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+      counter-reset: flow;
+    }
+
+    .flow-step {
+      position: relative;
+      min-height: 132px;
+      padding: 42px 14px 14px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .flow-step::before {
+      counter-increment: flow;
+      content: counter(flow);
+      position: absolute;
+      top: 12px;
+      left: 14px;
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      color: #fff;
+      background: var(--green);
+      border-radius: 50%;
+      font-size: 0.85rem;
+      font-weight: 800;
+    }
+
+    .flow-step strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .flow-step span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+
+    .mermaid-wrap {
+      margin-top: 14px;
+      padding: 16px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+
+    .mermaid {
+      min-width: 680px;
+      margin: 0;
+      text-align: center;
+    }
+
+    .claim {
+      border-left: 4px solid var(--green);
+    }
+
+    @media (max-width: 820px) {
+      .hero,
+      .grid-2,
+      .grid-3,
+      .flow-list,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-step {
+        min-height: auto;
+      }
+
+      .hero {
+        padding: 22px;
+      }
+
+      .doc-list {
+        columns: 1;
+      }
+
+      th,
+      td {
+        padding: 10px;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        font-size: 11.5pt;
+      }
+
+      .page {
+        max-width: none;
+        padding: 0;
+      }
+
+      .hero,
+      .box,
+      .note,
+      .flow-step,
+      table {
+        break-inside: avoid;
+      }
+
+      a {
+        color: inherit;
+        border: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <p class="kicker">給化學老師看的教學提案</p>
+        <h1>有機分類帽</h1>
+        <p class="lead">一款高中有機化學官能基辨識練習遊戲。學生看結構式，判斷它屬於哪一類官能基，透過練習、競速與對戰反覆建立「看到結構就能分類」的直覺。</p>
+        <div class="stats" aria-label="目前內容規模">
+          <div class="stat"><strong>82</strong><span>個已登錄化合物</span></div>
+          <div class="stat"><strong>13</strong><span>類主要分類</span></div>
+          <div class="stat"><strong>8</strong><span>個關卡模組</span></div>
+          <div class="stat"><strong>3</strong><span>種遊玩模式</span></div>
+        </div>
+      </div>
+      <div class="hero-visual" aria-label="官能基示意圖">
+        <div class="mol"><img src="../assets/images/00_functional_groups/fg_02_alkene.svg" alt="烯類 C=C 官能基"></div>
+        <div class="mol"><img src="../assets/images/00_functional_groups/fg_04_alcohol.svg" alt="醇類羥基"></div>
+        <div class="mol"><img src="../assets/images/00_functional_groups/fg_07_carboxylic_acid.svg" alt="羧酸官能基"></div>
+        <div class="mol"><img src="../assets/images/00_functional_groups/fg_13_phenol.svg" alt="酚類官能基"></div>
+      </div>
+    </header>
+
+    <section>
+      <h2>為什麼它能幫助有機化學學習</h2>
+      <div class="grid-3">
+        <div class="box claim">
+          <h3>把抽象名詞變成可看的特徵</h3>
+          <p>官能基對初學者常只是名詞：烯、醛、酯、酚。遊戲把學習任務固定成「從結構式找證據」，例如看 C=C、C=O、-OH 接在哪裡，讓學生用圖像特徵連到分類名稱。</p>
+        </div>
+        <div class="box claim">
+          <h3>反覆練習辨識，而不是只聽懂一次</h3>
+          <p>課堂講解能建立概念，但學生真正需要的是多次取回與判斷。每題都要求學生自己做分類決策，答完立刻得到回饋，適合用來補足課堂例題量不足的問題。</p>
+        </div>
+        <div class="box claim">
+          <h3>專門處理常見混淆</h3>
+          <p>它不是單純背題庫，而是刻意安排容易搞混的對比：醇 vs 醚、醛 vs 酮、羧酸 vs 酯、醇 vs 酚、芳香烴 vs 苯環衍生物。這些正是學生考試時容易失分的地方。</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>學生實際怎麼玩</h2>
+      <p>學生不用先讀長篇規則。老師選一個關卡，學生進入後會先看簡短教學，再開始看結構式作答。每一題都只做一件事：判斷這個分子屬於哪一類。</p>
+      <div class="flow-list" aria-label="遊戲流程">
+        <div class="flow-step"><strong>選關卡</strong><span>依課堂進度選碳氫、含氧、含氮鹵素、綜合題或苯環陷阱關。</span></div>
+        <div class="flow-step"><strong>看新手教學</strong><span>先用官能基示意圖說明這關要看的結構特徵。</span></div>
+        <div class="flow-step"><strong>看結構式</strong><span>題目呈現分子圖，學生先找 C=C、C=O、-OH、N、Cl、苯環等線索。</span></div>
+        <div class="flow-step"><strong>選答案</strong><span>從選項中選化合物名稱、中文分類或英文官能基名稱。</span></div>
+        <div class="flow-step"><strong>收到回饋</strong><span>答錯會顯示正確答案與辨識提示，下一題再練一次。</span></div>
+      </div>
+      <div class="mermaid-wrap" aria-label="玩法流程圖">
+        <pre class="mermaid">
+flowchart LR
+  A[老師選關卡] --> B[學生看本關教學]
+  B --> C[看結構式]
+  C --> D{判斷官能基}
+  D -->|答對| E[進入下一題]
+  D -->|答錯| F[看正解與辨識提示]
+  F --> E
+  E --> G[結算：完成度與錯題]
+        </pre>
+      </div>
+    </section>
+
+    <section>
+      <h2>三種模式怎麼放進課堂</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>模式</th>
+            <th>老師可以怎麼用</th>
+            <th>主要學習功能</th>
+            <th>適合時機</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Practice 自我修煉</td>
+            <td>學生個別練習，答錯時看提示，慢慢把判斷流程建立起來。</td>
+            <td>概念鷹架、錯題修正、補救教學。</td>
+            <td>剛教完一類官能基、作業練習、課後自學。</td>
+          </tr>
+          <tr>
+            <td>Speed 競速挑戰</td>
+            <td>限時作答，讓學生檢查自己是不是已經能快速辨識。</td>
+            <td>熟練化、提取練習、段考前複習。</td>
+            <td>下課前 5 分鐘、複習課、全班暖身。</td>
+          </tr>
+          <tr>
+            <td>Duel 巫師對決</td>
+            <td>兩人互動競賽，增加課堂參與感，但題目仍是官能基辨識。</td>
+            <td>動機維持、同儕互動、快速診斷常見錯誤。</td>
+            <td>小組活動、複習活動、段考前互相挑戰。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>學習鷹架怎麼搭</h2>
+      <p>這款遊戲的鷹架不是一次把所有有機化學塞進去，而是從「最容易從圖上看到的特徵」開始，逐步增加判斷負荷。每一關只新增少量特徵，舊特徵會在後面混合重出。</p>
+      <div class="mermaid-wrap" aria-label="學習鷹架順序圖">
+        <pre class="mermaid">
+flowchart TD
+  S0[看得懂結構式上的線與元素符號]
+  S1[碳氫骨架：C-C / C=C / C≡C / 苯環]
+  S2[單鍵氧：醇 vs 醚]
+  S3[雙鍵氧：醛 vs 酮]
+  S4[雙氧複合：羧酸 vs 酯]
+  S5[雜原子：胺與有機鹵化物]
+  S6[綜合辨識：混合出題]
+  S7[苯環陷阱：苯環只是背景，要找真正官能基]
+  S8[英文術語：把中文分類轉成 Alkane / Ester / Phenol]
+  S0 --> S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> S8
+        </pre>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>鷹架層次</th>
+            <th>學生要學會的動作</th>
+            <th>遊戲如何支援</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>辨識可見特徵</td>
+            <td>先看線的數量、元素符號、苯環、氧或氮的位置。</td>
+            <td>每關教學頁先用純官能基圖指出「要看哪裡」。</td>
+          </tr>
+          <tr>
+            <td>建立二選一對比</td>
+            <td>把相似結構分開，例如醇/醚、醛/酮、羧酸/酯。</td>
+            <td>關卡按容易混淆的家族分組，讓學生先在小範圍內練準。</td>
+          </tr>
+          <tr>
+            <td>混合情境遷移</td>
+            <td>不靠關卡名稱猜答案，而是在混合題中重新找證據。</td>
+            <td>Level 6 和苯環陷阱關把前面概念混在一起，檢查是否真的會判斷。</td>
+          </tr>
+          <tr>
+            <td>術語轉換</td>
+            <td>把中文分類連到英文課本或考題用語。</td>
+            <td>Level 99 用英文答案，專門練 Alkane/Alkene/Alkyne、Ether/Ester 等易混術語。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>建議的教學順序</h2>
+      <div class="grid-2">
+        <div class="box">
+          <h3>一堂課內的用法</h3>
+          <ol>
+            <li>老師先講一個官能基家族，示範 2 到 3 個例子。</li>
+            <li>全班進 Practice 玩同一關，答錯就看辨識提示。</li>
+            <li>老師停下來整理最常錯的結構，例如「-OH 接苯環才是酚」。</li>
+            <li>最後用 Speed 或 Duel 做 3 到 5 分鐘複習，增加參與感。</li>
+          </ol>
+        </div>
+        <div class="box">
+          <h3>一個單元內的用法</h3>
+          <ol>
+            <li>第一輪：照 Level 1 到 Level 5 分主題練，降低認知負荷。</li>
+            <li>第二輪：用 Level 6 混合出題，檢查學生是否能自己選判斷順序。</li>
+            <li>第三輪：用苯環陷阱關處理高錯誤率題型。</li>
+            <li>第四輪：用 Level 99 補英文術語，銜接課本與考題。</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>目前已涵蓋的化學範圍</h2>
+      <p>
+        <span class="tag">烷</span>
+        <span class="tag">烯</span>
+        <span class="tag">炔</span>
+        <span class="tag">芳香烴</span>
+        <span class="tag">醇</span>
+        <span class="tag">醚</span>
+        <span class="tag">醛</span>
+        <span class="tag">酮</span>
+        <span class="tag">羧酸</span>
+        <span class="tag">酯</span>
+        <span class="tag">胺</span>
+        <span class="tag">有機鹵化物</span>
+        <span class="tag">酚</span>
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>關卡</th>
+            <th>主題</th>
+            <th>代表例子</th>
+            <th>教學目的</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Level 1</td>
+            <td>碳氫骨架：烷、烯、炔、芳香烴</td>
+            <td>甲烷、乙烯、乙炔、苯、甲苯、二甲苯、萘</td>
+            <td>先建立單鍵、雙鍵、參鍵、苯環的視覺辨識。</td>
+          </tr>
+          <tr>
+            <td>Level 2</td>
+            <td>單鍵氧：醇、醚</td>
+            <td>甲醇、乙醇、甘油、苯甲醇、二甲醚、苯甲醚</td>
+            <td>分辨氧上有沒有 H，以及苯甲醇不是酚。</td>
+          </tr>
+          <tr>
+            <td>Level 3</td>
+            <td>雙鍵氧：醛、酮</td>
+            <td>甲醛、乙醛、苯甲醛、丙酮、環己酮、苯乙酮</td>
+            <td>看 C=O 在末端還是中間，避免只看到氧就亂選。</td>
+          </tr>
+          <tr>
+            <td>Level 4</td>
+            <td>雙氧複合：羧酸、酯</td>
+            <td>甲酸、乙酸、草酸、苯甲酸、乙酸乙酯、乙酸異戊酯</td>
+            <td>分辨 -COOH 與 C(=O)-O-C，連到酸味與水果香等生活例子。</td>
+          </tr>
+          <tr>
+            <td>Level 5</td>
+            <td>雜原子與鹵素：胺、有機鹵化物</td>
+            <td>甲胺、三甲胺、苯胺、氯甲烷、氯仿、氯乙烯</td>
+            <td>辨認 N 與 F/Cl/Br/I，並注意混合結構中的主分類。</td>
+          </tr>
+          <tr>
+            <td>Level 6</td>
+            <td>綜合辨識</td>
+            <td>前面各關混合，加上酚類</td>
+            <td>訓練完整判斷流程，而不是靠關卡主題猜答案。</td>
+          </tr>
+          <tr>
+            <td>苯環陷阱關</td>
+            <td>苯環衍生物專練</td>
+            <td>苯酚、苯甲醇、苯甲醛、苯甲酸、苯胺、氯苯</td>
+            <td>針對「有苯環不一定是酚或芳香烴」的常見錯誤。</td>
+          </tr>
+          <tr>
+            <td>Level 99</td>
+            <td>全英官能基挑戰</td>
+            <td>Alkane、Alkene、Alkyne、Alcohol、Ester、Phenol 等</td>
+            <td>把中文辨識能力轉成英文術語辨識。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>與高中化學課本對照</h2>
+      <p class="source">此表用「一般高中有機化學章節常見架構」對照目前遊戲內容；實際用書版本仍建議由老師依課本章節勾選。</p>
+      <table>
+        <thead>
+          <tr>
+            <th>課本內容</th>
+            <th>目前遊戲支援度</th>
+            <th>可直接用的教學活動</th>
+            <th>後續擴充判斷</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>有機化合物、結構式、碳骨架</td>
+            <td><span class="tag">已支援</span></td>
+            <td>用 Level 1 讓學生辨認 C-C、C=C、C≡C 與苯環。</td>
+            <td>可加入「同一分子不同畫法」作為進階，但不建議放進新手關。</td>
+          </tr>
+          <tr>
+            <td>烷、烯、炔、芳香烴</td>
+            <td><span class="tag">已支援</span></td>
+            <td>課後 5 分鐘快問快答，檢查學生是否能從鍵結數判斷分類。</td>
+            <td>可加反應現象：烯炔使溴水褪色、加成反應，但要另做反應關。</td>
+          </tr>
+          <tr>
+            <td>醇、醚</td>
+            <td><span class="tag">已支援</span></td>
+            <td>用乙醇、甘油、二甲醚、苯甲醚對比「氧接氫」與「氧夾兩個碳」。</td>
+            <td>可擴充一級、二級、三級醇的辨識或氧化差異。</td>
+          </tr>
+          <tr>
+            <td>醛、酮</td>
+            <td><span class="tag">已支援</span></td>
+            <td>用甲醛、乙醛、丙酮、環己酮練習 C=O 的位置判斷。</td>
+            <td>可加銀鏡反應、斐林試液等鑑別實驗作為「現象選擇題」。</td>
+          </tr>
+          <tr>
+            <td>羧酸、酯</td>
+            <td><span class="tag">已支援</span></td>
+            <td>用乙酸與乙酸乙酯說明 -COOH 和 C(=O)-O-C 的差異。</td>
+            <td>可加酯化、水解與生活氣味連結，做成配對或流程題。</td>
+          </tr>
+          <tr>
+            <td>胺、有機鹵化物</td>
+            <td><span class="tag">已支援</span></td>
+            <td>用甲胺、苯胺、氯甲烷、氯乙烯訓練 N 與鹵素的辨識。</td>
+            <td>若課本只略提，維持基礎辨識即可；若段考會考，可補生活用途或毒性安全題。</td>
+          </tr>
+          <tr>
+            <td>酚與苯環衍生物</td>
+            <td><span class="tag">已支援</span></td>
+            <td>用苯酚與苯甲醇對比 -OH 是否直接接在苯環上。</td>
+            <td>可加入酚的弱酸性或氯化鐵呈色，作為實驗現象擴充。</td>
+          </tr>
+          <tr>
+            <td>有機命名、同分異構</td>
+            <td><span class="tag secondary">部分支援</span></td>
+            <td>目前有 1-丁烯、2-丁烯、1-丁炔、2-丁炔、鄰/間/對二甲苯等例子。</td>
+            <td>若老師想強化命名，可新增「選正確名稱」或「位置異構配對」玩法。</td>
+          </tr>
+          <tr>
+            <td>反應與實驗鑑別</td>
+            <td><span class="tag secondary">可擴充</span></td>
+            <td>目前基礎關不考反應，避免學生還沒會辨識就混入反應記憶。</td>
+            <td>適合做第二階段：先分類，再問可能反應或實驗現象。</td>
+          </tr>
+          <tr>
+            <td>醯胺、硝基、腈、酸酐、醯氯等</td>
+            <td><span class="tag warn">不在基礎範圍</span></td>
+            <td>目前已有部分 SVG 素材，但未正式納入主線題庫。</td>
+            <td>若課本或老師認定會考，可先放「其他官能基」桶，再決定是否獨立成關。</td>
+          </tr>
+          <tr>
+            <td>多官能基藥物或大型分子</td>
+            <td><span class="tag warn">暫不建議</span></td>
+            <td>不適合初學者第一輪分類練習。</td>
+            <td>可做資優延伸或專題，但需明確標示「進階」。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>能不能擴充玩法與教學範圍：建議判準</h2>
+      <div class="grid-2">
+        <div class="box">
+          <h3>適合現在就擴充</h3>
+          <ul>
+            <li>課本明確列出、段考常出，而且能從結構式直接看出答案。</li>
+            <li>能幫學生分辨常見錯誤，例如醇 vs 酚、醛 vs 酮、羧酸 vs 酯。</li>
+            <li>能用生活例子加深記憶，例如乙醇、乙酸、丙酮、乙酸異戊酯。</li>
+            <li>可維持單一學習目標，不會同時要求命名、反應、立體化學全混在一起。</li>
+          </ul>
+        </div>
+        <div class="box">
+          <h3>建議放進進階關</h3>
+          <ul>
+            <li>需要先懂命名規則才能判斷的題型。</li>
+            <li>需要記反應條件、試劑或實驗現象的題型。</li>
+            <li>同一分子有多個官能基，需要判斷主官能基或優先序。</li>
+            <li>課本只有補充、老師不一定考的官能基家族。</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note" style="margin-top: 16px;">
+        <p><strong>建議擴充順序：</strong>先請老師審 13 類分類與代表分子，再補「課本必考生活例子」，接著做反應或實驗現象關。不要一開始就把藥物、多官能基與完整命名規則塞進基礎關。</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>給老師的審查問題</h2>
+      <ol>
+        <li>這 13 類官能基是否符合本校高二或高三課本的教學順序？</li>
+        <li>酚是否應該獨立成一類，還是只作為芳香族含氧化合物的延伸？</li>
+        <li>苯甲醇、苯甲醛、苯甲酸、苯胺、氯苯等苯環衍生物，分類是否符合課本用語？</li>
+        <li>哪些代表分子是課本有提、段考可能考，應該優先加入圖鑑或題庫？</li>
+        <li>反應與實驗現象要不要納入第二階段玩法？若要，應優先做哪些：溴水、過錳酸鉀、銀鏡、酯化、水解、酚的呈色？</li>
+        <li>遊戲用語要使用「烷類 / 烷烴」、「鹵化物 / 鹵代烴」、「參鍵 / 三鍵」哪一套，才最符合老師上課習慣？</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>附錄：可用的既有文件</h2>
+      <div class="note">
+        <p><strong>給老師推廣時不需要先講這段。</strong> 這些文件只是後續若要校正課本用語、擴充題庫或請老師審查時，可以拿來支援修改的材料。</p>
+      </div>
+      <ul class="doc-list">
+        <li><code>docs/設計決策清單.md</code>：遊戲定位、學習目標、模式設計。</li>
+        <li><code>docs/化學審查清單.md</code>：給老師檢查分類與辨識提示的清單。</li>
+        <li><code>docs/copy_for_notebooklm.json</code>：準備對照課本文案用的結構化草稿。</li>
+        <li><code>docs/teaching_copy_draft.md</code>：教學文案草稿。</li>
+        <li><code>assets/images/題庫擴充建議.md</code>：題庫擴充方向與已討論的範圍限制。</li>
+        <li><code>tutorial.js</code>：目前遊戲內每關新手教學內容。</li>
+        <li><code>data.js</code>：目前題庫、分類、關卡與答案資料。</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>交付與下一步</h2>
+      <div class="grid-2">
+        <div class="box">
+          <h3>可立即展示</h3>
+          <p>把本頁與遊戲本體一起開給老師看：先用本頁說明教學定位，再實際玩 Level 1、Level 2、苯環陷阱關與 Level 99。</p>
+        </div>
+        <div class="box">
+          <h3>下一輪最有價值的工作</h3>
+          <p>拿老師的課本章節逐項勾選，修正用語與範圍，再決定是否新增反應現象關、命名關或其他官能基桶。</p>
+        </div>
+      </div>
+      <p class="source" style="margin-top: 18px;">資料依據：<code>data.js</code>、<code>tutorial.js</code>、<code>docs/設計決策清單.md</code>、<code>assets/images/題庫擴充建議.md</code>。更新日期：2026-07-11。</p>
+    </section>
+  </main>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "base",
+      themeVariables: {
+        primaryColor: "#eef4f1",
+        primaryTextColor: "#1f2933",
+        primaryBorderColor: "#206a4b",
+        lineColor: "#596673",
+        secondaryColor: "#fff8e8",
+        tertiaryColor: "#ffffff"
+      }
+    });
+  </script>
+</body>
+</html>

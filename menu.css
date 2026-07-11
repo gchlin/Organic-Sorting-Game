@@ -171,6 +171,20 @@
     background: linear-gradient(180deg, rgba(78,65,45,.86), rgba(35,32,28,.94));
     border-color: rgba(212,175,55,.55);
 }
+/* 「遊戲特色」是 <a>（開新分頁），沿用按鈕外觀就要自己去掉底線 */
+a.v2-menu-btn { text-decoration: none; }
+/* 難度按鈕右側的白話說明（從結構認分類…）：字小、靠右、不搶戲 */
+.v2-menu-sub {
+    margin-left: auto;
+    flex: 0 1 auto;
+    color: rgba(237,226,200,.62);
+    font-size: clamp(.68rem, 1.35vh, .8rem);
+    line-height: 1.2;
+    text-align: right;
+    white-space: nowrap;
+}
+.v2-menu-btn:hover .v2-menu-sub,
+.v2-menu-btn:focus .v2-menu-sub { color: rgba(255,246,210,.8); }
 .v2-menu-btn .level-tag,
 .v2-sub-list .level-tag {
     flex: 0 0 auto;
@@ -342,7 +356,11 @@
 }
 
 @media (orientation: landscape) and (min-width: 760px), (min-width: 1100px) {
-    .v2-menu-grid,
+    /* 主選單從 3 區塊長到 4 個（多了「示性式挑戰」），用 auto-fit 讓它們一列排得下，
+       窄一點的螢幕會自動折行，不必為每個區塊數寫死欄數。 */
+    .v2-menu-grid {
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    }
     .v2-sub-list {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }

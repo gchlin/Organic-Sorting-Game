@@ -116,7 +116,14 @@ const AnswerBank = {
     "CAT_EN_AMINE":      { type: "categoryEn", content: "Amine",              category: "amine" },
     "CAT_EN_AROMATIC":   { type: "categoryEn", content: "Aromatic",           category: "aromatic" },
     "CAT_EN_HALIDE":     { type: "categoryEn", content: "Halide",             category: "halide" },
-    "CAT_EN_PHENOL":     { type: "categoryEn", content: "Phenol / Derivative", category: "phenol" }
+    "CAT_EN_PHENOL":     { type: "categoryEn", content: "Phenol / Derivative", category: "phenol" },
+
+    // --- 異構物種類 (異構物關卡的答案池) ---
+    // 這關問的不是官能基，而是「這兩個分子是哪一種異構物」，所以自成一種 type。
+    "CAT_ISO_CHAIN":      { type: "isomerType", content: "鏈異構物",   category: "chain" },
+    "CAT_ISO_POSITION":   { type: "isomerType", content: "位置異構物", category: "position" },
+    "CAT_ISO_FUNCTIONAL": { type: "isomerType", content: "官能基異構物", category: "functional" },
+    "CAT_ISO_CISTRANS":   { type: "isomerType", content: "順反異構物", category: "cistrans" }
 };
 
 // Legacy aliases: keep CAT_* keys working for any code that hasn't migrated yet.
@@ -464,26 +471,26 @@ const Families = {
     hydrocarbon: {
         nameZh: "碳氫骨架",
         imageFilter: { type: "byCategory", categories: ["alkane", "alkene", "alkyne", "aromatic"] },
-        difficulties: ["beginner", "intermediate"],
+        difficulties: ["beginner", "intermediate", "formulaBeginner", "formulaIntermediate"],
         storyKey: "hydrocarbon"
     },
     oxygen: {
         nameZh: "含氧家族",
         imageFilter: { type: "byCategory",
                        categories: ["alcohol", "ether", "aldehyde", "ketone", "carboxylic", "ester", "phenol"] },
-        difficulties: ["beginner", "intermediate"],
+        difficulties: ["beginner", "intermediate", "formulaBeginner", "formulaIntermediate"],
         storyKey: "oxygen"
     },
     nitrogenHalide: {
         nameZh: "含氮鹵化物",
         imageFilter: { type: "byCategory", categories: ["amine", "halide"] },
-        difficulties: ["beginner", "intermediate"],
+        difficulties: ["beginner", "intermediate", "formulaBeginner", "formulaIntermediate"],
         storyKey: "nitrogenHalide"
     },
     mixed: {
         nameZh: "綜合",
         imageFilter: { type: "all" },
-        difficulties: ["beginner", "intermediate"],
+        difficulties: ["beginner", "intermediate", "formulaBeginner", "formulaIntermediate"],
         storyKey: "mixed"
     },
     shell: {
@@ -500,16 +507,66 @@ const Families = {
     englishChallenge: {
         nameZh: "全題庫英文挑戰",
         imageFilter: { type: "all" },
-        difficulties: ["advanced"],
+        difficulties: ["advanced", "formulaAdvanced"],
+        storyKey: null
+    },
+    // 異構物關卡：題源不是 QuestionImages 而是 IsomerPairs（見 source）。
+    // 沒有 imageFilter → 圖鑑的分子計數（_famCompoundKeys）自動略過這一關，不會被灌水。
+    isomer: {
+        nameZh: "異構物",
+        source: "isomer",
+        difficulties: ["isomer"],
         storyKey: null
     }
 };
 
-// Difficulties：難度設定（決定答案池與 aKey 前綴）
+// Difficulties：難度設定
+//   answerType / aKeyPrefix → 決定「答案池」（要選什麼）
+//   repr                    → 決定「題面長什麼樣」：
+//                             structure = 結構圖（既有）
+//                             formula   = 示性式文字（示性式挑戰）
+//                             isomer    = 兩個分子並排的合成圖（異構物關卡）
+//   label                   → 選單上寫給學生看的白話說明
+//
+// 示性式關卡刻意做成「新的難度」而不是新的軸：存檔進度、每關教學、子關選單
+// 全部是用 (family, difficulty) 當 key，做成難度就自動各自獨立、不必改動它們。
 const Difficulties = {
-    beginner:     { answerType: "categoryZh", aKeyPrefix: "CAT_ZH_" },
-    intermediate: { answerType: "compound",   aKeyPrefix: null      },
-    advanced:     { answerType: "categoryEn", aKeyPrefix: "CAT_EN_" }
+    beginner:     { answerType: "categoryZh", aKeyPrefix: "CAT_ZH_", repr: "structure", label: "從結構認分類" },
+    intermediate: { answerType: "compound",   aKeyPrefix: null,      repr: "structure", label: "從結構認命名" },
+    advanced:     { answerType: "categoryEn", aKeyPrefix: "CAT_EN_", repr: "structure", label: "從結構認英文分類" },
+
+    formulaBeginner:     { answerType: "categoryZh", aKeyPrefix: "CAT_ZH_", repr: "formula", label: "從示性式認分類" },
+    formulaIntermediate: { answerType: "compound",   aKeyPrefix: null,      repr: "formula", label: "從示性式認命名" },
+    formulaAdvanced:     { answerType: "categoryEn", aKeyPrefix: "CAT_EN_", repr: "formula", label: "從示性式認英文分類" },
+
+    // 異構物只討論「這是哪一種異構物」，沒有中文/英文命名之分，所以只有一個難度。
+    isomer: { answerType: "isomerType", aKeyPrefix: "CAT_ISO_", repr: "isomer", label: "判斷異構物種類" }
+};
+
+// 異構物題庫：每題一張「左右並排」的合成圖（見 generate_isomer_svgs.py）。
+// 圖上刻意不寫分子名稱——「順-1,2-二氯乙烯」這種名字等於把答案印在題目上。
+// 個別分子不進 QuestionImages（否則綜合關會把合成圖當成單一分子出題）。
+const IsomerPairs = [
+    { src: "assets/images/20_isomer/iso_chain_butane.svg",    pairKey: "iso_chain_butane",    isomerType: "chain",      pairName: "正丁烷 / 異丁烷" },
+    { src: "assets/images/20_isomer/iso_chain_pentane.svg",   pairKey: "iso_chain_pentane",   isomerType: "chain",      pairName: "正戊烷 / 異戊烷" },
+    { src: "assets/images/20_isomer/iso_position_propanol.svg", pairKey: "iso_position_propanol", isomerType: "position", pairName: "1-丙醇 / 2-丙醇" },
+    { src: "assets/images/20_isomer/iso_position_butene.svg", pairKey: "iso_position_butene", isomerType: "position",   pairName: "1-丁烯 / 2-丁烯" },
+    { src: "assets/images/20_isomer/iso_position_xylene.svg", pairKey: "iso_position_xylene", isomerType: "position",   pairName: "鄰-二甲苯 / 間-二甲苯" },
+    { src: "assets/images/20_isomer/iso_position_cresol.svg", pairKey: "iso_position_cresol", isomerType: "position",   pairName: "鄰-甲酚 / 對-甲酚" },
+    { src: "assets/images/20_isomer/iso_functional_c2h6o.svg",  pairKey: "iso_functional_c2h6o",  isomerType: "functional", pairName: "乙醇 / 二甲醚" },
+    { src: "assets/images/20_isomer/iso_functional_c3h6o.svg",  pairKey: "iso_functional_c3h6o",  isomerType: "functional", pairName: "丙醛 / 丙酮" },
+    { src: "assets/images/20_isomer/iso_functional_c2h4o2.svg", pairKey: "iso_functional_c2h4o2", isomerType: "functional", pairName: "乙酸 / 甲酸甲酯" },
+    { src: "assets/images/20_isomer/iso_functional_c4h8o2.svg", pairKey: "iso_functional_c4h8o2", isomerType: "functional", pairName: "丁酸 / 乙酸乙酯" },
+    { src: "assets/images/20_isomer/iso_cistrans_dichloroethene.svg",        pairKey: "iso_cistrans_dichloroethene",        isomerType: "cistrans", pairName: "順- / 反-1,2-二氯乙烯" },
+    { src: "assets/images/20_isomer/iso_cistrans_dimethylcyclopropane.svg",  pairKey: "iso_cistrans_dimethylcyclopropane",  isomerType: "cistrans", pairName: "順- / 反-1,2-二甲基環丙烷" }
+];
+
+// 異構物關卡答錯時的提示（對應「看教學」泡泡）。只指路，不給答案。
+const IsomerHints = {
+    chain:      "比對兩邊的「碳骨架」：碳原子接成一直線，還是分了岔？分子式一樣但碳鏈接法不同，就是鏈異構物。",
+    position:   "兩邊的碳骨架一樣、官能基也是同一種——差別只在官能基（或雙鍵）長在第幾個碳上。位置換了，就是位置異構物。",
+    functional: "先數數看兩邊的原子是不是一樣多（分子式相同），再看官能基：一邊是 –OH、另一邊卻是 C–O–C，官能基整個換了種類，就是官能基異構物。",
+    cistrans:   "兩邊的接法完全一樣，只有「取代基在哪一側」不同。因為雙鍵或環不能繞軸旋轉，換不過去，所以是兩個不同的分子——這就是順反異構物。"
 };
 
 // 4. 化合物小知識（圖鑑用，1~2 句，淺顯不複雜）
@@ -526,7 +583,7 @@ const CompoundFacts = {
     ethene:         "產量最大的有機化工原料；聚合成聚乙烯（PE），也是讓水果催熟的植物激素。",
     propene:        "聚合成聚丙烯（PP）；也是製造丙酮、異丙醇的原料。",
     "1-butene":     "與乙烯共聚可調整聚乙烯的柔軟度（LLDPE）。",
-    "2-butene":     "有順式/反式兩種異構物；用於製造丁二烯與合成橡膠原料。",
+    "2-butene":     "有順式/反式兩種異構物：兩個 CH₃ 在雙鍵同側叫順式、異側叫反式（雙鍵不能繞軸旋轉，所以換不過去）。注意示性式 CH₃CH=CHCH₃ 兩者長得一模一樣——順反只看得出來在結構圖上。用於製造丁二烯與合成橡膠原料。",
     "1,3-butadiene":"共軛二烯，是合成橡膠（SBR、丁腈橡膠）最主要的單體。",
     cyclohexene:    "課本示範「溴水褪色」「過錳酸鉀加成」常用的環狀烯烴。",
     // 炔
